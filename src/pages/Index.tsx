@@ -19,6 +19,8 @@ import { useFileSharing, SharedFile } from '@/hooks/useFileSharing';
 import { useTextSharing } from '@/hooks/useTextSharing';
 import { useOnlinePresence } from '@/hooks/useOnlinePresence';
 import { useAuth } from '@/hooks/useAuth';
+import { useProfileSync } from '@/hooks/useProfileSync';
+import { FriendsNavButton } from '@/components/FriendsNavButton';
 import { usePromoOverride } from '@/hooks/usePromoOverride';
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from '@/components/ThemeProvider';
