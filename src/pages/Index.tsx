@@ -78,8 +78,8 @@ const Index = () => {
         subject: data.subject,
         uploader_email: user?.email ?? null,
         uploader_id: user?.id ?? null,
-        keep_forever: keepForever,
-        expires_seconds: keepForever ? overrideSeconds : undefined,
+        keep_forever: keepForever && durationChosen,
+        expires_seconds: keepForever && durationChosen ? overrideSeconds : undefined,
       });
       if (notificationsEnabled()) {
         toast({
