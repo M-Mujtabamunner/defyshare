@@ -31,7 +31,7 @@ const NOTIF_KEY = 'defyshare:notifications';
 const SettingsSheet: React.FC = () => {
   const [promo, setPromo] = React.useState('');
   const { toast } = useToast();
-  const { keepForever, overrideSeconds, setOverrideSeconds, applyPromo, signedIn } = usePromoOverride();
+  const { keepForever, overrideSeconds, setOverrideSeconds, durationChosen, applyPromo, signedIn } = usePromoOverride();
   const { user } = useAuth();
   const [notifications, setNotifications] = React.useState<boolean>(() => {
     if (typeof window === 'undefined') return true;
