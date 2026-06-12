@@ -7,6 +7,11 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+import FriendsLayout from "./pages/FriendsLayout";
+import FriendsEmpty from "./pages/FriendsEmpty";
+import FriendChat from "./pages/FriendChat";
+import GroupChat from "./pages/GroupChat";
+import FriendRequestsPage from "./pages/FriendRequests";
 
 const queryClient = new QueryClient();
 
@@ -20,7 +25,12 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/admin" element={<Admin />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="/friends/request" element={<FriendRequestsPage />} />
+            <Route path="/friends" element={<FriendsLayout />}>
+              <Route index element={<FriendsEmpty />} />
+              <Route path="group/:groupSlug" element={<GroupChat />} />
+              <Route path=":friendSlug" element={<FriendChat />} />
+            </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

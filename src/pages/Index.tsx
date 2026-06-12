@@ -19,6 +19,8 @@ import { useFileSharing, SharedFile } from '@/hooks/useFileSharing';
 import { useTextSharing } from '@/hooks/useTextSharing';
 import { useOnlinePresence } from '@/hooks/useOnlinePresence';
 import { useAuth } from '@/hooks/useAuth';
+import { useProfileSync } from '@/hooks/useProfileSync';
+import { FriendsNavButton } from '@/components/FriendsNavButton';
 import { usePromoOverride } from '@/hooks/usePromoOverride';
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from '@/components/ThemeProvider';
@@ -34,7 +36,8 @@ const Index = () => {
   const { texts, loading: textsLoading, addText, removeText, clearAllTexts } = useTextSharing(roomId);
   const onlineCount = useOnlinePresence(roomId);
   const { user } = useAuth();
-  const { keepForever, overrideSeconds } = usePromoOverride();
+  useProfileSync();
+  const { keepForever, overrideSeconds, durationChosen } = usePromoOverride();
   const { toast } = useToast();
 
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -78,8 +81,8 @@ const Index = () => {
         subject: data.subject,
         uploader_email: user?.email ?? null,
         uploader_id: user?.id ?? null,
-        keep_forever: keepForever,
-        expires_seconds: keepForever ? overrideSeconds : undefined,
+        keep_forever: keepForever && durationChosen,
+        expires_seconds: keepForever && durationChosen ? overrideSeconds : undefined,
       });
       if (notificationsEnabled()) {
         toast({
@@ -128,6 +131,7 @@ const Index = () => {
             </div>
             <div className="flex items-center gap-2">
               <OnlineIndicator count={onlineCount} />
+              <FriendsNavButton />
               <ThemeToggle />
               <SettingsSheet />
               <AuthButton />
