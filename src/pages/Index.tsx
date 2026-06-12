@@ -131,6 +131,7 @@ const Index = () => {
             </div>
             <div className="flex items-center gap-2">
               <OnlineIndicator count={onlineCount} />
+              <FriendsNavButton />
               <ThemeToggle />
               <SettingsSheet />
               <AuthButton />
