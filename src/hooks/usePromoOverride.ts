@@ -17,16 +17,20 @@ export const DURATION_OPTIONS: { label: string; seconds: number | null }[] = [
   { label: 'Forever', seconds: null },
 ];
 
+const chosenKey = (uid: string) => `defyshare:promoChosen:${uid}`;
+
 export const usePromoOverride = () => {
   const { user } = useAuth();
   const [keepForever, setKeepForever] = useState(false);
   const [overrideSeconds, setOverrideSecondsState] = useState<number | null>(null);
+  const [durationChosen, setDurationChosen] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!user) {
       setKeepForever(false);
       setOverrideSecondsState(null);
+      setDurationChosen(false);
       return;
     }
     let active = true;
@@ -42,6 +46,7 @@ export const usePromoOverride = () => {
         setOverrideSecondsState(
           (data as { override_seconds?: number | null } | null)?.override_seconds ?? null,
         );
+        setDurationChosen(localStorage.getItem(chosenKey(user.id)) === '1');
         setLoading(false);
       });
     return () => {
@@ -64,6 +69,8 @@ export const usePromoOverride = () => {
       if (error) return { ok: false, reason: error.message };
       setKeepForever(true);
       setOverrideSecondsState(null);
+      setDurationChosen(false);
+      localStorage.removeItem(chosenKey(user.id));
       return { ok: true };
     },
     [user],
@@ -72,7 +79,9 @@ export const usePromoOverride = () => {
   const setOverrideSeconds = useCallback(
     async (seconds: number | null) => {
       setOverrideSecondsState(seconds);
+      setDurationChosen(true);
       if (!user) return;
+      localStorage.setItem(chosenKey(user.id), '1');
       await supabase.from('promo_overrides').upsert({
         user_id: user.id,
         keep_forever: true,
@@ -86,6 +95,7 @@ export const usePromoOverride = () => {
     keepForever,
     overrideSeconds,
     setOverrideSeconds,
+    durationChosen,
     loading,
     applyPromo,
     signedIn: !!user,
