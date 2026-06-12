@@ -54,8 +54,11 @@ const SettingsSheet: React.FC = () => {
 
   const showAdmin = isAdminEmail(user?.email);
 
-  const currentValue =
-    overrideSeconds === null ? 'forever' : overrideSeconds ? String(overrideSeconds) : 'forever';
+  const currentValue = !durationChosen
+    ? ''
+    : overrideSeconds === null
+      ? 'forever'
+      : String(overrideSeconds);
 
   const onDurationChange = (val: string) => {
     setOverrideSeconds(val === 'forever' ? null : Number(val));
@@ -79,11 +82,13 @@ const SettingsSheet: React.FC = () => {
           <div className="space-y-2">
             <Label className="text-sm font-medium">Auto-remove after 30h</Label>
             <div className="flex items-center gap-2 p-3 rounded-md border border-border/50 bg-secondary/30">
-              <Checkbox checked={!keepForever} disabled />
+              <Checkbox checked={!keepForever || !durationChosen} disabled />
               <span className="text-sm text-muted-foreground">
-                {keepForever
-                  ? 'Promo active — choose how long uploads stay below.'
-                  : 'Enabled — your uploads expire in 30h.'}
+                {keepForever && durationChosen
+                  ? 'Promo active — using your chosen duration below.'
+                  : keepForever
+                    ? 'Promo applied — choose how long uploads should stay below.'
+                    : 'Enabled — your uploads expire in 30h.'}
               </span>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -117,8 +122,8 @@ const SettingsSheet: React.FC = () => {
             <div className="space-y-2">
               <Label className="text-sm font-medium">Keep uploads for</Label>
               <Select value={currentValue} onValueChange={onDurationChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose duration" />
+                <SelectTrigger className={!durationChosen ? 'ring-2 ring-primary/60' : ''}>
+                  <SelectValue placeholder="Choose a duration…" />
                 </SelectTrigger>
                 <SelectContent>
                   {DURATION_OPTIONS.map((o) => (
@@ -131,8 +136,10 @@ const SettingsSheet: React.FC = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                Applies to files you upload from now on.
+              <p className={`text-xs ${durationChosen ? 'text-muted-foreground' : 'text-primary'}`}>
+                {durationChosen
+                  ? 'Applies to files you upload from now on.'
+                  : 'Pick a duration to activate it. Until then, uploads use the default 30h expiry.'}
               </p>
             </div>
           )}
