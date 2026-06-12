@@ -36,6 +36,7 @@ const Index = () => {
   const { texts, loading: textsLoading, addText, removeText, clearAllTexts } = useTextSharing(roomId);
   const onlineCount = useOnlinePresence(roomId);
   const { user } = useAuth();
+  useProfileSync();
   const { keepForever, overrideSeconds, durationChosen } = usePromoOverride();
   const { toast } = useToast();
 
