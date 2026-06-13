@@ -7,7 +7,7 @@ import { UserAvatar } from '@/components/friends/UserAvatar';
 import { useAuth } from '@/hooks/useAuth';
 import { useMessages, MessageRow } from '@/hooks/useMessages';
 import { supabase } from '@/integrations/supabase/client';
-import { triggerBlobDownload } from '@/lib/storageUrls';
+import { triggerBlobDownload, getSignedChatUrl } from '@/lib/storageUrls';
 import type { ProfileRow } from '@/hooks/useFriendsData';
 import { cn } from '@/lib/utils';
 import SettingsSheet from '@/components/SettingsSheet';
@@ -41,12 +41,9 @@ const MessageMedia: React.FC<{ msg: MessageRow }> = ({ msg }) => {
   useEffect(() => {
     let active = true;
     if (msg.file_url) {
-      supabase.storage
-        .from('chat-media')
-        .createSignedUrl(msg.file_url, 3600)
-        .then(({ data }) => {
-          if (active) setUrl(data?.signedUrl ?? null);
-        });
+      getSignedChatUrl(msg.file_url).then((u) => {
+        if (active) setUrl(u);
+      });
     }
     return () => {
       active = false;
@@ -68,6 +65,8 @@ const MessageMedia: React.FC<{ msg: MessageRow }> = ({ msg }) => {
         <img
           src={url}
           alt={msg.file_name ?? ''}
+          loading="lazy"
+          decoding="async"
           className="rounded-md max-h-64 object-cover block"
         />
         <button
