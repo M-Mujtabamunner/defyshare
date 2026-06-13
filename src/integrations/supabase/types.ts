@@ -385,6 +385,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_friend_request: { Args: { _req_id: string }; Returns: undefined }
       is_blocked: { Args: { a: string; b: string }; Returns: boolean }
       is_conversation_admin: {
         Args: { _conv: string; _user: string }

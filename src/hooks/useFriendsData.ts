@@ -171,18 +171,10 @@ export const useFriendsData = () => {
   const acceptRequest = useCallback(
     async (req: FriendRequestRow) => {
       if (!uid) return;
-      await supabase
-        .from('friend_requests')
-        .update({ status: 'accepted', is_read: true })
-        .eq('id', req.id);
-      // create symmetric rows
-      await supabase.from('friends').upsert(
-        [
-          { user_id: req.sender_id, friend_id: req.receiver_id },
-          { user_id: req.receiver_id, friend_id: req.sender_id },
-        ],
-        { onConflict: 'user_id,friend_id', ignoreDuplicates: true },
-      );
+      const { error } = await supabase.rpc('accept_friend_request', { _req_id: req.id });
+      if (error) {
+        console.error('accept_friend_request failed', error);
+      }
       await refresh();
     },
     [uid, refresh],
