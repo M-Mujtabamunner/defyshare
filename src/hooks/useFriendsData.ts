@@ -210,18 +210,30 @@ export const useFriendsData = () => {
   const blockUser = useCallback(
     async (targetId: string) => {
       if (!uid) return;
+      // Optimistic: immediately reflect block + remove friend locally
+      const tempBlock: BlockRow = {
+        id: `temp-${targetId}`,
+        blocker_id: uid,
+        blocked_user_id: targetId,
+        created_at: new Date().toISOString(),
+      };
+      setBlocks((prev) =>
+        prev.some((b) => b.blocked_user_id === targetId) ? prev : [...prev, tempBlock],
+      );
+      setFriends((prev) => prev.filter((f) => f.friend_id !== targetId));
+      setReceived((prev) => prev.filter((r) => r.sender_id !== targetId));
+      setSent((prev) => prev.filter((r) => r.receiver_id !== targetId));
+
       await supabase.from('blocked_users').upsert(
         { blocker_id: uid, blocked_user_id: targetId },
         { onConflict: 'blocker_id,blocked_user_id', ignoreDuplicates: true },
       );
-      // Cancel any pending requests between the two
       await supabase
         .from('friend_requests')
         .delete()
         .or(
           `and(sender_id.eq.${uid},receiver_id.eq.${targetId}),and(sender_id.eq.${targetId},receiver_id.eq.${uid})`,
         );
-      // Remove friend row in MY direction (other side keeps history visible)
       await supabase
         .from('friends')
         .delete()
@@ -235,6 +247,8 @@ export const useFriendsData = () => {
   const unblockUser = useCallback(
     async (targetId: string) => {
       if (!uid) return;
+      // Optimistic: remove block locally
+      setBlocks((prev) => prev.filter((b) => b.blocked_user_id !== targetId));
       await supabase
         .from('blocked_users')
         .delete()
@@ -248,6 +262,8 @@ export const useFriendsData = () => {
   const removeFriend = useCallback(
     async (friendId: string) => {
       if (!uid) return;
+      // Optimistic: remove friend locally
+      setFriends((prev) => prev.filter((f) => f.friend_id !== friendId));
       await supabase
         .from('friends')
         .delete()
@@ -258,6 +274,7 @@ export const useFriendsData = () => {
     },
     [uid, refresh],
   );
+
 
   const renameFriend = useCallback(
     async (friendId: string, name: string | null) => {
