@@ -194,9 +194,59 @@ const Admin: React.FC = () => {
               </TableBody>
             </Table>
           )}
-        </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="history" className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search history by name, subject, uploader, room…"
+                value={hq}
+                onChange={(e) => setHq(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <div className="rounded-xl border border-border/50 bg-card/30 backdrop-blur-sm">
+              {loading ? (
+                <div className="p-10 text-center text-muted-foreground">Loading…</div>
+              ) : filteredHistory.length === 0 ? (
+                <div className="p-10 text-center text-muted-foreground">No history yet</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Subject</TableHead>
+                      <TableHead>File</TableHead>
+                      <TableHead>Uploader</TableHead>
+                      <TableHead>Room (IP)</TableHead>
+                      <TableHead>Size</TableHead>
+                      <TableHead>Uploaded</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredHistory.map((f) => (
+                      <TableRow key={f.id}>
+                        <TableCell className="max-w-[160px] truncate">{f.subject || '—'}</TableCell>
+                        <TableCell className="font-mono text-xs max-w-[180px] truncate">{f.name}</TableCell>
+                        <TableCell className="text-xs">
+                          <div className="truncate max-w-[160px]">{f.uploader_name || '—'}</div>
+                          <div className="text-muted-foreground truncate max-w-[160px]">{f.uploader_email || ''}</div>
+                        </TableCell>
+                        <TableCell className="font-mono text-xs">{f.room_key}</TableCell>
+                        <TableCell className="text-xs">{formatBytes(f.size)}</TableCell>
+                        <TableCell className="text-xs">{new Date(f.uploaded_at).toLocaleString()}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
+
   );
 };
 
