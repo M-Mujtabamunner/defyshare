@@ -9,6 +9,8 @@ import {
   ChevronDown,
   Smile,
   Clock,
+  Check,
+  CheckCheck,
   Infinity as InfinityIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
