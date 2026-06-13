@@ -3,12 +3,27 @@ import { Link, Navigate } from 'react-router-dom';
 import { ArrowLeft, Download, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { isAdminEmail } from '@/lib/admin';
 import { SharedFile } from '@/hooks/useFileSharing';
 import { getSignedFileUrl } from '@/lib/storageUrls';
+
+interface HistoryRow {
+  id: string;
+  room_key: string;
+  name: string;
+  size: number;
+  type: string | null;
+  subject: string | null;
+  uploader_name: string | null;
+  uploader_email: string | null;
+  uploader_id: string | null;
+  uploaded_at: string;
+}
+
 
 const formatBytes = (b: number) => {
   if (!b) return '0 B';
@@ -20,21 +35,32 @@ const formatBytes = (b: number) => {
 const Admin: React.FC = () => {
   const { user } = useAuth();
   const [files, setFiles] = useState<SharedFile[]>([]);
+  const [history, setHistory] = useState<HistoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
+  const [hq, setHq] = useState('');
 
   useEffect(() => {
     if (!user || !isAdminEmail(user.email)) return;
-    supabase
-      .from('shared_files')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(1000)
-      .then(({ data }) => {
-        setFiles((data as SharedFile[]) || []);
-        setLoading(false);
-      });
+    (async () => {
+      const [filesRes, histRes] = await Promise.all([
+        supabase
+          .from('shared_files')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(1000),
+        (supabase as any)
+          .from('file_history')
+          .select('*')
+          .order('uploaded_at', { ascending: false })
+          .limit(2000),
+      ]);
+      setFiles((filesRes.data as SharedFile[]) || []);
+      setHistory((histRes.data as HistoryRow[]) || []);
+      setLoading(false);
+    })();
   }, [user]);
+
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -46,11 +72,22 @@ const Admin: React.FC = () => {
     );
   }, [files, q]);
 
+  const filteredHistory = useMemo(() => {
+    const s = hq.trim().toLowerCase();
+    if (!s) return history;
+    return history.filter((f) =>
+      [f.name, f.subject, f.uploader_name, f.uploader_email, f.room_key]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(s)),
+    );
+  }, [history, hq]);
+
   const stats = useMemo(() => {
     const rooms = new Set(files.map((f) => (f as any).room_key)).size;
     const totalSize = files.reduce((s, f) => s + (f.size || 0), 0);
-    return { count: files.length, rooms, totalSize };
-  }, [files]);
+    return { count: files.length, rooms, totalSize, history: history.length };
+  }, [files, history]);
+
 
   const download = async (f: SharedFile) => {
     const url = await getSignedFileUrl(f.file_path);
@@ -80,9 +117,9 @@ const Admin: React.FC = () => {
           <div className="text-xs text-muted-foreground">{user.email}</div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           <div className="p-4 rounded-lg border border-border/50 bg-card/30">
-            <p className="text-xs text-muted-foreground">Files</p>
+            <p className="text-xs text-muted-foreground">Active files</p>
             <p className="text-2xl font-bold text-primary">{stats.count}</p>
           </div>
           <div className="p-4 rounded-lg border border-border/50 bg-card/30">
@@ -93,17 +130,29 @@ const Admin: React.FC = () => {
             <p className="text-xs text-muted-foreground">Storage used</p>
             <p className="text-2xl font-bold text-primary">{formatBytes(stats.totalSize)}</p>
           </div>
+          <div className="p-4 rounded-lg border border-border/50 bg-card/30">
+            <p className="text-xs text-muted-foreground">Total ever shared</p>
+            <p className="text-2xl font-bold text-primary">{stats.history}</p>
+          </div>
         </div>
 
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by name, subject, uploader, room…"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            className="pl-9"
-          />
-        </div>
+        <Tabs defaultValue="active" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="active">Active</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="active" className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name, subject, uploader, room…"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
 
         <div className="rounded-xl border border-border/50 bg-card/30 backdrop-blur-sm">
           {loading ? (
@@ -145,9 +194,59 @@ const Admin: React.FC = () => {
               </TableBody>
             </Table>
           )}
-        </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="history" className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search history by name, subject, uploader, room…"
+                value={hq}
+                onChange={(e) => setHq(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <div className="rounded-xl border border-border/50 bg-card/30 backdrop-blur-sm">
+              {loading ? (
+                <div className="p-10 text-center text-muted-foreground">Loading…</div>
+              ) : filteredHistory.length === 0 ? (
+                <div className="p-10 text-center text-muted-foreground">No history yet</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Subject</TableHead>
+                      <TableHead>File</TableHead>
+                      <TableHead>Uploader</TableHead>
+                      <TableHead>Room (IP)</TableHead>
+                      <TableHead>Size</TableHead>
+                      <TableHead>Uploaded</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredHistory.map((f) => (
+                      <TableRow key={f.id}>
+                        <TableCell className="max-w-[160px] truncate">{f.subject || '—'}</TableCell>
+                        <TableCell className="font-mono text-xs max-w-[180px] truncate">{f.name}</TableCell>
+                        <TableCell className="text-xs">
+                          <div className="truncate max-w-[160px]">{f.uploader_name || '—'}</div>
+                          <div className="text-muted-foreground truncate max-w-[160px]">{f.uploader_email || ''}</div>
+                        </TableCell>
+                        <TableCell className="font-mono text-xs">{f.room_key}</TableCell>
+                        <TableCell className="text-xs">{formatBytes(f.size)}</TableCell>
+                        <TableCell className="text-xs">{new Date(f.uploaded_at).toLocaleString()}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
+
   );
 };
 

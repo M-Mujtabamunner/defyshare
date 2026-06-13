@@ -94,6 +94,51 @@ export type Database = {
         }
         Relationships: []
       }
+      file_history: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          room_key: string
+          shared_file_id: string | null
+          size: number
+          subject: string | null
+          type: string | null
+          uploaded_at: string
+          uploader_email: string | null
+          uploader_id: string | null
+          uploader_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          room_key: string
+          shared_file_id?: string | null
+          size?: number
+          subject?: string | null
+          type?: string | null
+          uploaded_at?: string
+          uploader_email?: string | null
+          uploader_id?: string | null
+          uploader_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          room_key?: string
+          shared_file_id?: string | null
+          size?: number
+          subject?: string | null
+          type?: string | null
+          uploaded_at?: string
+          uploader_email?: string | null
+          uploader_id?: string | null
+          uploader_name?: string | null
+        }
+        Relationships: []
+      }
       friend_requests: {
         Row: {
           created_at: string
