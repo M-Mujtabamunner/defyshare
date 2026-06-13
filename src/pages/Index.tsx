@@ -270,6 +270,18 @@ const Index = () => {
 
       <GlobalDropOverlay onFiles={(files) => setPendingFile(files[0])} />
 
+      <a
+        href="https://defyshare.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Powered by DefyShare"
+        className="fixed bottom-4 left-4 z-40 inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/80 backdrop-blur px-4 py-2 text-sm font-medium text-foreground shadow-lg hover:bg-card hover:scale-105 transition"
+      >
+        <span className="text-muted-foreground">Powered by</span>
+        <img src={logo} alt="DefyShare" className="w-7 h-7" />
+        <span>DefyShare</span>
+      </a>
+
     </div>
   );
 };
