@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { getB2UploadUrl, isB2Path, toB2Path } from '@/lib/storageUrls';
+import { getB2UploadUrl, isB2Path, toB2Path, b2Key, deleteB2Objects } from '@/lib/storageUrls';
 
 
 export interface SharedFile {
@@ -57,8 +57,12 @@ export const useFileSharing = (roomKey: string) => {
 
       if (expired && expired.length > 0) {
         const cloudPaths = expired.filter(f => !isB2Path(f.file_path)).map(f => f.file_path);
+        const b2Keys = expired.filter(f => isB2Path(f.file_path)).map(f => b2Key(f.file_path));
         if (cloudPaths.length > 0) {
           await supabase.storage.from('shared-files').remove(cloudPaths);
+        }
+        if (b2Keys.length > 0) {
+          await deleteB2Objects(b2Keys);
         }
         await supabase.from('shared_files').delete().in('id', expired.map(f => f.id));
       }
@@ -177,7 +181,9 @@ export const useFileSharing = (roomKey: string) => {
     const file = files.find(f => f.id === fileId);
     if (!file) return;
     setFiles(prev => prev.filter(f => f.id !== fileId));
-    if (!isB2Path(file.file_path)) {
+    if (isB2Path(file.file_path)) {
+      await deleteB2Objects([b2Key(file.file_path)]);
+    } else {
       await supabase.storage.from('shared-files').remove([file.file_path]);
     }
     await supabase.from('shared_files').delete().eq('id', fileId);
@@ -194,8 +200,12 @@ export const useFileSharing = (roomKey: string) => {
     const prevFiles = [...files];
     setFiles([]);
     const cloudPaths = prevFiles.filter(f => !isB2Path(f.file_path)).map(f => f.file_path);
+    const b2Keys = prevFiles.filter(f => isB2Path(f.file_path)).map(f => b2Key(f.file_path));
     if (cloudPaths.length > 0) {
       await supabase.storage.from('shared-files').remove(cloudPaths);
+    }
+    if (b2Keys.length > 0) {
+      await deleteB2Objects(b2Keys);
     }
     await supabase.from('shared_files').delete().eq('room_key', roomKey);
   }, [files, roomKey]);

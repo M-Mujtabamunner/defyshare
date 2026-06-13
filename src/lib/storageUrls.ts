@@ -22,6 +22,11 @@ async function b2SignedUrl(action: 'put' | 'get', key: string, contentType?: str
 export const getB2UploadUrl = (key: string, contentType?: string) =>
   b2SignedUrl('put', key, contentType);
 
+export const deleteB2Objects = async (keys: string[]) => {
+  if (keys.length === 0) return;
+  await supabase.functions.invoke('b2-sign', { body: { action: 'delete', keys } });
+};
+
 async function getSigned(
   filePath: string,
   bucket: 'shared-files' | 'chat-media',
