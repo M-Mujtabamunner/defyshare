@@ -115,7 +115,15 @@ const Admin: React.FC = () => {
     );
   }
   if (!user) return <Navigate to="/" replace />;
-  if (!isAdminEmail(user.email)) return <Navigate to="/" replace />;
+  if (adminState === 'checking') {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
+        Checking access…
+      </div>
+    );
+  }
+  if (adminState === 'denied') return <Navigate to="/" replace />;
+
 
   return (
     <div className="min-h-screen bg-background">
