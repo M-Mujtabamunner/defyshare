@@ -133,17 +133,48 @@ export const ChatView: React.FC<Props> = ({
   const [dragOver, setDragOver] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [atBottom, setAtBottom] = useState(true);
+  const prevCountRef = useRef(0);
 
+  const isNearBottom = (el: HTMLDivElement, threshold = 120) =>
+    el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+
+  const scrollToBottom = useCallback((smooth = true) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
+  }, []);
+
+  // Auto-scroll on new messages only if user was already near bottom.
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    const el = scrollRef.current;
+    if (!el) return;
+    const prev = prevCountRef.current;
+    prevCountRef.current = messages.length;
+    if (messages.length > prev) {
+      if (atBottom) scrollToBottom(prev === 0 ? false : true);
     }
-  }, [messages.length]);
+  }, [messages.length, atBottom, scrollToBottom]);
+
+  // Initial jump to bottom when switching conversations.
+  useEffect(() => {
+    prevCountRef.current = 0;
+    setAtBottom(true);
+    requestAnimationFrame(() => scrollToBottom(false));
+  }, [conversationId, scrollToBottom]);
+
+  const onScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setAtBottom(isNearBottom(el));
+  }, []);
 
   const handleSend = async () => {
     if (!text.trim()) return;
     await sendText(text);
     setText('');
+    setAtBottom(true);
+    requestAnimationFrame(() => scrollToBottom(true));
   };
 
   const onPickFile = () => fileInput.current?.click();
