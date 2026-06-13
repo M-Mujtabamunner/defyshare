@@ -159,15 +159,33 @@ export const useConversations = () => {
         .insert({ type: 'group' })
         .select('id')
         .single();
-      if (error || !conv) return null;
-      await supabase.from('conversation_members').insert([
-        { conversation_id: conv.id, user_id: uid, role: 'admin' },
-        ...memberIds.map((m) => ({
-          conversation_id: conv.id,
-          user_id: m,
-          role: 'member' as const,
-        })),
-      ]);
+      if (error || !conv) {
+        console.error('create conversation failed', error);
+        return null;
+      }
+      // Insert self as admin FIRST so RLS sees us as admin when adding others
+      const { error: selfErr } = await supabase.from('conversation_members').insert({
+        conversation_id: conv.id,
+        user_id: uid,
+        role: 'admin',
+      });
+      if (selfErr) {
+        console.error('add self member failed', selfErr);
+        return null;
+      }
+      if (memberIds.length > 0) {
+        const { error: othersErr } = await supabase.from('conversation_members').insert(
+          memberIds.map((m) => ({
+            conversation_id: conv.id,
+            user_id: m,
+            role: 'member' as const,
+          })),
+        );
+        if (othersErr) {
+          console.error('add other members failed', othersErr);
+          return null;
+        }
+      }
       await supabase.from('groups').insert({
         conversation_id: conv.id,
         group_name: name,
