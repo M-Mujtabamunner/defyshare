@@ -155,6 +155,9 @@ export const ChatView: React.FC<Props> = ({
     typingUsers,
     toggleReaction,
     broadcastTyping,
+    loadOlder,
+    hasMore,
+    loadingOlder,
   } = useMessages(conversationId);
   const [text, setText] = useState('');
   const [dragOver, setDragOver] = useState(false);
@@ -162,6 +165,8 @@ export const ChatView: React.FC<Props> = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
   const prevCountRef = useRef(0);
+  const loadingOlderRef = useRef(false);
+  const preserveRef = useRef<{ height: number; top: number } | null>(null);
   const [nowTick, setNowTick] = useState(Date.now());
   const [otherReads, setOtherReads] = useState<Record<string, string>>({});
 
