@@ -7,7 +7,7 @@ import { UserAvatar } from '@/components/friends/UserAvatar';
 import { useAuth } from '@/hooks/useAuth';
 import { useMessages, MessageRow } from '@/hooks/useMessages';
 import { supabase } from '@/integrations/supabase/client';
-import { triggerBlobDownload } from '@/lib/storageUrls';
+import { triggerBlobDownload, getSignedChatUrl } from '@/lib/storageUrls';
 import type { ProfileRow } from '@/hooks/useFriendsData';
 import { cn } from '@/lib/utils';
 import SettingsSheet from '@/components/SettingsSheet';
