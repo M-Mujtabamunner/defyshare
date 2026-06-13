@@ -33,7 +33,7 @@ function rfc3986(str: string) {
   );
 }
 
-async function presign(method: 'PUT' | 'GET', key: string, expires: number) {
+async function presign(method: 'PUT' | 'GET' | 'DELETE', key: string, expires: number) {
   const now = new Date();
   const amzDate = now.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
   const dateStamp = amzDate.slice(0, 8);
@@ -90,18 +90,38 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
     const body = await req.json();
-    const action = body?.action as 'put' | 'get';
-    const key = body?.key as string;
+    const action = body?.action as 'put' | 'get' | 'delete';
+    const keys: string[] = Array.isArray(body?.keys)
+      ? body.keys
+      : body?.key
+        ? [body.key]
+        : [];
     const expires = Number(body?.expires) || 3600;
 
-    if (!key || (action !== 'put' && action !== 'get')) {
+    if (keys.length === 0 || !['put', 'get', 'delete'].includes(action)) {
       return new Response(JSON.stringify({ error: 'invalid request' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const url = await presign(action === 'put' ? 'PUT' : 'GET', key, expires);
+    const method = action.toUpperCase() as 'PUT' | 'GET' | 'DELETE';
+
+    // For delete action, perform the deletes server-side so the client doesn't need CORS-DELETE.
+    if (action === 'delete') {
+      const results: { key: string; ok: boolean; status: number }[] = [];
+      for (const key of keys) {
+        const url = await presign('DELETE', key, 300);
+        const res = await fetch(url, { method: 'DELETE' });
+        await res.text();
+        results.push({ key, ok: res.ok || res.status === 404, status: res.status });
+      }
+      return new Response(JSON.stringify({ results }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const url = await presign(method, keys[0], expires);
     return new Response(JSON.stringify({ url }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
