@@ -371,6 +371,11 @@ export const ChatView: React.FC<Props> = ({
           onScroll={onScroll}
           className="absolute inset-0 overflow-y-auto p-4 space-y-2"
         >
+          {loadingOlder && (
+            <div className="flex justify-center py-2">
+              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+            </div>
+          )}
           {messages.length === 0 && (
             <p className="text-center text-sm text-muted-foreground py-12">
               No messages yet. Say hi 👋
