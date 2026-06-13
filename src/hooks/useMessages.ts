@@ -25,35 +25,84 @@ export interface ReactionRow {
   emoji: string;
 }
 
+const PAGE_SIZE = 30;
+
 export const useMessages = (conversationId: string | null) => {
   const { user } = useAuth();
   const uid = user?.id ?? null;
   const [messages, setMessages] = useState<MessageRow[]>([]);
   const [reactions, setReactions] = useState<ReactionRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [uploading, setUploading] = useState<{ name: string; progress: number } | null>(null);
   const [typingUsers, setTypingUsers] = useState<Record<string, number>>({});
+
+  const loadOlder = useCallback(async () => {
+    if (!conversationId) return 0;
+    setLoadingOlder((prev) => prev);
+    let oldestIso: string | null = null;
+    setMessages((cur) => {
+      oldestIso = cur[0]?.created_at ?? null;
+      return cur;
+    });
+    if (!oldestIso) return 0;
+    setLoadingOlder(true);
+    const { data } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('conversation_id', conversationId)
+      .lt('created_at', oldestIso)
+      .order('created_at', { ascending: false })
+      .limit(PAGE_SIZE);
+    const rows = ((data ?? []) as MessageRow[]).slice().reverse();
+    setHasMore(rows.length === PAGE_SIZE);
+    if (rows.length) {
+      setMessages((prev) => {
+        const existing = new Set(prev.map((m) => m.id));
+        const merged = [...rows.filter((r) => !existing.has(r.id)), ...prev];
+        return merged;
+      });
+      const ids = rows.map((r) => r.id);
+      const { data: rx } = await (supabase as any)
+        .from('message_reactions')
+        .select('*')
+        .in('message_id', ids);
+      if (rx?.length) {
+        setReactions((prev) => {
+          const ex = new Set(prev.map((r) => r.id));
+          return [...prev, ...(rx as ReactionRow[]).filter((r) => !ex.has(r.id))];
+        });
+      }
+    }
+    setLoadingOlder(false);
+    return rows.length;
+  }, [conversationId]);
 
   useEffect(() => {
     if (!conversationId) {
       setMessages([]);
       setReactions([]);
       setLoading(false);
+      setHasMore(false);
       return;
     }
     let active = true;
     setLoading(true);
+    setHasMore(false);
     supabase
       .from('messages')
       .select('*')
       .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: false })
+      .limit(PAGE_SIZE)
       .then(({ data }) => {
         if (!active) return;
-        setMessages((data ?? []) as MessageRow[]);
+        const rows = ((data ?? []) as MessageRow[]).slice().reverse();
+        setMessages(rows);
+        setHasMore((data ?? []).length === PAGE_SIZE);
         setLoading(false);
-        // load reactions for these messages
-        const ids = (data ?? []).map((m: any) => m.id);
+        const ids = rows.map((m) => m.id);
         if (ids.length) {
           (supabase as any)
             .from('message_reactions')
@@ -66,76 +115,7 @@ export const useMessages = (conversationId: string | null) => {
           setReactions([]);
         }
       });
-
-    const channel = supabase
-      .channel(`msgs-${conversationId}-${Math.random().toString(36).slice(2)}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'messages',
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            const msg = payload.new as MessageRow;
-            setMessages((prev) =>
-              prev.some((m) => m.id === msg.id) ? prev : [...prev, msg],
-            );
-            if (uid && msg.sender_id !== uid) {
-              supabase
-                .from('conversation_members')
-                .update({ last_read_at: new Date().toISOString() })
-                .eq('conversation_id', conversationId)
-                .eq('user_id', uid)
-                .then(() => {});
-            }
-          } else if (payload.eventType === 'DELETE') {
-            setMessages((prev) => prev.filter((m) => m.id !== (payload.old as MessageRow).id));
-          }
-        },
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'message_reactions' },
-        (payload: any) => {
-          if (payload.eventType === 'INSERT') {
-            const r = payload.new as ReactionRow;
-            setReactions((prev) => (prev.some((x) => x.id === r.id) ? prev : [...prev, r]));
-          } else if (payload.eventType === 'DELETE') {
-            setReactions((prev) => prev.filter((x) => x.id !== (payload.old as ReactionRow).id));
-          }
-        },
-      )
-      .on('broadcast', { event: 'typing' }, (payload: any) => {
-        const u = payload?.payload?.userId as string | undefined;
-        if (!u || u === uid) return;
-        setTypingUsers((prev) => ({ ...prev, [u]: Date.now() }));
-      })
-      .subscribe();
-
-    // expire typing indicators
-    const tInt = setInterval(() => {
-      setTypingUsers((prev) => {
-        const now = Date.now();
-        const out: Record<string, number> = {};
-        for (const [k, v] of Object.entries(prev)) {
-          if (now - v < 4000) out[k] = v;
-        }
-        return out;
-      });
-    }, 1500);
-
-    if (uid) {
-      supabase
-        .from('conversation_members')
-        .update({ last_read_at: new Date().toISOString() })
-        .eq('conversation_id', conversationId)
-        .eq('user_id', uid)
-        .then(() => {});
-    }
-
+...
     return () => {
       active = false;
       clearInterval(tInt);
