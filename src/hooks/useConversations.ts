@@ -171,6 +171,20 @@ export const useConversations = () => {
 
 
 
+  const markAsRead = useCallback(
+    async (conversationId: string) => {
+      if (!uid) return;
+      // optimistic
+      setUnread((u) => ({ ...u, [conversationId]: 0 }));
+      await supabase
+        .from('conversation_members')
+        .update({ last_read_at: new Date().toISOString() })
+        .eq('conversation_id', conversationId)
+        .eq('user_id', uid);
+    },
+    [uid],
+  );
+
   return {
     loading,
     memberships,
@@ -178,6 +192,7 @@ export const useConversations = () => {
     totalUnread,
     getOrCreateDirect,
     createGroup,
+    markAsRead,
     refresh,
   };
 };
