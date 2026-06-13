@@ -218,15 +218,20 @@ export const ChatView: React.FC<Props> = ({
             )}
           </div>
         </button>
+        <SettingsSheet />
         {onOpenSettings && (
-          <Button variant="ghost" size="icon" onClick={onOpenSettings} aria-label="Settings">
+          <Button variant="ghost" size="icon" onClick={onOpenSettings} aria-label="Chat info">
             <SettingsIcon className="w-4 h-4" />
           </Button>
         )}
       </header>
 
-      <ScrollArea className="flex-1">
-        <div ref={scrollRef} className="p-4 space-y-2">
+      <div className="flex-1 relative overflow-hidden">
+        <div
+          ref={scrollRef}
+          onScroll={onScroll}
+          className="absolute inset-0 overflow-y-auto p-4 space-y-2"
+        >
           {grouped.length === 0 && (
             <p className="text-center text-sm text-muted-foreground py-12">
               No messages yet. Say hi 👋
@@ -280,7 +285,21 @@ export const ChatView: React.FC<Props> = ({
             );
           })}
         </div>
-      </ScrollArea>
+
+        {!atBottom && (
+          <button
+            type="button"
+            onClick={() => {
+              setAtBottom(true);
+              scrollToBottom(true);
+            }}
+            aria-label="Scroll to latest"
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 inline-flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground shadow-lg hover:opacity-90 transition"
+          >
+            <ChevronDown className="w-5 h-5" />
+          </button>
+        )}
+      </div>
 
       {uploading && (
         <div className="px-4 py-2 text-xs text-muted-foreground flex items-center gap-2 border-t border-border/50">
