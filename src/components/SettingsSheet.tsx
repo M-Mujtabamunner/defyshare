@@ -24,7 +24,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { usePromoOverride, DURATION_OPTIONS } from '@/hooks/usePromoOverride';
 import { useAuth } from '@/hooks/useAuth';
-import { isAdminEmail } from '@/lib/admin';
+import { checkIsAdmin } from '@/lib/admin';
 
 const NOTIF_KEY = 'defyshare:notifications';
 
