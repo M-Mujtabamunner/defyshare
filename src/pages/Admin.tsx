@@ -3,12 +3,27 @@ import { Link, Navigate } from 'react-router-dom';
 import { ArrowLeft, Download, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { isAdminEmail } from '@/lib/admin';
 import { SharedFile } from '@/hooks/useFileSharing';
 import { getSignedFileUrl } from '@/lib/storageUrls';
+
+interface HistoryRow {
+  id: string;
+  room_key: string;
+  name: string;
+  size: number;
+  type: string | null;
+  subject: string | null;
+  uploader_name: string | null;
+  uploader_email: string | null;
+  uploader_id: string | null;
+  uploaded_at: string;
+}
+
 
 const formatBytes = (b: number) => {
   if (!b) return '0 B';
