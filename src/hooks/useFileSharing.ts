@@ -177,7 +177,9 @@ export const useFileSharing = (roomKey: string) => {
     const file = files.find(f => f.id === fileId);
     if (!file) return;
     setFiles(prev => prev.filter(f => f.id !== fileId));
-    if (!isB2Path(file.file_path)) {
+    if (isB2Path(file.file_path)) {
+      await deleteB2Objects([b2Key(file.file_path)]);
+    } else {
       await supabase.storage.from('shared-files').remove([file.file_path]);
     }
     await supabase.from('shared_files').delete().eq('id', fileId);
