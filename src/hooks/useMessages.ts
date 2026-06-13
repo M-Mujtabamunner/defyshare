@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { getB2UploadUrl, getSignedChatUrl, isB2Path, toB2Path } from '@/lib/storageUrls';
+import { getB2UploadUrl, getSignedChatUrl, toB2Path } from '@/lib/storageUrls';
 
 
 export interface MessageRow {
