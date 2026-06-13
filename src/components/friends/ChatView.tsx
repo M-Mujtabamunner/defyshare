@@ -155,6 +155,9 @@ export const ChatView: React.FC<Props> = ({
     typingUsers,
     toggleReaction,
     broadcastTyping,
+    loadOlder,
+    hasMore,
+    loadingOlder,
   } = useMessages(conversationId);
   const [text, setText] = useState('');
   const [dragOver, setDragOver] = useState(false);
@@ -162,6 +165,8 @@ export const ChatView: React.FC<Props> = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
   const prevCountRef = useRef(0);
+  const loadingOlderRef = useRef(false);
+  const preserveRef = useRef<{ height: number; top: number } | null>(null);
   const [nowTick, setNowTick] = useState(Date.now());
   const [otherReads, setOtherReads] = useState<Record<string, string>>({});
 
@@ -227,12 +232,24 @@ export const ChatView: React.FC<Props> = ({
     const prev = prevCountRef.current;
     prevCountRef.current = messages.length;
     if (messages.length > prev) {
-      if (atBottom) scrollToBottom(prev === 0 ? false : true);
+      if (preserveRef.current) {
+        // older messages were prepended — restore scroll position
+        const { height, top } = preserveRef.current;
+        preserveRef.current = null;
+        requestAnimationFrame(() => {
+          el.scrollTop = top + (el.scrollHeight - height);
+          loadingOlderRef.current = false;
+        });
+      } else if (atBottom) {
+        scrollToBottom(prev === 0 ? false : true);
+      }
     }
   }, [messages.length, atBottom, scrollToBottom]);
 
   useEffect(() => {
     prevCountRef.current = 0;
+    preserveRef.current = null;
+    loadingOlderRef.current = false;
     setAtBottom(true);
     requestAnimationFrame(() => scrollToBottom(false));
   }, [conversationId, scrollToBottom]);
@@ -241,7 +258,17 @@ export const ChatView: React.FC<Props> = ({
     const el = scrollRef.current;
     if (!el) return;
     setAtBottom(isNearBottom(el));
-  }, []);
+    if (el.scrollTop < 80 && hasMore && !loadingOlderRef.current) {
+      loadingOlderRef.current = true;
+      preserveRef.current = { height: el.scrollHeight, top: el.scrollTop };
+      loadOlder().then((n) => {
+        if (!n) {
+          preserveRef.current = null;
+          loadingOlderRef.current = false;
+        }
+      });
+    }
+  }, [hasMore, loadOlder]);
 
   const handleSend = async () => {
     if (!text.trim()) return;
@@ -344,6 +371,11 @@ export const ChatView: React.FC<Props> = ({
           onScroll={onScroll}
           className="absolute inset-0 overflow-y-auto p-4 space-y-2"
         >
+          {loadingOlder && (
+            <div className="flex justify-center py-2">
+              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+            </div>
+          )}
           {messages.length === 0 && (
             <p className="text-center text-sm text-muted-foreground py-12">
               No messages yet. Say hi 👋

@@ -25,35 +25,84 @@ export interface ReactionRow {
   emoji: string;
 }
 
+const PAGE_SIZE = 30;
+
 export const useMessages = (conversationId: string | null) => {
   const { user } = useAuth();
   const uid = user?.id ?? null;
   const [messages, setMessages] = useState<MessageRow[]>([]);
   const [reactions, setReactions] = useState<ReactionRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [uploading, setUploading] = useState<{ name: string; progress: number } | null>(null);
   const [typingUsers, setTypingUsers] = useState<Record<string, number>>({});
+
+  const loadOlder = useCallback(async () => {
+    if (!conversationId) return 0;
+    setLoadingOlder((prev) => prev);
+    let oldestIso: string | null = null;
+    setMessages((cur) => {
+      oldestIso = cur[0]?.created_at ?? null;
+      return cur;
+    });
+    if (!oldestIso) return 0;
+    setLoadingOlder(true);
+    const { data } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('conversation_id', conversationId)
+      .lt('created_at', oldestIso)
+      .order('created_at', { ascending: false })
+      .limit(PAGE_SIZE);
+    const rows = ((data ?? []) as MessageRow[]).slice().reverse();
+    setHasMore(rows.length === PAGE_SIZE);
+    if (rows.length) {
+      setMessages((prev) => {
+        const existing = new Set(prev.map((m) => m.id));
+        const merged = [...rows.filter((r) => !existing.has(r.id)), ...prev];
+        return merged;
+      });
+      const ids = rows.map((r) => r.id);
+      const { data: rx } = await (supabase as any)
+        .from('message_reactions')
+        .select('*')
+        .in('message_id', ids);
+      if (rx?.length) {
+        setReactions((prev) => {
+          const ex = new Set(prev.map((r) => r.id));
+          return [...prev, ...(rx as ReactionRow[]).filter((r) => !ex.has(r.id))];
+        });
+      }
+    }
+    setLoadingOlder(false);
+    return rows.length;
+  }, [conversationId]);
 
   useEffect(() => {
     if (!conversationId) {
       setMessages([]);
       setReactions([]);
       setLoading(false);
+      setHasMore(false);
       return;
     }
     let active = true;
     setLoading(true);
+    setHasMore(false);
     supabase
       .from('messages')
       .select('*')
       .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: false })
+      .limit(PAGE_SIZE)
       .then(({ data }) => {
         if (!active) return;
-        setMessages((data ?? []) as MessageRow[]);
+        const rows = ((data ?? []) as MessageRow[]).slice().reverse();
+        setMessages(rows);
+        setHasMore((data ?? []).length === PAGE_SIZE);
         setLoading(false);
-        // load reactions for these messages
-        const ids = (data ?? []).map((m: any) => m.id);
+        const ids = rows.map((m) => m.id);
         if (ids.length) {
           (supabase as any)
             .from('message_reactions')
@@ -115,7 +164,6 @@ export const useMessages = (conversationId: string | null) => {
       })
       .subscribe();
 
-    // expire typing indicators
     const tInt = setInterval(() => {
       setTypingUsers((prev) => {
         const now = Date.now();
@@ -248,6 +296,9 @@ export const useMessages = (conversationId: string | null) => {
     messages,
     reactions,
     loading,
+    loadingOlder,
+    hasMore,
+    loadOlder,
     uploading,
     typingUsers,
     sendText,
