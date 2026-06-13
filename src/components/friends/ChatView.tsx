@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Paperclip, Send, Download, FileIcon, Loader2, Settings as SettingsIcon } from 'lucide-react';
+import { Paperclip, Send, Download, FileIcon, Loader2, Settings as SettingsIcon, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { UserAvatar } from '@/components/friends/UserAvatar';
 import { useAuth } from '@/hooks/useAuth';
 import { useMessages, MessageRow } from '@/hooks/useMessages';
@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { triggerBlobDownload } from '@/lib/storageUrls';
 import type { ProfileRow } from '@/hooks/useFriendsData';
 import { cn } from '@/lib/utils';
+import SettingsSheet from '@/components/SettingsSheet';
 
 interface Props {
   conversationId: string | null;
@@ -132,17 +133,48 @@ export const ChatView: React.FC<Props> = ({
   const [dragOver, setDragOver] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [atBottom, setAtBottom] = useState(true);
+  const prevCountRef = useRef(0);
 
+  const isNearBottom = (el: HTMLDivElement, threshold = 120) =>
+    el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+
+  const scrollToBottom = useCallback((smooth = true) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
+  }, []);
+
+  // Auto-scroll on new messages only if user was already near bottom.
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    const el = scrollRef.current;
+    if (!el) return;
+    const prev = prevCountRef.current;
+    prevCountRef.current = messages.length;
+    if (messages.length > prev) {
+      if (atBottom) scrollToBottom(prev === 0 ? false : true);
     }
-  }, [messages.length]);
+  }, [messages.length, atBottom, scrollToBottom]);
+
+  // Initial jump to bottom when switching conversations.
+  useEffect(() => {
+    prevCountRef.current = 0;
+    setAtBottom(true);
+    requestAnimationFrame(() => scrollToBottom(false));
+  }, [conversationId, scrollToBottom]);
+
+  const onScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setAtBottom(isNearBottom(el));
+  }, []);
 
   const handleSend = async () => {
     if (!text.trim()) return;
     await sendText(text);
     setText('');
+    setAtBottom(true);
+    requestAnimationFrame(() => scrollToBottom(true));
   };
 
   const onPickFile = () => fileInput.current?.click();
@@ -186,15 +218,20 @@ export const ChatView: React.FC<Props> = ({
             )}
           </div>
         </button>
+        <SettingsSheet />
         {onOpenSettings && (
-          <Button variant="ghost" size="icon" onClick={onOpenSettings} aria-label="Settings">
+          <Button variant="ghost" size="icon" onClick={onOpenSettings} aria-label="Chat info">
             <SettingsIcon className="w-4 h-4" />
           </Button>
         )}
       </header>
 
-      <ScrollArea className="flex-1">
-        <div ref={scrollRef} className="p-4 space-y-2">
+      <div className="flex-1 relative overflow-hidden">
+        <div
+          ref={scrollRef}
+          onScroll={onScroll}
+          className="absolute inset-0 overflow-y-auto p-4 space-y-2"
+        >
           {grouped.length === 0 && (
             <p className="text-center text-sm text-muted-foreground py-12">
               No messages yet. Say hi 👋
@@ -248,7 +285,21 @@ export const ChatView: React.FC<Props> = ({
             );
           })}
         </div>
-      </ScrollArea>
+
+        {!atBottom && (
+          <button
+            type="button"
+            onClick={() => {
+              setAtBottom(true);
+              scrollToBottom(true);
+            }}
+            aria-label="Scroll to latest"
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 inline-flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground shadow-lg hover:opacity-90 transition"
+          >
+            <ChevronDown className="w-5 h-5" />
+          </button>
+        )}
+      </div>
 
       {uploading && (
         <div className="px-4 py-2 text-xs text-muted-foreground flex items-center gap-2 border-t border-border/50">
