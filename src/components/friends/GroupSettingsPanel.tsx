@@ -45,7 +45,6 @@ export const GroupSettingsPanel: React.FC<Props> = ({
   const uid = user?.id;
   const me = summary.members.find((m) => m.user_id === uid);
   const isAdmin = me?.role === 'admin';
-  const isCreator = group.created_by === uid;
   const memberIds = new Set(summary.members.map((m) => m.user_id));
   const addable = friends.filter((f) => !memberIds.has(f.friend_id));
 
