@@ -115,7 +115,75 @@ export const useMessages = (conversationId: string | null) => {
           setReactions([]);
         }
       });
-...
+
+    const channel = supabase
+      .channel(`msgs-${conversationId}-${Math.random().toString(36).slice(2)}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const msg = payload.new as MessageRow;
+            setMessages((prev) =>
+              prev.some((m) => m.id === msg.id) ? prev : [...prev, msg],
+            );
+            if (uid && msg.sender_id !== uid) {
+              supabase
+                .from('conversation_members')
+                .update({ last_read_at: new Date().toISOString() })
+                .eq('conversation_id', conversationId)
+                .eq('user_id', uid)
+                .then(() => {});
+            }
+          } else if (payload.eventType === 'DELETE') {
+            setMessages((prev) => prev.filter((m) => m.id !== (payload.old as MessageRow).id));
+          }
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'message_reactions' },
+        (payload: any) => {
+          if (payload.eventType === 'INSERT') {
+            const r = payload.new as ReactionRow;
+            setReactions((prev) => (prev.some((x) => x.id === r.id) ? prev : [...prev, r]));
+          } else if (payload.eventType === 'DELETE') {
+            setReactions((prev) => prev.filter((x) => x.id !== (payload.old as ReactionRow).id));
+          }
+        },
+      )
+      .on('broadcast', { event: 'typing' }, (payload: any) => {
+        const u = payload?.payload?.userId as string | undefined;
+        if (!u || u === uid) return;
+        setTypingUsers((prev) => ({ ...prev, [u]: Date.now() }));
+      })
+      .subscribe();
+
+    const tInt = setInterval(() => {
+      setTypingUsers((prev) => {
+        const now = Date.now();
+        const out: Record<string, number> = {};
+        for (const [k, v] of Object.entries(prev)) {
+          if (now - v < 4000) out[k] = v;
+        }
+        return out;
+      });
+    }, 1500);
+
+    if (uid) {
+      supabase
+        .from('conversation_members')
+        .update({ last_read_at: new Date().toISOString() })
+        .eq('conversation_id', conversationId)
+        .eq('user_id', uid)
+        .then(() => {});
+    }
+
     return () => {
       active = false;
       clearInterval(tInt);
