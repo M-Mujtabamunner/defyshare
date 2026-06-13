@@ -20,6 +20,25 @@ export const getSignedFileUrl = async (filePath: string): Promise<string | null>
   return data.signedUrl;
 };
 
+const chatCache = new Map<string, { url: string; expiresAt: number }>();
+
+/** Cached signed URL for the `chat-media` bucket. */
+export const getSignedChatUrl = async (filePath: string): Promise<string | null> => {
+  const cached = chatCache.get(filePath);
+  if (cached && cached.expiresAt - Date.now() > REFRESH_BUFFER_MS) {
+    return cached.url;
+  }
+  const { data, error } = await supabase.storage
+    .from('chat-media')
+    .createSignedUrl(filePath, SIGNED_TTL_SECONDS);
+  if (error || !data) return null;
+  chatCache.set(filePath, {
+    url: data.signedUrl,
+    expiresAt: Date.now() + SIGNED_TTL_SECONDS * 1000,
+  });
+  return data.signedUrl;
+};
+
 /**
  * Force a real browser download from a (possibly cross-origin) URL.
  * Fetches as a blob so the `download` attribute is honored instead of
