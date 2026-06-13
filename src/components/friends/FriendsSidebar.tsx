@@ -7,8 +7,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { UserAvatar } from '@/components/friends/UserAvatar';
 import { useFriendsData } from '@/hooks/useFriendsData';
 import { useConversations } from '@/hooks/useConversations';
-import { userSlug, groupSlug } from '@/lib/slug';
+import { userSlug, groupSlug, idFromSlug } from '@/lib/slug';
 import { cn } from '@/lib/utils';
+
 
 interface Props {
   /** which item is currently open (for highlighting) */
