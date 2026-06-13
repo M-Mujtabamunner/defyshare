@@ -9,6 +9,7 @@ import AuthButton from '@/components/AuthButton';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Home } from 'lucide-react';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 const FriendsLayout: React.FC = () => {
   useProfileSync();
@@ -41,6 +42,7 @@ const FriendsLayout: React.FC = () => {
   }
 
   return (
+    <ErrorBoundary>
     <div className="h-screen flex flex-col bg-background">
       <header className="flex items-center gap-2 px-3 h-12 border-b border-border/50 shrink-0">
         <Link to="/" className="flex items-center gap-2">
@@ -75,6 +77,7 @@ const FriendsLayout: React.FC = () => {
 
       <CreateGroupModal open={createOpen} onClose={() => setCreateOpen(false)} />
     </div>
+    </ErrorBoundary>
   );
 };
 
