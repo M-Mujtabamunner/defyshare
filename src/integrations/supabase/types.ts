@@ -386,6 +386,10 @@ export type Database = {
     }
     Functions: {
       accept_friend_request: { Args: { _req_id: string }; Returns: undefined }
+      get_or_create_direct_conversation: {
+        Args: { _other: string }
+        Returns: string
+      }
       is_blocked: { Args: { a: string; b: string }; Returns: boolean }
       is_conversation_admin: {
         Args: { _conv: string; _user: string }
