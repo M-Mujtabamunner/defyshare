@@ -52,7 +52,13 @@ const SettingsSheet: React.FC = () => {
     }
   };
 
-  const showAdmin = isAdminEmail(user?.email);
+  const [showAdmin, setShowAdmin] = React.useState(false);
+  React.useEffect(() => {
+    let cancelled = false;
+    if (!user) { setShowAdmin(false); return; }
+    checkIsAdmin().then((ok) => { if (!cancelled) setShowAdmin(ok); });
+    return () => { cancelled = true; };
+  }, [user]);
 
   const currentValue = !durationChosen
     ? ''
