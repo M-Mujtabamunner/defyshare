@@ -68,33 +68,39 @@ export const CreateGroupModal: React.FC<Props> = ({ open, onClose }) => {
     setBusy(true);
     let photoUrl: string | null = null;
     if (photoFile && user) {
-      // Upload to chat-media bucket under a temporary path keyed by user id
-      // (group photo is rendered via a signed URL from anywhere — store the path)
-      const path = `group-photos/${user.id}/${Date.now()}-${photoFile.name}`;
-      // Use the shared-files bucket fallback isn't ideal; reuse chat-media but it's
-      // restricted to conversation members. Simplest: store as data URL ref to skip
-      // signed URL plumbing in v1.
-      const reader = await photoFile
-        .arrayBuffer()
-        .then((b) => `data:${photoFile.type};base64,${btoa(String.fromCharCode(...new Uint8Array(b)))}`);
-      photoUrl = reader;
-      // path variable kept to silence lints
-      void path;
+      try {
+        const buf = new Uint8Array(await photoFile.arrayBuffer());
+        let bin = '';
+        const chunk = 0x8000;
+        for (let i = 0; i < buf.length; i += chunk) {
+          bin += String.fromCharCode.apply(null, Array.from(buf.subarray(i, i + chunk)));
+        }
+        photoUrl = `data:${photoFile.type};base64,${btoa(bin)}`;
+      } catch (e) {
+        console.error('photo encode failed', e);
+      }
     }
     const ids = Array.from(selected);
-    const convId = await createGroup(name.trim(), ids, photoUrl);
-    setBusy(false);
-    if (!convId) {
-      toast({ title: 'Could not create group', variant: 'destructive' });
-      return;
+    try {
+      const convId = await createGroup(name.trim(), ids, photoUrl);
+      setBusy(false);
+      if (!convId) {
+        toast({ title: 'Could not create group', description: 'Check console for details.', variant: 'destructive' });
+        return;
+      }
+      toast({ title: 'Group created' });
+      onClose();
+      setName('');
+      setSelected(new Set());
+      setPhotoFile(null);
+      navigate(`/friends/group/${groupSlug(convId, name.trim())}`);
+    } catch (err) {
+      setBusy(false);
+      const msg = err instanceof Error ? err.message : String(err);
+      toast({ title: 'Could not create group', description: msg, variant: 'destructive' });
     }
-    toast({ title: 'Group created' });
-    onClose();
-    setName('');
-    setSelected(new Set());
-    setPhotoFile(null);
-    navigate(`/friends/group/${groupSlug(convId, name.trim())}`);
   };
+
 
   // Avoid TS warning for unused supabase import (kept for future when we
   // switch group photos to a real bucket).
