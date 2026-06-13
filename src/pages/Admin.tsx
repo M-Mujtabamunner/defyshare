@@ -39,10 +39,19 @@ const Admin: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [hq, setHq] = useState('');
+  const [adminState, setAdminState] = useState<'checking' | 'allowed' | 'denied'>('checking');
 
   useEffect(() => {
-    if (!user || !isAdminEmail(user.email)) return;
+    if (!user) return;
+    let cancelled = false;
     (async () => {
+      const ok = await checkIsAdmin();
+      if (cancelled) return;
+      if (!ok) {
+        setAdminState('denied');
+        return;
+      }
+      setAdminState('allowed');
       const [filesRes, histRes] = await Promise.all([
         supabase
           .from('shared_files')
@@ -59,7 +68,11 @@ const Admin: React.FC = () => {
       setHistory((histRes.data as HistoryRow[]) || []);
       setLoading(false);
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
+
 
 
   const filtered = useMemo(() => {
