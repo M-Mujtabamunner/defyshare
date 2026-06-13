@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { getB2UploadUrl, isB2Path, toB2Path } from '@/lib/storageUrls';
+import { getB2UploadUrl, isB2Path, toB2Path, b2Key, deleteB2Objects } from '@/lib/storageUrls';
 
 
 export interface SharedFile {
