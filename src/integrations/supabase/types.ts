@@ -231,10 +231,43 @@ export type Database = {
           },
         ]
       }
+      message_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          id?: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           conversation_id: string
           created_at: string
+          expires_at: string | null
           file_name: string | null
           file_size: number | null
           file_type: string | null
@@ -248,6 +281,7 @@ export type Database = {
         Insert: {
           conversation_id: string
           created_at?: string
+          expires_at?: string | null
           file_name?: string | null
           file_size?: number | null
           file_type?: string | null
@@ -261,6 +295,7 @@ export type Database = {
         Update: {
           conversation_id?: string
           created_at?: string
+          expires_at?: string | null
           file_name?: string | null
           file_size?: number | null
           file_type?: string | null
@@ -408,18 +443,21 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          expires_at: string
           id: string
           room_key: string
         }
         Insert: {
           content: string
           created_at?: string
+          expires_at?: string
           id?: string
           room_key: string
         }
         Update: {
           content?: string
           created_at?: string
+          expires_at?: string
           id?: string
           room_key?: string
         }
@@ -452,6 +490,7 @@ export type Database = {
     }
     Functions: {
       accept_friend_request: { Args: { _req_id: string }; Returns: undefined }
+      cleanup_expired: { Args: never; Returns: undefined }
       create_group_conversation: {
         Args: { _member_ids: string[]; _name: string; _photo: string }
         Returns: string
