@@ -198,7 +198,7 @@ export const GroupSettingsPanel: React.FC<Props> = ({
           <Button variant="outline" onClick={leave} className="w-full gap-2">
             <LogOut className="w-4 h-4" /> Leave group
           </Button>
-          {isCreator && (
+          {isAdmin && (
             <Button variant="destructive" onClick={deleteGroup} className="w-full gap-2">
               <Trash2 className="w-4 h-4" /> Delete group
             </Button>
