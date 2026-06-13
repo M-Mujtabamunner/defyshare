@@ -45,7 +45,6 @@ export const GroupSettingsPanel: React.FC<Props> = ({
   const uid = user?.id;
   const me = summary.members.find((m) => m.user_id === uid);
   const isAdmin = me?.role === 'admin';
-  const isCreator = group.created_by === uid;
   const memberIds = new Set(summary.members.map((m) => m.user_id));
   const addable = friends.filter((f) => !memberIds.has(f.friend_id));
 
@@ -199,7 +198,7 @@ export const GroupSettingsPanel: React.FC<Props> = ({
           <Button variant="outline" onClick={leave} className="w-full gap-2">
             <LogOut className="w-4 h-4" /> Leave group
           </Button>
-          {isCreator && (
+          {isAdmin && (
             <Button variant="destructive" onClick={deleteGroup} className="w-full gap-2">
               <Trash2 className="w-4 h-4" /> Delete group
             </Button>

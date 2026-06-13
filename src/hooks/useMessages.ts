@@ -15,18 +15,29 @@ export interface MessageRow {
   file_size: number | null;
   file_type: string | null;
   created_at: string;
+  expires_at: string | null;
+}
+
+export interface ReactionRow {
+  id: string;
+  message_id: string;
+  user_id: string;
+  emoji: string;
 }
 
 export const useMessages = (conversationId: string | null) => {
   const { user } = useAuth();
   const uid = user?.id ?? null;
   const [messages, setMessages] = useState<MessageRow[]>([]);
+  const [reactions, setReactions] = useState<ReactionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState<{ name: string; progress: number } | null>(null);
+  const [typingUsers, setTypingUsers] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!conversationId) {
       setMessages([]);
+      setReactions([]);
       setLoading(false);
       return;
     }
@@ -41,6 +52,19 @@ export const useMessages = (conversationId: string | null) => {
         if (!active) return;
         setMessages((data ?? []) as MessageRow[]);
         setLoading(false);
+        // load reactions for these messages
+        const ids = (data ?? []).map((m: any) => m.id);
+        if (ids.length) {
+          (supabase as any)
+            .from('message_reactions')
+            .select('*')
+            .in('message_id', ids)
+            .then(({ data: rx }: any) => {
+              if (active) setReactions((rx ?? []) as ReactionRow[]);
+            });
+        } else {
+          setReactions([]);
+        }
       });
 
     const channel = supabase
@@ -59,7 +83,6 @@ export const useMessages = (conversationId: string | null) => {
             setMessages((prev) =>
               prev.some((m) => m.id === msg.id) ? prev : [...prev, msg],
             );
-            // mark read when an incoming message arrives while chat is open
             if (uid && msg.sender_id !== uid) {
               supabase
                 .from('conversation_members')
@@ -73,9 +96,37 @@ export const useMessages = (conversationId: string | null) => {
           }
         },
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'message_reactions' },
+        (payload: any) => {
+          if (payload.eventType === 'INSERT') {
+            const r = payload.new as ReactionRow;
+            setReactions((prev) => (prev.some((x) => x.id === r.id) ? prev : [...prev, r]));
+          } else if (payload.eventType === 'DELETE') {
+            setReactions((prev) => prev.filter((x) => x.id !== (payload.old as ReactionRow).id));
+          }
+        },
+      )
+      .on('broadcast', { event: 'typing' }, (payload: any) => {
+        const u = payload?.payload?.userId as string | undefined;
+        if (!u || u === uid) return;
+        setTypingUsers((prev) => ({ ...prev, [u]: Date.now() }));
+      })
       .subscribe();
 
-    // mark read on open + when new messages arrive
+    // expire typing indicators
+    const tInt = setInterval(() => {
+      setTypingUsers((prev) => {
+        const now = Date.now();
+        const out: Record<string, number> = {};
+        for (const [k, v] of Object.entries(prev)) {
+          if (now - v < 4000) out[k] = v;
+        }
+        return out;
+      });
+    }, 1500);
+
     if (uid) {
       supabase
         .from('conversation_members')
@@ -87,6 +138,7 @@ export const useMessages = (conversationId: string | null) => {
 
     return () => {
       active = false;
+      clearInterval(tInt);
       supabase.removeChannel(channel);
     };
   }, [conversationId, uid]);
@@ -125,7 +177,7 @@ export const useMessages = (conversationId: string | null) => {
       setUploading({ name: file.name, progress: 5 });
       try {
         const key = `${conversationId}/${uid}/${Date.now()}-${file.name}`;
-        const filePath = toB2Path(key); // new chat media -> Backblaze B2
+        const filePath = toB2Path(key);
         const interval = setInterval(() => {
           setUploading((prev) =>
             prev ? { ...prev, progress: Math.min(prev.progress + 10, 90) } : prev,
@@ -163,9 +215,46 @@ export const useMessages = (conversationId: string | null) => {
     [uid, conversationId],
   );
 
+  const toggleReaction = useCallback(
+    async (messageId: string, emoji: string) => {
+      if (!uid) return;
+      const existing = reactions.find(
+        (r) => r.message_id === messageId && r.user_id === uid && r.emoji === emoji,
+      );
+      if (existing) {
+        await (supabase as any).from('message_reactions').delete().eq('id', existing.id);
+      } else {
+        await (supabase as any)
+          .from('message_reactions')
+          .insert({ message_id: messageId, user_id: uid, emoji });
+      }
+    },
+    [uid, reactions],
+  );
+
+  const broadcastTyping = useCallback(() => {
+    if (!uid || !conversationId) return;
+    supabase
+      .channel(`msgs-typing-${conversationId}`, { config: { broadcast: { self: false } } })
+      .send({ type: 'broadcast', event: 'typing', payload: { userId: uid } })
+      .catch(() => {});
+  }, [uid, conversationId]);
+
   const signedUrl = useCallback(async (path: string) => {
     return await getSignedChatUrl(path);
   }, []);
 
-  return { messages, loading, uploading, sendText, sendFile, signedUrl, markRead };
+  return {
+    messages,
+    reactions,
+    loading,
+    uploading,
+    typingUsers,
+    sendText,
+    sendFile,
+    signedUrl,
+    markRead,
+    toggleReaction,
+    broadcastTyping,
+  };
 };
