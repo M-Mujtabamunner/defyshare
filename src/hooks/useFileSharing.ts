@@ -196,8 +196,12 @@ export const useFileSharing = (roomKey: string) => {
     const prevFiles = [...files];
     setFiles([]);
     const cloudPaths = prevFiles.filter(f => !isB2Path(f.file_path)).map(f => f.file_path);
+    const b2Keys = prevFiles.filter(f => isB2Path(f.file_path)).map(f => b2Key(f.file_path));
     if (cloudPaths.length > 0) {
       await supabase.storage.from('shared-files').remove(cloudPaths);
+    }
+    if (b2Keys.length > 0) {
+      await deleteB2Objects(b2Keys);
     }
     await supabase.from('shared_files').delete().eq('room_key', roomKey);
   }, [files, roomKey]);
