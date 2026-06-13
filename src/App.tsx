@@ -34,6 +34,7 @@ const App = () => (
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <PoweredByBadge />
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
