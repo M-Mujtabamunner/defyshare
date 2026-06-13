@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { getB2UploadUrl, getSignedChatUrl, isB2Path, toB2Path } from '@/lib/storageUrls';
+
 
 export interface MessageRow {
   id: string;
@@ -122,15 +124,17 @@ export const useMessages = (conversationId: string | null) => {
       if (!uid || !conversationId) return;
       setUploading({ name: file.name, progress: 5 });
       try {
-        const path = `${conversationId}/${uid}/${Date.now()}-${file.name}`;
+        const key = `${conversationId}/${uid}/${Date.now()}-${file.name}`;
+        const filePath = toB2Path(key); // new chat media -> Backblaze B2
         const interval = setInterval(() => {
           setUploading((prev) =>
             prev ? { ...prev, progress: Math.min(prev.progress + 10, 90) } : prev,
           );
         }, 120);
-        const { error } = await supabase.storage.from('chat-media').upload(path, file);
+        const uploadUrl = await getB2UploadUrl(key, file.type);
+        const putRes = await fetch(uploadUrl, { method: 'PUT', body: file });
         clearInterval(interval);
-        if (error) throw error;
+        if (!putRes.ok) throw new Error(`Upload failed (${putRes.status})`);
         const mtype: MessageRow['message_type'] = file.type.startsWith('image/')
           ? 'image'
           : file.type.startsWith('video/')
@@ -140,7 +144,7 @@ export const useMessages = (conversationId: string | null) => {
           conversation_id: conversationId,
           sender_id: uid,
           message_type: mtype,
-          file_url: path,
+          file_url: filePath,
           file_name: file.name,
           file_size: file.size,
           file_type: file.type,
@@ -160,8 +164,7 @@ export const useMessages = (conversationId: string | null) => {
   );
 
   const signedUrl = useCallback(async (path: string) => {
-    const { data } = await supabase.storage.from('chat-media').createSignedUrl(path, 3600);
-    return data?.signedUrl ?? null;
+    return await getSignedChatUrl(path);
   }, []);
 
   return { messages, loading, uploading, sendText, sendFile, signedUrl, markRead };
