@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Paperclip, Send, Download, FileIcon, Loader2, Settings as SettingsIcon } from 'lucide-react';
+import { Paperclip, Send, Download, FileIcon, Loader2, Settings as SettingsIcon, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { triggerBlobDownload } from '@/lib/storageUrls';
 import type { ProfileRow } from '@/hooks/useFriendsData';
 import { cn } from '@/lib/utils';
+import SettingsSheet from '@/components/SettingsSheet';
 
 interface Props {
   conversationId: string | null;
