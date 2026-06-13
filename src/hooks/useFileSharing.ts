@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { getB2UploadUrl, isB2Path, toB2Path } from '@/lib/storageUrls';
+
 
 export interface SharedFile {
   id: string;
@@ -106,7 +108,8 @@ export const useFileSharing = (roomKey: string) => {
   const addFile = useCallback(async (file: File, metadata?: UploadMetadata) => {
     if (!roomKey) return;
 
-    const filePath = `${roomKey}/${Date.now()}-${file.name}`;
+    const key = `${roomKey}/${Date.now()}-${file.name}`;
+    const filePath = toB2Path(key); // new uploads go to Backblaze B2
     setUploadState({ isUploading: true, progress: 0, fileName: file.name });
 
     const progressInterval = setInterval(() => {
@@ -117,14 +120,12 @@ export const useFileSharing = (roomKey: string) => {
     }, 100);
 
     try {
-      const { error: uploadError } = await supabase.storage
-        .from('shared-files')
-        .upload(filePath, file);
-
+      const uploadUrl = await getB2UploadUrl(key, file.type);
+      const putRes = await fetch(uploadUrl, { method: 'PUT', body: file });
       clearInterval(progressInterval);
-      if (uploadError) {
+      if (!putRes.ok) {
         setUploadState({ isUploading: false, progress: 0 });
-        throw uploadError;
+        throw new Error(`Upload failed (${putRes.status})`);
       }
 
       setUploadState(prev => ({ ...prev, progress: 95 }));
@@ -173,25 +174,25 @@ export const useFileSharing = (roomKey: string) => {
     const file = files.find(f => f.id === fileId);
     if (!file) return;
     setFiles(prev => prev.filter(f => f.id !== fileId));
-    await supabase.storage.from('shared-files').remove([file.file_path]);
+    if (!isB2Path(file.file_path)) {
+      await supabase.storage.from('shared-files').remove([file.file_path]);
+    }
     await supabase.from('shared_files').delete().eq('id', fileId);
   }, [files]);
 
   const downloadFile = useCallback(async (file: SharedFile) => {
-    const { data, error } = await supabase.storage
-      .from('shared-files')
-      .createSignedUrl(file.file_path, 3600);
-    if (error || !data) throw new Error('Could not generate download link');
-    const { triggerBlobDownload } = await import('@/lib/storageUrls');
-    await triggerBlobDownload(data.signedUrl, file.name);
+    const { getSignedFileUrl, triggerBlobDownload } = await import('@/lib/storageUrls');
+    const url = await getSignedFileUrl(file.file_path);
+    if (!url) throw new Error('Could not generate download link');
+    await triggerBlobDownload(url, file.name);
   }, []);
 
   const clearAll = useCallback(async () => {
     const prevFiles = [...files];
     setFiles([]);
-    const filePaths = prevFiles.map(f => f.file_path);
-    if (filePaths.length > 0) {
-      await supabase.storage.from('shared-files').remove(filePaths);
+    const cloudPaths = prevFiles.filter(f => !isB2Path(f.file_path)).map(f => f.file_path);
+    if (cloudPaths.length > 0) {
+      await supabase.storage.from('shared-files').remove(cloudPaths);
     }
     await supabase.from('shared_files').delete().eq('room_key', roomKey);
   }, [files, roomKey]);
