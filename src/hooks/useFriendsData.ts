@@ -298,10 +298,14 @@ export const useFriendsData = () => {
         .select('user_id, google_name, google_email, google_photo')
         .or(`google_email.ilike.%${term}%,google_name.ilike.%${term}%`)
         .limit(20);
-      return (data ?? []).filter((p) => p.user_id !== uid) as ProfileRow[];
+      const friendIds = new Set(friends.map((f) => f.friend_id));
+      return (data ?? []).filter(
+        (p) => p.user_id !== uid && !friendIds.has(p.user_id),
+      ) as ProfileRow[];
     },
-    [uid],
+    [uid, friends],
   );
+
 
   return {
     loading,
