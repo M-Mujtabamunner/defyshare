@@ -444,9 +444,6 @@ export const ChatView: React.FC<Props> = ({
                       ))}
                     </div>
                   )}
-                  {isLastMine && !isGroup && seenByOther && (
-                    <div className="text-[10px] text-muted-foreground mt-0.5 pr-1">Seen</div>
-                  )}
                 </div>
               </div>
             );
