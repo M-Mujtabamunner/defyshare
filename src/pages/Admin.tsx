@@ -72,11 +72,22 @@ const Admin: React.FC = () => {
     );
   }, [files, q]);
 
+  const filteredHistory = useMemo(() => {
+    const s = hq.trim().toLowerCase();
+    if (!s) return history;
+    return history.filter((f) =>
+      [f.name, f.subject, f.uploader_name, f.uploader_email, f.room_key]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(s)),
+    );
+  }, [history, hq]);
+
   const stats = useMemo(() => {
     const rooms = new Set(files.map((f) => (f as any).room_key)).size;
     const totalSize = files.reduce((s, f) => s + (f.size || 0), 0);
-    return { count: files.length, rooms, totalSize };
-  }, [files]);
+    return { count: files.length, rooms, totalSize, history: history.length };
+  }, [files, history]);
+
 
   const download = async (f: SharedFile) => {
     const url = await getSignedFileUrl(f.file_path);
