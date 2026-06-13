@@ -35,21 +35,32 @@ const formatBytes = (b: number) => {
 const Admin: React.FC = () => {
   const { user } = useAuth();
   const [files, setFiles] = useState<SharedFile[]>([]);
+  const [history, setHistory] = useState<HistoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
+  const [hq, setHq] = useState('');
 
   useEffect(() => {
     if (!user || !isAdminEmail(user.email)) return;
-    supabase
-      .from('shared_files')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(1000)
-      .then(({ data }) => {
-        setFiles((data as SharedFile[]) || []);
-        setLoading(false);
-      });
+    (async () => {
+      const [filesRes, histRes] = await Promise.all([
+        supabase
+          .from('shared_files')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(1000),
+        (supabase as any)
+          .from('file_history')
+          .select('*')
+          .order('uploaded_at', { ascending: false })
+          .limit(2000),
+      ]);
+      setFiles((filesRes.data as SharedFile[]) || []);
+      setHistory((histRes.data as HistoryRow[]) || []);
+      setLoading(false);
+    })();
   }, [user]);
+
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
