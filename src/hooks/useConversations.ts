@@ -134,45 +134,15 @@ export const useConversations = () => {
   const getOrCreateDirect = useCallback(
     async (otherId: string): Promise<string | null> => {
       if (!uid) return null;
-      // Check existing
-      const { data: mineConvs } = await supabase
-        .from('conversation_members')
-        .select('conversation_id')
-        .eq('user_id', uid);
-      const ids = (mineConvs ?? []).map((r) => r.conversation_id);
-      if (ids.length > 0) {
-        const { data: candidates } = await supabase
-          .from('conversation_members')
-          .select('conversation_id')
-          .eq('user_id', otherId)
-          .in('conversation_id', ids);
-        if (candidates && candidates.length > 0) {
-          // confirm one is type direct
-          const { data: directOnes } = await supabase
-            .from('conversations')
-            .select('id')
-            .eq('type', 'direct')
-            .in(
-              'id',
-              candidates.map((c) => c.conversation_id),
-            )
-            .limit(1);
-          if (directOnes && directOnes.length > 0) return directOnes[0].id;
-        }
+      const { data, error } = await supabase.rpc('get_or_create_direct_conversation', {
+        _other: otherId,
+      });
+      if (error) {
+        console.error('get_or_create_direct_conversation failed', error);
+        return null;
       }
-      // Create
-      const { data: newConv, error } = await supabase
-        .from('conversations')
-        .insert({ type: 'direct' })
-        .select('id')
-        .single();
-      if (error || !newConv) return null;
-      await supabase.from('conversation_members').insert([
-        { conversation_id: newConv.id, user_id: uid, role: 'member' },
-        { conversation_id: newConv.id, user_id: otherId, role: 'member' },
-      ]);
       await refresh();
-      return newConv.id;
+      return (data as string) ?? null;
     },
     [uid, refresh],
   );
