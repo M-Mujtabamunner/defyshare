@@ -7,6 +7,7 @@ import { UserAvatar } from '@/components/friends/UserAvatar';
 import { useAuth } from '@/hooks/useAuth';
 import { useMessages, MessageRow } from '@/hooks/useMessages';
 import { supabase } from '@/integrations/supabase/client';
+import { triggerBlobDownload } from '@/lib/storageUrls';
 import type { ProfileRow } from '@/hooks/useFriendsData';
 import { cn } from '@/lib/utils';
 
@@ -51,32 +52,66 @@ const MessageMedia: React.FC<{ msg: MessageRow }> = ({ msg }) => {
     };
   }, [msg.file_url]);
 
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!url) return;
+    await triggerBlobDownload(url, msg.file_name ?? 'download');
+  };
+
   if (!url) return <div className="text-xs opacity-70">Loading…</div>;
 
   if (msg.message_type === 'image') {
     return (
-      <a href={url} target="_blank" rel="noreferrer">
-        <img src={url} alt={msg.file_name ?? ''} className="rounded-md max-h-64 object-cover" />
-      </a>
+      <div className="relative group/media">
+        <img
+          src={url}
+          alt={msg.file_name ?? ''}
+          className="rounded-md max-h-64 object-cover block"
+        />
+        <button
+          type="button"
+          onClick={handleDownload}
+          aria-label="Download image"
+          className="absolute bottom-2 right-2 inline-flex items-center gap-1 px-2 py-1 rounded-md bg-background/80 backdrop-blur text-foreground text-xs shadow-md opacity-0 group-hover/media:opacity-100 transition-opacity hover:bg-background"
+        >
+          <Download className="w-3.5 h-3.5" />
+          Download
+        </button>
+      </div>
     );
   }
   if (msg.message_type === 'video') {
-    return <video src={url} controls className="rounded-md max-h-64" />;
+    return (
+      <div className="relative group/media">
+        <video src={url} controls className="rounded-md max-h-64 block" />
+        <button
+          type="button"
+          onClick={handleDownload}
+          aria-label="Download video"
+          className="absolute bottom-2 right-2 inline-flex items-center gap-1 px-2 py-1 rounded-md bg-background/80 backdrop-blur text-foreground text-xs shadow-md opacity-0 group-hover/media:opacity-100 transition-opacity hover:bg-background"
+        >
+          <Download className="w-3.5 h-3.5" />
+          Download
+        </button>
+      </div>
+    );
   }
   return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noreferrer"
-      className="flex items-center gap-2 px-3 py-2 rounded-md bg-background/40 hover:bg-background/60 transition"
+    <button
+      type="button"
+      onClick={handleDownload}
+      className="w-full flex items-center gap-2 px-3 py-2 rounded-md bg-background/40 hover:bg-background/60 transition text-left"
     >
       <FileIcon className="w-4 h-4" />
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm">{msg.file_name}</div>
-        <div className="text-[10px] opacity-70">{msg.file_size ? formatSize(msg.file_size) : ''}</div>
+        <div className="text-[10px] opacity-70">
+          {msg.file_size ? formatSize(msg.file_size) : ''}
+        </div>
       </div>
       <Download className="w-4 h-4 opacity-70" />
-    </a>
+    </button>
   );
 };
 
