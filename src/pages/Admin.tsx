@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { isAdminEmail } from '@/lib/admin';
+import { checkIsAdmin } from '@/lib/admin';
 import { SharedFile } from '@/hooks/useFileSharing';
 import { getSignedFileUrl } from '@/lib/storageUrls';
 
