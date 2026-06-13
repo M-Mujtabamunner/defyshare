@@ -1,0 +1,10 @@
+ALTER TABLE public.shared_files REPLICA IDENTITY FULL;
+ALTER TABLE public.shared_texts REPLICA IDENTITY FULL;
+ALTER TABLE public.friends REPLICA IDENTITY FULL;
+ALTER TABLE public.groups REPLICA IDENTITY FULL;
+ALTER TABLE public.blocked_users REPLICA IDENTITY FULL;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.shared_files;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.shared_texts;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.friends;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.groups;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.blocked_users;
