@@ -180,19 +180,22 @@ Deno.serve(async (req) => {
 
     const method = action.toUpperCase() as 'PUT' | 'GET' | 'DELETE';
 
-    // For delete action, perform the deletes server-side so the client doesn't need CORS-DELETE.
+    // For delete action, perform hard delete via B2 native API (removes ALL versions).
     if (action === 'delete') {
-      const results: { key: string; ok: boolean; status: number }[] = [];
+      const results: { key: string; ok: boolean; deleted: number; error?: string }[] = [];
       for (const key of keys) {
-        const url = await presign('DELETE', key, 300);
-        const res = await fetch(url, { method: 'DELETE' });
-        await res.text();
-        results.push({ key, ok: res.ok || res.status === 404, status: res.status });
+        try {
+          const r = await b2HardDelete(key);
+          results.push({ key, ...r });
+        } catch (e) {
+          results.push({ key, ok: false, deleted: 0, error: String(e) });
+        }
       }
       return new Response(JSON.stringify({ results }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
 
     const url = await presign(method, keys[0], expires);
     return new Response(JSON.stringify({ url }), {
