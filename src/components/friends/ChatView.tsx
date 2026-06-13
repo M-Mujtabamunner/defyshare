@@ -232,12 +232,24 @@ export const ChatView: React.FC<Props> = ({
     const prev = prevCountRef.current;
     prevCountRef.current = messages.length;
     if (messages.length > prev) {
-      if (atBottom) scrollToBottom(prev === 0 ? false : true);
+      if (preserveRef.current) {
+        // older messages were prepended — restore scroll position
+        const { height, top } = preserveRef.current;
+        preserveRef.current = null;
+        requestAnimationFrame(() => {
+          el.scrollTop = top + (el.scrollHeight - height);
+          loadingOlderRef.current = false;
+        });
+      } else if (atBottom) {
+        scrollToBottom(prev === 0 ? false : true);
+      }
     }
   }, [messages.length, atBottom, scrollToBottom]);
 
   useEffect(() => {
     prevCountRef.current = 0;
+    preserveRef.current = null;
+    loadingOlderRef.current = false;
     setAtBottom(true);
     requestAnimationFrame(() => scrollToBottom(false));
   }, [conversationId, scrollToBottom]);
@@ -246,7 +258,17 @@ export const ChatView: React.FC<Props> = ({
     const el = scrollRef.current;
     if (!el) return;
     setAtBottom(isNearBottom(el));
-  }, []);
+    if (el.scrollTop < 80 && hasMore && !loadingOlderRef.current) {
+      loadingOlderRef.current = true;
+      preserveRef.current = { height: el.scrollHeight, top: el.scrollTop };
+      loadOlder().then((n) => {
+        if (!n) {
+          preserveRef.current = null;
+          loadingOlderRef.current = false;
+        }
+      });
+    }
+  }, [hasMore, loadOlder]);
 
   const handleSend = async () => {
     if (!text.trim()) return;
