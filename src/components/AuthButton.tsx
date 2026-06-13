@@ -1,5 +1,5 @@
 import React from 'react';
-import { LogIn, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { lovable } from '@/integrations/lovable';
 import { supabase } from '@/integrations/supabase/client';
