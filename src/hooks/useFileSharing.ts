@@ -182,13 +182,8 @@ export const useFileSharing = (roomKey: string) => {
       .from('shared-files')
       .createSignedUrl(file.file_path, 3600);
     if (error || !data) throw new Error('Could not generate download link');
-    const link = document.createElement('a');
-    link.href = data.signedUrl;
-    link.download = file.name;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const { triggerBlobDownload } = await import('@/lib/storageUrls');
+    await triggerBlobDownload(data.signedUrl, file.name);
   }, []);
 
   const clearAll = useCallback(async () => {
