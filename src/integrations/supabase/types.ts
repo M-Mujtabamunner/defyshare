@@ -386,6 +386,10 @@ export type Database = {
     }
     Functions: {
       accept_friend_request: { Args: { _req_id: string }; Returns: undefined }
+      create_group_conversation: {
+        Args: { _member_ids: string[]; _name: string; _photo: string }
+        Returns: string
+      }
       get_or_create_direct_conversation: {
         Args: { _other: string }
         Returns: string
