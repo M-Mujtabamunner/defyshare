@@ -338,7 +338,7 @@ export const ChatView: React.FC<Props> = ({
             const sender = memberProfiles.get(m.sender_id);
             const rx = reactionsByMsg.get(m.id) ?? [];
             const remaining = formatRemaining(m.expires_at, nowTick);
-            const isLastMine = mine && idx === lastMineIdx;
+            
             return (
               <div
                 key={m.id}
