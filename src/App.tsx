@@ -12,6 +12,7 @@ import FriendsEmpty from "./pages/FriendsEmpty";
 import FriendChat from "./pages/FriendChat";
 import GroupChat from "./pages/GroupChat";
 import FriendRequestsPage from "./pages/FriendRequests";
+import { PoweredByBadge } from "./components/PoweredByBadge";
 
 const queryClient = new QueryClient();
 
