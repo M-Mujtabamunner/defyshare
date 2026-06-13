@@ -1,48 +1,64 @@
 import { supabase } from '@/integrations/supabase/client';
 
-const cache = new Map<string, { url: string; expiresAt: number }>();
+const B2_PREFIX = 'b2://';
 const SIGNED_TTL_SECONDS = 60 * 60; // 1 hour
 const REFRESH_BUFFER_MS = 60_000;
 
-export const getSignedFileUrl = async (filePath: string): Promise<string | null> => {
+const fileCache = new Map<string, { url: string; expiresAt: number }>();
+const chatCache = new Map<string, { url: string; expiresAt: number }>();
+
+export const isB2Path = (p: string) => p.startsWith(B2_PREFIX);
+export const toB2Path = (key: string) => B2_PREFIX + key;
+export const b2Key = (p: string) => p.slice(B2_PREFIX.length);
+
+async function b2SignedUrl(action: 'put' | 'get', key: string, contentType?: string) {
+  const { data, error } = await supabase.functions.invoke('b2-sign', {
+    body: { action, key, contentType, expires: SIGNED_TTL_SECONDS },
+  });
+  if (error || !data?.url) throw new Error(error?.message || 'Failed to sign B2 URL');
+  return data.url as string;
+}
+
+export const getB2UploadUrl = (key: string, contentType?: string) =>
+  b2SignedUrl('put', key, contentType);
+
+async function getSigned(
+  filePath: string,
+  bucket: 'shared-files' | 'chat-media',
+  cache: Map<string, { url: string; expiresAt: number }>,
+): Promise<string | null> {
   const cached = cache.get(filePath);
   if (cached && cached.expiresAt - Date.now() > REFRESH_BUFFER_MS) {
     return cached.url;
   }
-  const { data, error } = await supabase.storage
-    .from('shared-files')
-    .createSignedUrl(filePath, SIGNED_TTL_SECONDS);
-  if (error || !data) return null;
-  cache.set(filePath, {
-    url: data.signedUrl,
-    expiresAt: Date.now() + SIGNED_TTL_SECONDS * 1000,
-  });
-  return data.signedUrl;
-};
 
-const chatCache = new Map<string, { url: string; expiresAt: number }>();
+  let url: string | null = null;
 
-/** Cached signed URL for the `chat-media` bucket. */
-export const getSignedChatUrl = async (filePath: string): Promise<string | null> => {
-  const cached = chatCache.get(filePath);
-  if (cached && cached.expiresAt - Date.now() > REFRESH_BUFFER_MS) {
-    return cached.url;
+  if (isB2Path(filePath)) {
+    try {
+      url = await b2SignedUrl('get', b2Key(filePath));
+    } catch {
+      url = null;
+    }
+  } else {
+    const { data } = await supabase.storage.from(bucket).createSignedUrl(filePath, SIGNED_TTL_SECONDS);
+    url = data?.signedUrl ?? null;
   }
-  const { data, error } = await supabase.storage
-    .from('chat-media')
-    .createSignedUrl(filePath, SIGNED_TTL_SECONDS);
-  if (error || !data) return null;
-  chatCache.set(filePath, {
-    url: data.signedUrl,
-    expiresAt: Date.now() + SIGNED_TTL_SECONDS * 1000,
-  });
-  return data.signedUrl;
-};
+
+  if (url) {
+    cache.set(filePath, { url, expiresAt: Date.now() + SIGNED_TTL_SECONDS * 1000 });
+  }
+  return url;
+}
+
+export const getSignedFileUrl = (filePath: string) =>
+  getSigned(filePath, 'shared-files', fileCache);
+
+export const getSignedChatUrl = (filePath: string) =>
+  getSigned(filePath, 'chat-media', chatCache);
 
 /**
  * Force a real browser download from a (possibly cross-origin) URL.
- * Fetches as a blob so the `download` attribute is honored instead of
- * the browser navigating to / opening the file.
  */
 export const triggerBlobDownload = async (url: string, filename: string) => {
   try {
@@ -57,7 +73,6 @@ export const triggerBlobDownload = async (url: string, filename: string) => {
     document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
   } catch {
-    // Fallback: open the URL if blob fetch fails
     window.open(url, '_blank', 'noopener');
   }
 };
