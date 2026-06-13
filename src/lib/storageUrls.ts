@@ -19,3 +19,26 @@ export const getSignedFileUrl = async (filePath: string): Promise<string | null>
   });
   return data.signedUrl;
 };
+
+/**
+ * Force a real browser download from a (possibly cross-origin) URL.
+ * Fetches as a blob so the `download` attribute is honored instead of
+ * the browser navigating to / opening the file.
+ */
+export const triggerBlobDownload = async (url: string, filename: string) => {
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objectUrl;
+    a.download = filename || 'download';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  } catch {
+    // Fallback: open the URL if blob fetch fails
+    window.open(url, '_blank', 'noopener');
+  }
+};
