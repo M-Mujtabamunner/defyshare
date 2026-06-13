@@ -6,6 +6,7 @@ import { FriendsSidebar } from '@/components/friends/FriendsSidebar';
 import { CreateGroupModal } from '@/components/friends/CreateGroupModal';
 import ThemeToggle from '@/components/ThemeToggle';
 import AuthButton from '@/components/AuthButton';
+import SettingsSheet from '@/components/SettingsSheet';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Home } from 'lucide-react';
@@ -54,6 +55,7 @@ const FriendsLayout: React.FC = () => {
           Defy<span className="text-primary">Share</span> · Friends
         </h1>
         <ThemeToggle />
+        <SettingsSheet />
         <AuthButton />
       </header>
 

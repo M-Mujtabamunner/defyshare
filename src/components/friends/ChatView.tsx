@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Paperclip, Send, Download, FileIcon, Loader2, Settings as SettingsIcon, ChevronDown } from 'lucide-react';
+import { Paperclip, Send, Download, FileIcon, Loader2, MoreVertical, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -10,7 +10,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { triggerBlobDownload, getSignedChatUrl } from '@/lib/storageUrls';
 import type { ProfileRow } from '@/hooks/useFriendsData';
 import { cn } from '@/lib/utils';
-import SettingsSheet from '@/components/SettingsSheet';
 
 interface Props {
   conversationId: string | null;
@@ -217,10 +216,9 @@ export const ChatView: React.FC<Props> = ({
             )}
           </div>
         </button>
-        <SettingsSheet />
         {onOpenSettings && (
           <Button variant="ghost" size="icon" onClick={onOpenSettings} aria-label="Chat info">
-            <SettingsIcon className="w-4 h-4" />
+            <MoreVertical className="w-4 h-4" />
           </Button>
         )}
       </header>
