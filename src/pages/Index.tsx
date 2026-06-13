@@ -185,15 +185,26 @@ const Index = () => {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">Shared Files</h2>
                 {files.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleClearAllFiles}
-                    className="text-muted-foreground hover:text-destructive"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Clear all
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => files.forEach((f) => downloadFile(f))}
+                      className="text-muted-foreground hover:text-primary"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download all
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleClearAllFiles}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Clear all
+                    </Button>
+                  </div>
                 )}
               </div>
 
