@@ -174,11 +174,12 @@ export const FriendsSidebar: React.FC<Props> = ({ activeId, onCreateGroup, onIte
                           {s.members.length} members
                         </div>
                       </div>
-                      {s.unreadCount > 0 && (
+                      {s.unreadCount > 0 && !(activeGroupIdTail && s.conversation.id.startsWith(activeGroupIdTail)) && (
                         <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 text-[10px] rounded-full bg-destructive text-destructive-foreground">
                           {s.unreadCount}
                         </span>
                       )}
+
                     </Link>
                   </li>
                 );
