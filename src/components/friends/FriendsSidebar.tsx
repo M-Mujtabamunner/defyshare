@@ -29,17 +29,19 @@ export const FriendsSidebar: React.FC<Props> = ({ activeId, onCreateGroup, onIte
   const groups = useMemo(() => summaries.filter((s) => s.conversation.type === 'group'), [
     summaries,
   ]);
+  const activeFriendIdTail = idFromSlug(params.friendSlug);
+  const activeGroupIdTail = idFromSlug(params.groupSlug);
   const directUnread = useMemo(() => {
     const map = new Map<string, number>();
     for (const s of summaries) {
       if (s.conversation.type === 'direct' && s.otherUserId) {
-        const activeSlug = userSlug(s.otherUserId);
-        const isActive = params.friendSlug && params.friendSlug.endsWith(activeSlug.split('-').pop() || '');
+        const isActive = !!activeFriendIdTail && s.otherUserId.startsWith(activeFriendIdTail);
         map.set(s.otherUserId, isActive ? 0 : s.unreadCount);
       }
     }
     return map;
-  }, [summaries, params.friendSlug]);
+  }, [summaries, activeFriendIdTail]);
+
 
 
   const filteredFriends = useMemo(() => {
