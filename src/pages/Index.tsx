@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Trash2, FileIcon, MessageSquareText, Download } from 'lucide-react';
+import { Trash2, FileIcon, MessageSquareText, Download, Users, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import DropZone from '@/components/DropZone';
@@ -141,6 +142,25 @@ const Index = () => {
             Real-time file & text sharing • Auto-rooms by network
           </p>
         </header>
+
+        <div className="mb-6 animate-fade-in">
+          <Link to="/friends" className="block group">
+            <div className="flex items-center gap-3 p-4 rounded-xl border border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50 transition-all">
+              <div className="p-2 rounded-lg bg-primary/15 text-primary">
+                <Users className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm md:text-base text-foreground group-hover:text-primary transition-colors">
+                  Share with Friends
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Share outside your local network
+                </p>
+              </div>
+              <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+            </div>
+          </Link>
+        </div>
 
         <div className="mb-6 animate-fade-in">
           <RoomInfo localIP={publicIP} roomId={roomId} fileCount={totalItems} />
