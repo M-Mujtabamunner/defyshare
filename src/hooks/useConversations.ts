@@ -154,53 +154,21 @@ export const useConversations = () => {
       photoUrl: string | null,
     ): Promise<string | null> => {
       if (!uid) return null;
-      const { data: conv, error } = await supabase
-        .from('conversations')
-        .insert({ type: 'group' })
-        .select('id')
-        .single();
-      if (error || !conv) {
-        console.error('create conversation failed', error);
-        throw new Error(error?.message || 'create conversation failed');
-      }
-      // Insert self as admin FIRST so RLS sees us as admin when adding others
-      const { error: selfErr } = await supabase.from('conversation_members').insert({
-        conversation_id: conv.id,
-        user_id: uid,
-        role: 'admin',
+      const { data, error } = await supabase.rpc('create_group_conversation', {
+        _name: name,
+        _member_ids: memberIds,
+        _photo: photoUrl,
       });
-      if (selfErr) {
-        console.error('add self member failed', selfErr);
-        throw new Error(`add self: ${selfErr.message}`);
-      }
-      if (memberIds.length > 0) {
-        const { error: othersErr } = await supabase.from('conversation_members').insert(
-          memberIds.map((m) => ({
-            conversation_id: conv.id,
-            user_id: m,
-            role: 'member' as const,
-          })),
-        );
-        if (othersErr) {
-          console.error('add other members failed', othersErr);
-          throw new Error(`add members: ${othersErr.message}`);
-        }
-      }
-      const { error: groupErr } = await supabase.from('groups').insert({
-        conversation_id: conv.id,
-        group_name: name,
-        group_photo: photoUrl,
-        created_by: uid,
-      });
-      if (groupErr) {
-        console.error('create group meta failed', groupErr);
-        throw new Error(`group meta: ${groupErr.message}`);
+      if (error) {
+        console.error('create_group_conversation failed', error);
+        throw new Error(error.message);
       }
       await refresh();
-      return conv.id;
+      return (data as string) ?? null;
     },
     [uid, refresh],
   );
+
 
 
   return {
