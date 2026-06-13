@@ -161,7 +161,7 @@ export const useConversations = () => {
         .single();
       if (error || !conv) {
         console.error('create conversation failed', error);
-        return null;
+        throw new Error(error?.message || 'create conversation failed');
       }
       // Insert self as admin FIRST so RLS sees us as admin when adding others
       const { error: selfErr } = await supabase.from('conversation_members').insert({
@@ -171,7 +171,7 @@ export const useConversations = () => {
       });
       if (selfErr) {
         console.error('add self member failed', selfErr);
-        return null;
+        throw new Error(`add self: ${selfErr.message}`);
       }
       if (memberIds.length > 0) {
         const { error: othersErr } = await supabase.from('conversation_members').insert(
@@ -183,20 +183,25 @@ export const useConversations = () => {
         );
         if (othersErr) {
           console.error('add other members failed', othersErr);
-          return null;
+          throw new Error(`add members: ${othersErr.message}`);
         }
       }
-      await supabase.from('groups').insert({
+      const { error: groupErr } = await supabase.from('groups').insert({
         conversation_id: conv.id,
         group_name: name,
         group_photo: photoUrl,
         created_by: uid,
       });
+      if (groupErr) {
+        console.error('create group meta failed', groupErr);
+        throw new Error(`group meta: ${groupErr.message}`);
+      }
       await refresh();
       return conv.id;
     },
     [uid, refresh],
   );
+
 
   return {
     loading,
