@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { isAdminEmail } from '@/lib/admin';
+import { checkIsAdmin } from '@/lib/admin';
 import { SharedFile } from '@/hooks/useFileSharing';
 import { getSignedFileUrl } from '@/lib/storageUrls';
 
@@ -39,10 +39,19 @@ const Admin: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [hq, setHq] = useState('');
+  const [adminState, setAdminState] = useState<'checking' | 'allowed' | 'denied'>('checking');
 
   useEffect(() => {
-    if (!user || !isAdminEmail(user.email)) return;
+    if (!user) return;
+    let cancelled = false;
     (async () => {
+      const ok = await checkIsAdmin();
+      if (cancelled) return;
+      if (!ok) {
+        setAdminState('denied');
+        return;
+      }
+      setAdminState('allowed');
       const [filesRes, histRes] = await Promise.all([
         supabase
           .from('shared_files')
@@ -59,7 +68,11 @@ const Admin: React.FC = () => {
       setHistory((histRes.data as HistoryRow[]) || []);
       setLoading(false);
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
+
 
 
   const filtered = useMemo(() => {
@@ -102,7 +115,15 @@ const Admin: React.FC = () => {
     );
   }
   if (!user) return <Navigate to="/" replace />;
-  if (!isAdminEmail(user.email)) return <Navigate to="/" replace />;
+  if (adminState === 'checking') {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
+        Checking access…
+      </div>
+    );
+  }
+  if (adminState === 'denied') return <Navigate to="/" replace />;
+
 
   return (
     <div className="min-h-screen bg-background">

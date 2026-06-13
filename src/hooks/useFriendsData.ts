@@ -292,19 +292,14 @@ export const useFriendsData = () => {
   const searchPeople = useCallback(
     async (q: string): Promise<ProfileRow[]> => {
       const term = q.trim();
-      if (!term) return [];
-      const { data } = await supabase
-        .from('profiles')
-        .select('user_id, google_name, google_email, google_photo')
-        .or(`google_email.ilike.%${term}%,google_name.ilike.%${term}%`)
-        .limit(20);
-      const friendIds = new Set(friends.map((f) => f.friend_id));
-      return (data ?? []).filter(
-        (p) => p.user_id !== uid && !friendIds.has(p.user_id),
-      ) as ProfileRow[];
+      if (term.length < 2) return [];
+      const { data, error } = await (supabase as any).rpc('search_profiles', { _q: term });
+      if (error || !data) return [];
+      return data as ProfileRow[];
     },
-    [uid, friends],
+    [],
   );
+
 
 
   return {

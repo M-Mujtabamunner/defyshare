@@ -24,7 +24,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { usePromoOverride, DURATION_OPTIONS } from '@/hooks/usePromoOverride';
 import { useAuth } from '@/hooks/useAuth';
-import { isAdminEmail } from '@/lib/admin';
+import { checkIsAdmin } from '@/lib/admin';
 
 const NOTIF_KEY = 'defyshare:notifications';
 
@@ -52,7 +52,13 @@ const SettingsSheet: React.FC = () => {
     }
   };
 
-  const showAdmin = isAdminEmail(user?.email);
+  const [showAdmin, setShowAdmin] = React.useState(false);
+  React.useEffect(() => {
+    let cancelled = false;
+    if (!user) { setShowAdmin(false); return; }
+    checkIsAdmin().then((ok) => { if (!cancelled) setShowAdmin(ok); });
+    return () => { cancelled = true; };
+  }, [user]);
 
   const currentValue = !durationChosen
     ? ''

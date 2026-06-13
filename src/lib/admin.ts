@@ -1,11 +1,11 @@
-export const ADMIN_EMAILS = [
-  'mujtabamuneer777@gmail.com',
-  'chadxkid@gmail.com',
-  'twocousins7777@gmail.com',
-  'mehroz.muneer@gmail.com',
-  'mmahadmuneer@gmail.com',
-  'info@defyscale.com',
-];
+import { supabase } from '@/integrations/supabase/client';
 
-export const isAdminEmail = (email?: string | null) =>
-  !!email && ADMIN_EMAILS.includes(email.toLowerCase());
+/**
+ * Server-side admin check. The admin role lives in `public.user_roles`
+ * and is enforced through RLS — there is no email allowlist in the client bundle.
+ */
+export const checkIsAdmin = async (): Promise<boolean> => {
+  const { data, error } = await supabase.rpc('is_admin');
+  if (error) return false;
+  return Boolean(data);
+};

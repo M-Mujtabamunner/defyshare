@@ -425,6 +425,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -439,6 +460,14 @@ export type Database = {
         Args: { _other: string }
         Returns: string
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: never; Returns: boolean }
       is_blocked: { Args: { a: string; b: string }; Returns: boolean }
       is_conversation_admin: {
         Args: { _conv: string; _user: string }
@@ -449,8 +478,18 @@ export type Database = {
         Returns: boolean
       }
       is_friend: { Args: { a: string; b: string }; Returns: boolean }
+      search_profiles: {
+        Args: { _q: string }
+        Returns: {
+          google_email: string
+          google_name: string
+          google_photo: string
+          user_id: string
+        }[]
+      }
     }
     Enums: {
+      app_role: "admin" | "moderator" | "user"
       conversation_type: "direct" | "group"
       friend_request_status: "pending" | "accepted" | "rejected" | "cancelled"
       member_role: "admin" | "member"
@@ -582,6 +621,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "moderator", "user"],
       conversation_type: ["direct", "group"],
       friend_request_status: ["pending", "accepted", "rejected", "cancelled"],
       member_role: ["admin", "member"],
