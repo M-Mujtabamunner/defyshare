@@ -401,6 +401,19 @@ export const ChatView: React.FC<Props> = ({
                         )}
                         <span>·</span>
                         <span>{formatTime(m.created_at)}</span>
+                        {mine && (
+                          (() => {
+                            const created = new Date(m.created_at).getTime();
+                            const readBy = Object.values(otherReads).filter(
+                              (iso) => new Date(iso).getTime() >= created,
+                            ).length;
+                            return readBy > 0 ? (
+                              <CheckCheck className="w-3.5 h-3.5 text-sky-300" aria-label="Read" />
+                            ) : (
+                              <Check className="w-3.5 h-3.5 opacity-70" aria-label="Sent" />
+                            );
+                          })()
+                        )}
                       </div>
                     </div>
                     <Popover>
