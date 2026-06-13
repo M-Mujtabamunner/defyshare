@@ -53,11 +53,19 @@ export const useMessages = (conversationId: string | null) => {
         },
         (payload) => {
           if (payload.eventType === 'INSERT') {
+            const msg = payload.new as MessageRow;
             setMessages((prev) =>
-              prev.some((m) => m.id === (payload.new as MessageRow).id)
-                ? prev
-                : [...prev, payload.new as MessageRow],
+              prev.some((m) => m.id === msg.id) ? prev : [...prev, msg],
             );
+            // mark read when an incoming message arrives while chat is open
+            if (uid && msg.sender_id !== uid) {
+              supabase
+                .from('conversation_members')
+                .update({ last_read_at: new Date().toISOString() })
+                .eq('conversation_id', conversationId)
+                .eq('user_id', uid)
+                .then(() => {});
+            }
           } else if (payload.eventType === 'DELETE') {
             setMessages((prev) => prev.filter((m) => m.id !== (payload.old as MessageRow).id));
           }
