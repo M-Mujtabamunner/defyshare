@@ -93,7 +93,7 @@ export const useConversations = () => {
     if (!uid) return;
     refresh();
     const channel = supabase
-      .channel(`convs-${uid}`)
+      .channel(`convs-${uid}-${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => refresh())
       .on(
         'postgres_changes',

@@ -93,7 +93,7 @@ export const useFriendsData = () => {
     if (!uid) return;
     refresh();
     const channel = supabase
-      .channel(`friends-${uid}`)
+      .channel(`friends-${uid}-${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'friend_requests' }, () =>
         refresh(),
       )
