@@ -7,8 +7,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { UserAvatar } from '@/components/friends/UserAvatar';
 import { useFriendsData } from '@/hooks/useFriendsData';
 import { useConversations } from '@/hooks/useConversations';
-import { userSlug, groupSlug } from '@/lib/slug';
+import { userSlug, groupSlug, idFromSlug } from '@/lib/slug';
 import { cn } from '@/lib/utils';
+
 
 interface Props {
   /** which item is currently open (for highlighting) */
@@ -28,15 +29,20 @@ export const FriendsSidebar: React.FC<Props> = ({ activeId, onCreateGroup, onIte
   const groups = useMemo(() => summaries.filter((s) => s.conversation.type === 'group'), [
     summaries,
   ]);
+  const activeFriendIdTail = idFromSlug(params.friendSlug);
+  const activeGroupIdTail = idFromSlug(params.groupSlug);
   const directUnread = useMemo(() => {
     const map = new Map<string, number>();
     for (const s of summaries) {
       if (s.conversation.type === 'direct' && s.otherUserId) {
-        map.set(s.otherUserId, s.unreadCount);
+        const isActive = !!activeFriendIdTail && s.otherUserId.startsWith(activeFriendIdTail);
+        map.set(s.otherUserId, isActive ? 0 : s.unreadCount);
       }
     }
     return map;
-  }, [summaries]);
+  }, [summaries, activeFriendIdTail]);
+
+
 
   const filteredFriends = useMemo(() => {
     const t = q.trim().toLowerCase();
@@ -168,11 +174,12 @@ export const FriendsSidebar: React.FC<Props> = ({ activeId, onCreateGroup, onIte
                           {s.members.length} members
                         </div>
                       </div>
-                      {s.unreadCount > 0 && (
+                      {s.unreadCount > 0 && !(activeGroupIdTail && s.conversation.id.startsWith(activeGroupIdTail)) && (
                         <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 text-[10px] rounded-full bg-destructive text-destructive-foreground">
                           {s.unreadCount}
                         </span>
                       )}
+
                     </Link>
                   </li>
                 );
