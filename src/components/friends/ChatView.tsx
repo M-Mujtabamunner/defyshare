@@ -284,6 +284,22 @@ export const ChatView: React.FC<Props> = ({
     return map;
   }, [reactions, uid]);
 
+  // Index of latest own message that has been seen (DM: by other; group: by all others)
+  const lastSeenMineIdx = useMemo(() => {
+    const otherIds = Array.from(memberProfiles.keys()).filter((id) => id !== uid);
+    if (otherIds.length === 0) return -1;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i];
+      if (m.sender_id !== uid) continue;
+      const created = new Date(m.created_at).getTime();
+      const seenByAll = otherIds.every((id) => {
+        const r = otherReads[id];
+        return r && new Date(r).getTime() >= created;
+      });
+      if (seenByAll) return i;
+    }
+    return -1;
+  }, [messages, otherReads, memberProfiles, uid]);
 
   const typingNames = useMemo(() => {
     const ids = Object.keys(typingUsers).filter((id) => id !== uid);
