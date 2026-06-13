@@ -1,7 +1,23 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Paperclip, Send, Download, FileIcon, Loader2, MoreVertical, ChevronDown } from 'lucide-react';
+import {
+  Paperclip,
+  Send,
+  Download,
+  FileIcon,
+  Loader2,
+  MoreVertical,
+  ChevronDown,
+  Smile,
+  Clock,
+  Infinity as InfinityIcon,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 
 import { UserAvatar } from '@/components/friends/UserAvatar';
 import { useAuth } from '@/hooks/useAuth';
@@ -16,13 +32,13 @@ interface Props {
   title: string;
   subtitle?: string;
   photo?: string | null;
-  /** Member id -> profile lookup. */
   memberProfiles: Map<string, ProfileRow>;
   isGroup?: boolean;
-  /** Hide input + show notice. */
   disabledNotice?: string | null;
   onOpenSettings?: () => void;
 }
+
+const QUICK_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
 
 const formatTime = (iso: string) => {
   const d = new Date(iso);
@@ -33,6 +49,20 @@ const formatSize = (bytes: number) => {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+};
+
+const formatRemaining = (expiresAt: string | null, now: number) => {
+  if (!expiresAt) return null;
+  const ms = new Date(expiresAt).getTime() - now;
+  if (ms <= 0) return 'expiring…';
+  const s = Math.floor(ms / 1000);
+  const d = Math.floor(s / 86400);
+  const h = Math.floor((s % 86400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  if (d > 0) return `${d}d ${h}h left`;
+  if (h > 0) return `${h}h ${m}m left`;
+  if (m > 0) return `${m}m left`;
+  return `${s}s left`;
 };
 
 const MessageMedia: React.FC<{ msg: MessageRow }> = ({ msg }) => {
@@ -66,36 +96,24 @@ const MessageMedia: React.FC<{ msg: MessageRow }> = ({ msg }) => {
           alt={msg.file_name ?? ''}
           loading="lazy"
           decoding="async"
-          className="rounded-md max-h-64 object-cover block"
+          className="rounded-md max-h-64"
         />
         <button
           type="button"
           onClick={handleDownload}
-          aria-label="Download image"
-          className="absolute bottom-2 right-2 inline-flex items-center gap-1 px-2 py-1 rounded-md bg-background/80 backdrop-blur text-foreground text-xs shadow-md opacity-0 group-hover/media:opacity-100 transition-opacity hover:bg-background"
+          aria-label="Download"
+          className="absolute top-1 right-1 bg-background/70 backdrop-blur p-1 rounded-md opacity-0 group-hover/media:opacity-100 transition"
         >
-          <Download className="w-3.5 h-3.5" />
-          Download
+          <Download className="w-4 h-4" />
         </button>
       </div>
     );
   }
+
   if (msg.message_type === 'video') {
-    return (
-      <div className="relative group/media">
-        <video src={url} controls className="rounded-md max-h-64 block" />
-        <button
-          type="button"
-          onClick={handleDownload}
-          aria-label="Download video"
-          className="absolute bottom-2 right-2 inline-flex items-center gap-1 px-2 py-1 rounded-md bg-background/80 backdrop-blur text-foreground text-xs shadow-md opacity-0 group-hover/media:opacity-100 transition-opacity hover:bg-background"
-        >
-          <Download className="w-3.5 h-3.5" />
-          Download
-        </button>
-      </div>
-    );
+    return <video src={url} controls className="rounded-md max-h-64" />;
   }
+
   return (
     <button
       type="button"
@@ -126,13 +144,71 @@ export const ChatView: React.FC<Props> = ({
 }) => {
   const { user } = useAuth();
   const uid = user?.id ?? null;
-  const { messages, sendText, sendFile, uploading } = useMessages(conversationId);
+  const {
+    messages,
+    reactions,
+    sendText,
+    sendFile,
+    uploading,
+    typingUsers,
+    toggleReaction,
+    broadcastTyping,
+  } = useMessages(conversationId);
   const [text, setText] = useState('');
   const [dragOver, setDragOver] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
   const prevCountRef = useRef(0);
+  const [nowTick, setNowTick] = useState(Date.now());
+  const [otherReads, setOtherReads] = useState<Record<string, string>>({});
+
+  // tick once a minute to refresh countdown text
+  useEffect(() => {
+    const id = setInterval(() => setNowTick(Date.now()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+
+  // load + subscribe to other members' last_read_at
+  useEffect(() => {
+    if (!conversationId || !uid) return;
+    let active = true;
+    supabase
+      .from('conversation_members')
+      .select('user_id,last_read_at')
+      .eq('conversation_id', conversationId)
+      .then(({ data }) => {
+        if (!active || !data) return;
+        const map: Record<string, string> = {};
+        for (const r of data as any[]) {
+          if (r.user_id !== uid) map[r.user_id] = r.last_read_at;
+        }
+        setOtherReads(map);
+      });
+
+    const ch = supabase
+      .channel(`reads-${conversationId}-${Math.random().toString(36).slice(2)}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'conversation_members',
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload: any) => {
+          const row = payload.new;
+          if (row.user_id === uid) return;
+          setOtherReads((prev) => ({ ...prev, [row.user_id]: row.last_read_at }));
+        },
+      )
+      .subscribe();
+
+    return () => {
+      active = false;
+      supabase.removeChannel(ch);
+    };
+  }, [conversationId, uid]);
 
   const isNearBottom = (el: HTMLDivElement, threshold = 120) =>
     el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
@@ -143,7 +219,6 @@ export const ChatView: React.FC<Props> = ({
     el.scrollTo({ top: el.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
   }, []);
 
-  // Auto-scroll on new messages only if user was already near bottom.
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -154,7 +229,6 @@ export const ChatView: React.FC<Props> = ({
     }
   }, [messages.length, atBottom, scrollToBottom]);
 
-  // Initial jump to bottom when switching conversations.
   useEffect(() => {
     prevCountRef.current = 0;
     setAtBottom(true);
@@ -191,7 +265,44 @@ export const ChatView: React.FC<Props> = ({
     [sendFile, disabledNotice],
   );
 
-  const grouped = useMemo(() => messages, [messages]);
+  // group reactions per message
+  const reactionsByMsg = useMemo(() => {
+    const map = new Map<string, { emoji: string; count: number; mine: boolean }[]>();
+    for (const r of reactions) {
+      const arr = map.get(r.message_id) ?? [];
+      const existing = arr.find((x) => x.emoji === r.emoji);
+      if (existing) {
+        existing.count += 1;
+        if (r.user_id === uid) existing.mine = true;
+      } else {
+        arr.push({ emoji: r.emoji, count: 1, mine: r.user_id === uid });
+      }
+      map.set(r.message_id, arr);
+    }
+    return map;
+  }, [reactions, uid]);
+
+  // index of last own message for read-receipts
+  const lastMineIdx = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].sender_id === uid) return i;
+    }
+    return -1;
+  }, [messages, uid]);
+
+  const seenByOther = useMemo(() => {
+    if (lastMineIdx < 0) return false;
+    const m = messages[lastMineIdx];
+    const created = new Date(m.created_at).getTime();
+    return Object.values(otherReads).some((iso) => new Date(iso).getTime() >= created);
+  }, [otherReads, messages, lastMineIdx]);
+
+  const typingNames = useMemo(() => {
+    const ids = Object.keys(typingUsers).filter((id) => id !== uid);
+    return ids
+      .map((id) => memberProfiles.get(id)?.google_name?.split(' ')[0] || 'Someone')
+      .slice(0, 3);
+  }, [typingUsers, memberProfiles, uid]);
 
   return (
     <div
@@ -229,18 +340,21 @@ export const ChatView: React.FC<Props> = ({
           onScroll={onScroll}
           className="absolute inset-0 overflow-y-auto p-4 space-y-2"
         >
-          {grouped.length === 0 && (
+          {messages.length === 0 && (
             <p className="text-center text-sm text-muted-foreground py-12">
               No messages yet. Say hi 👋
             </p>
           )}
-          {grouped.map((m) => {
+          {messages.map((m, idx) => {
             const mine = m.sender_id === uid;
             const sender = memberProfiles.get(m.sender_id);
+            const rx = reactionsByMsg.get(m.id) ?? [];
+            const remaining = formatRemaining(m.expires_at, nowTick);
+            const isLastMine = mine && idx === lastMineIdx;
             return (
               <div
                 key={m.id}
-                className={cn('flex gap-2', mine ? 'justify-end' : 'justify-start')}
+                className={cn('flex gap-2 group/msg', mine ? 'justify-end' : 'justify-start')}
               >
                 {!mine && (
                   <UserAvatar
@@ -249,38 +363,98 @@ export const ChatView: React.FC<Props> = ({
                     className="h-7 w-7 mt-0.5"
                   />
                 )}
-                <div className={cn('max-w-[75%]', mine && 'items-end')}>
+                <div className={cn('max-w-[75%] flex flex-col', mine && 'items-end')}>
                   {isGroup && !mine && (
                     <div className="text-[10px] text-muted-foreground mb-0.5 px-1">
                       {sender?.google_name || 'User'}
                     </div>
                   )}
-                  <div
-                    className={cn(
-                      'rounded-2xl px-3 py-2 text-sm',
-                      mine
-                        ? 'bg-primary text-primary-foreground rounded-br-sm'
-                        : 'bg-secondary text-foreground rounded-bl-sm',
-                    )}
-                  >
-                    {m.message_type === 'text' ? (
-                      <div className="whitespace-pre-wrap break-words">{m.text_content}</div>
-                    ) : (
-                      <MessageMedia msg={m} />
-                    )}
+                  <div className={cn('flex items-center gap-1', mine && 'flex-row-reverse')}>
                     <div
                       className={cn(
-                        'text-[10px] mt-1 text-right',
-                        mine ? 'opacity-80' : 'text-muted-foreground',
+                        'rounded-2xl px-3 py-2 text-sm',
+                        mine
+                          ? 'bg-primary text-primary-foreground rounded-br-sm'
+                          : 'bg-secondary text-foreground rounded-bl-sm',
                       )}
                     >
-                      {formatTime(m.created_at)}
+                      {m.message_type === 'text' ? (
+                        <div className="whitespace-pre-wrap break-words">{m.text_content}</div>
+                      ) : (
+                        <MessageMedia msg={m} />
+                      )}
+                      <div
+                        className={cn(
+                          'text-[10px] mt-1 flex items-center gap-1 justify-end',
+                          mine ? 'opacity-80' : 'text-muted-foreground',
+                        )}
+                      >
+                        {remaining === null ? (
+                          <InfinityIcon className="w-3 h-3 opacity-70" aria-label="Never expires" />
+                        ) : (
+                          <span className="inline-flex items-center gap-0.5 opacity-70">
+                            <Clock className="w-3 h-3" />
+                            {remaining}
+                          </span>
+                        )}
+                        <span>·</span>
+                        <span>{formatTime(m.created_at)}</span>
+                      </div>
                     </div>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button
+                          aria-label="React"
+                          className="opacity-0 group-hover/msg:opacity-100 transition p-1 rounded-full hover:bg-secondary"
+                        >
+                          <Smile className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-1 flex gap-1" side="top">
+                        {QUICK_EMOJIS.map((e) => (
+                          <button
+                            key={e}
+                            onClick={() => toggleReaction(m.id, e)}
+                            className="w-8 h-8 rounded-md hover:bg-secondary text-lg"
+                            type="button"
+                          >
+                            {e}
+                          </button>
+                        ))}
+                      </PopoverContent>
+                    </Popover>
                   </div>
+                  {rx.length > 0 && (
+                    <div className={cn('flex flex-wrap gap-1 mt-1', mine && 'justify-end')}>
+                      {rx.map((r) => (
+                        <button
+                          key={r.emoji}
+                          onClick={() => toggleReaction(m.id, r.emoji)}
+                          className={cn(
+                            'text-xs px-1.5 py-0.5 rounded-full border transition',
+                            r.mine
+                              ? 'bg-primary/15 border-primary/40'
+                              : 'bg-secondary border-border/50 hover:bg-secondary/80',
+                          )}
+                          type="button"
+                        >
+                          {r.emoji} {r.count}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {isLastMine && !isGroup && seenByOther && (
+                    <div className="text-[10px] text-muted-foreground mt-0.5 pr-1">Seen</div>
+                  )}
                 </div>
               </div>
             );
           })}
+          {typingNames.length > 0 && (
+            <div className="text-xs text-muted-foreground italic px-1">
+              {typingNames.join(', ')} {typingNames.length === 1 ? 'is' : 'are'} typing…
+            </div>
+          )}
         </div>
 
         {!atBottom && (
@@ -322,7 +496,10 @@ export const ChatView: React.FC<Props> = ({
           />
           <Input
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => {
+              setText(e.target.value);
+              broadcastTyping();
+            }}
             placeholder="Type a message"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
