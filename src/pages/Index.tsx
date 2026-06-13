@@ -27,6 +27,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useTheme } from '@/components/ThemeProvider';
 import logoLight from '@/assets/logo.png';
 import logoDark from '@/assets/logo-dark.png';
+import defyshareLogo from '@/assets/defyshare-logo.png.asset.json';
 
 const NOTIF_KEY = 'defyshare:notifications';
 
