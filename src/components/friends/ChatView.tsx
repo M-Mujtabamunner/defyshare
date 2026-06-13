@@ -460,6 +460,11 @@ export const ChatView: React.FC<Props> = ({
                       ))}
                     </div>
                   )}
+                  {mine && idx === lastSeenMineIdx && (
+                    <div className="text-[10px] text-muted-foreground mt-0.5 pr-1 text-right">
+                      Seen
+                    </div>
+                  )}
                 </div>
               </div>
             );
