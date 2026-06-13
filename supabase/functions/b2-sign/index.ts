@@ -1,4 +1,5 @@
-// Presigns S3-compatible URLs for Backblaze B2 (path-style).
+// Presigns S3-compatible URLs for Backblaze B2 (path-style),
+// and performs hard deletes via B2 native API (removes all file versions).
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 
 const KEY_ID = Deno.env.get('B2_KEY_ID')!;
@@ -7,6 +8,78 @@ const BUCKET = 'defyshare';
 const ENDPOINT = 's3.us-east-005.backblazeb2.com';
 const REGION = 'us-east-005';
 const SERVICE = 's3';
+
+// --- B2 native API auth (cached for the lifetime of the isolate) ---
+type B2Auth = { apiUrl: string; authToken: string; bucketId: string; expiresAt: number };
+let b2AuthCache: B2Auth | null = null;
+
+async function b2Authorize(): Promise<B2Auth> {
+  if (b2AuthCache && b2AuthCache.expiresAt > Date.now() + 60_000) return b2AuthCache;
+  const basic = btoa(`${KEY_ID}:${APP_KEY}`);
+  const res = await fetch('https://api.backblazeb2.com/b2api/v3/b2_authorize_account', {
+    headers: { Authorization: `Basic ${basic}` },
+  });
+  if (!res.ok) throw new Error(`b2_authorize_account failed: ${res.status} ${await res.text()}`);
+  const json = await res.json();
+  const apiUrl: string = json.apiInfo.storageApi.apiUrl;
+  const authToken: string = json.authorizationToken;
+  // find bucketId for our bucket name
+  const listRes = await fetch(`${apiUrl}/b2api/v3/b2_list_buckets`, {
+    method: 'POST',
+    headers: { Authorization: authToken, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ accountId: json.accountId, bucketName: BUCKET }),
+  });
+  if (!listRes.ok) throw new Error(`b2_list_buckets failed: ${listRes.status} ${await listRes.text()}`);
+  const listJson = await listRes.json();
+  const bucketId: string = listJson.buckets?.[0]?.bucketId;
+  if (!bucketId) throw new Error(`bucket "${BUCKET}" not found`);
+  b2AuthCache = { apiUrl, authToken, bucketId, expiresAt: Date.now() + 23 * 3600 * 1000 };
+  return b2AuthCache;
+}
+
+async function b2HardDelete(key: string): Promise<{ ok: boolean; deleted: number; error?: string }> {
+  const auth = await b2Authorize();
+  let deleted = 0;
+  let startFileName: string | undefined = key;
+  let startFileId: string | undefined = undefined;
+  // List up to a few pages of versions matching this exact file name and delete each version.
+  for (let page = 0; page < 10; page++) {
+    const body: Record<string, unknown> = {
+      bucketId: auth.bucketId,
+      startFileName,
+      maxFileCount: 100,
+      prefix: key,
+    };
+    if (startFileId) body.startFileId = startFileId;
+    const res = await fetch(`${auth.apiUrl}/b2api/v3/b2_list_file_versions`, {
+      method: 'POST',
+      headers: { Authorization: auth.authToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) return { ok: false, deleted, error: `list_versions ${res.status}: ${await res.text()}` };
+    const json = await res.json();
+    const files: Array<{ fileId: string; fileName: string }> = json.files ?? [];
+    const matches = files.filter((f) => f.fileName === key);
+    if (matches.length === 0 && page === 0) {
+      // nothing to delete (treat as success)
+      return { ok: true, deleted: 0 };
+    }
+    for (const f of matches) {
+      const delRes = await fetch(`${auth.apiUrl}/b2api/v3/b2_delete_file_version`, {
+        method: 'POST',
+        headers: { Authorization: auth.authToken, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileName: f.fileName, fileId: f.fileId }),
+      });
+      if (delRes.ok) deleted++;
+    }
+    if (!json.nextFileName || json.nextFileName !== key) break;
+    startFileName = json.nextFileName;
+    startFileId = json.nextFileId;
+  }
+  return { ok: true, deleted };
+}
+
+
 
 const enc = new TextEncoder();
 
@@ -107,19 +180,22 @@ Deno.serve(async (req) => {
 
     const method = action.toUpperCase() as 'PUT' | 'GET' | 'DELETE';
 
-    // For delete action, perform the deletes server-side so the client doesn't need CORS-DELETE.
+    // For delete action, perform hard delete via B2 native API (removes ALL versions).
     if (action === 'delete') {
-      const results: { key: string; ok: boolean; status: number }[] = [];
+      const results: { key: string; ok: boolean; deleted: number; error?: string }[] = [];
       for (const key of keys) {
-        const url = await presign('DELETE', key, 300);
-        const res = await fetch(url, { method: 'DELETE' });
-        await res.text();
-        results.push({ key, ok: res.ok || res.status === 404, status: res.status });
+        try {
+          const r = await b2HardDelete(key);
+          results.push({ key, ...r });
+        } catch (e) {
+          results.push({ key, ok: false, deleted: 0, error: String(e) });
+        }
       }
       return new Response(JSON.stringify({ results }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
 
     const url = await presign(method, keys[0], expires);
     return new Response(JSON.stringify({ url }), {
