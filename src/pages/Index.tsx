@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Trash2, FileIcon, MessageSquareText } from 'lucide-react';
+import { Trash2, FileIcon, MessageSquareText, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import DropZone from '@/components/DropZone';
