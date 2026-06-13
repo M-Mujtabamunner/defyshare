@@ -57,8 +57,12 @@ export const useFileSharing = (roomKey: string) => {
 
       if (expired && expired.length > 0) {
         const cloudPaths = expired.filter(f => !isB2Path(f.file_path)).map(f => f.file_path);
+        const b2Keys = expired.filter(f => isB2Path(f.file_path)).map(f => b2Key(f.file_path));
         if (cloudPaths.length > 0) {
           await supabase.storage.from('shared-files').remove(cloudPaths);
+        }
+        if (b2Keys.length > 0) {
+          await deleteB2Objects(b2Keys);
         }
         await supabase.from('shared_files').delete().in('id', expired.map(f => f.id));
       }
