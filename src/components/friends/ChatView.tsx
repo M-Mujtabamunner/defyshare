@@ -65,6 +65,8 @@ const MessageMedia: React.FC<{ msg: MessageRow }> = ({ msg }) => {
         <img
           src={url}
           alt={msg.file_name ?? ''}
+          loading="lazy"
+          decoding="async"
           className="rounded-md max-h-64 object-cover block"
         />
         <button
