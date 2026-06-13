@@ -284,20 +284,6 @@ export const ChatView: React.FC<Props> = ({
     return map;
   }, [reactions, uid]);
 
-  // index of last own message for read-receipts
-  const lastMineIdx = useMemo(() => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].sender_id === uid) return i;
-    }
-    return -1;
-  }, [messages, uid]);
-
-  const seenByOther = useMemo(() => {
-    if (lastMineIdx < 0) return false;
-    const m = messages[lastMineIdx];
-    const created = new Date(m.created_at).getTime();
-    return Object.values(otherReads).some((iso) => new Date(iso).getTime() >= created);
-  }, [otherReads, messages, lastMineIdx]);
 
   const typingNames = useMemo(() => {
     const ids = Object.keys(typingUsers).filter((id) => id !== uid);
