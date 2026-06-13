@@ -117,9 +117,9 @@ const Admin: React.FC = () => {
           <div className="text-xs text-muted-foreground">{user.email}</div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           <div className="p-4 rounded-lg border border-border/50 bg-card/30">
-            <p className="text-xs text-muted-foreground">Files</p>
+            <p className="text-xs text-muted-foreground">Active files</p>
             <p className="text-2xl font-bold text-primary">{stats.count}</p>
           </div>
           <div className="p-4 rounded-lg border border-border/50 bg-card/30">
@@ -130,17 +130,29 @@ const Admin: React.FC = () => {
             <p className="text-xs text-muted-foreground">Storage used</p>
             <p className="text-2xl font-bold text-primary">{formatBytes(stats.totalSize)}</p>
           </div>
+          <div className="p-4 rounded-lg border border-border/50 bg-card/30">
+            <p className="text-xs text-muted-foreground">Total ever shared</p>
+            <p className="text-2xl font-bold text-primary">{stats.history}</p>
+          </div>
         </div>
 
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by name, subject, uploader, room…"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            className="pl-9"
-          />
-        </div>
+        <Tabs defaultValue="active" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="active">Active</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="active" className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name, subject, uploader, room…"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
 
         <div className="rounded-xl border border-border/50 bg-card/30 backdrop-blur-sm">
           {loading ? (
