@@ -317,5 +317,6 @@ export const useMessages = (conversationId: string | null) => {
     markRead,
     toggleReaction,
     broadcastTyping,
+    deleteMessage,
   };
 };
