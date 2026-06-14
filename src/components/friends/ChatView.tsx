@@ -159,6 +159,7 @@ export const ChatView: React.FC<Props> = ({
     loadOlder,
     hasMore,
     loadingOlder,
+    deleteMessage,
   } = useMessages(conversationId);
   const [text, setText] = useState('');
   const [dragOver, setDragOver] = useState(false);
