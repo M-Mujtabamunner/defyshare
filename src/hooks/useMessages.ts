@@ -25,6 +25,7 @@ export interface ReactionRow {
   emoji: string;
 }
 
+const INITIAL_PAGE_SIZE = 7;
 const PAGE_SIZE = 30;
 
 export const useMessages = (conversationId: string | null) => {
@@ -95,12 +96,12 @@ export const useMessages = (conversationId: string | null) => {
       .select('*')
       .eq('conversation_id', conversationId)
       .order('created_at', { ascending: false })
-      .limit(PAGE_SIZE)
+      .limit(INITIAL_PAGE_SIZE)
       .then(({ data }) => {
         if (!active) return;
         const rows = ((data ?? []) as MessageRow[]).slice().reverse();
         setMessages(rows);
-        setHasMore((data ?? []).length === PAGE_SIZE);
+        setHasMore((data ?? []).length === INITIAL_PAGE_SIZE);
         setLoading(false);
         const ids = rows.map((m) => m.id);
         if (ids.length) {
