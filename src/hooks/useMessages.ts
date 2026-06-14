@@ -289,6 +289,15 @@ export const useMessages = (conversationId: string | null) => {
       .catch(() => {});
   }, [uid, conversationId]);
 
+  const deleteMessage = useCallback(
+    async (messageId: string) => {
+      if (!uid) return;
+      await supabase.from('messages').delete().eq('id', messageId).eq('sender_id', uid);
+      setMessages((prev) => prev.filter((m) => m.id !== messageId));
+    },
+    [uid],
+  );
+
   const signedUrl = useCallback(async (path: string) => {
     return await getSignedChatUrl(path);
   }, []);
@@ -308,5 +317,6 @@ export const useMessages = (conversationId: string | null) => {
     markRead,
     toggleReaction,
     broadcastTyping,
+    deleteMessage,
   };
 };
