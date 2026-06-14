@@ -132,34 +132,49 @@ export const useFriendsData = () => {
 
   // Actions
   const sendFriendRequest = useCallback(
-    async (email: string): Promise<{ ok: boolean; reason?: string }> => {
+    async (
+      emailOrUserId: string,
+      opts?: { byUserId?: boolean },
+    ): Promise<{ ok: boolean; reason?: string }> => {
       if (!uid) return { ok: false, reason: 'Sign in first' };
-      const clean = email.trim().toLowerCase();
-      if (!clean) return { ok: false, reason: 'Enter an email' };
-      const { data: target } = await supabase
-        .from('profiles')
-        .select('user_id, google_email')
-        .ilike('google_email', clean)
-        .maybeSingle();
-      if (!target) {
-        return { ok: false, reason: 'User not found. They need to sign in to DefyShare first.' };
+      let targetId: string | null = null;
+
+      if (opts?.byUserId) {
+        targetId = emailOrUserId;
+      } else {
+        const clean = emailOrUserId.trim().toLowerCase();
+        if (!clean) return { ok: false, reason: 'Enter an email' };
+        const { data, error } = await (supabase as any).rpc('find_profile_by_email', {
+          _email: clean,
+        });
+        if (error) return { ok: false, reason: error.message };
+        const row = Array.isArray(data) ? data[0] : data;
+        if (!row?.user_id) {
+          return {
+            ok: false,
+            reason: 'User not found. They need to sign in to DefyShare first.',
+          };
+        }
+        targetId = row.user_id as string;
       }
-      if (target.user_id === uid) return { ok: false, reason: "You can't friend yourself." };
-      if (blocks.some((b) => b.blocked_user_id === target.user_id)) {
+
+      if (!targetId) return { ok: false, reason: 'User not found.' };
+      if (targetId === uid) return { ok: false, reason: "You can't friend yourself." };
+      if (blocks.some((b) => b.blocked_user_id === targetId)) {
         return { ok: false, reason: 'You blocked this user. Unblock to send a request.' };
       }
-      if (friends.some((f) => f.friend_id === target.user_id)) {
+      if (friends.some((f) => f.friend_id === targetId)) {
         return { ok: false, reason: 'Already friends.' };
       }
       if (
-        sent.some((r) => r.receiver_id === target.user_id) ||
-        received.some((r) => r.sender_id === target.user_id)
+        sent.some((r) => r.receiver_id === targetId) ||
+        received.some((r) => r.sender_id === targetId)
       ) {
         return { ok: false, reason: 'A pending request already exists.' };
       }
       const { error } = await supabase.from('friend_requests').insert({
         sender_id: uid,
-        receiver_id: target.user_id,
+        receiver_id: targetId,
       });
       if (error) return { ok: false, reason: error.message };
       await refresh();

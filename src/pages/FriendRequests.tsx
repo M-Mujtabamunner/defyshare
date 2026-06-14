@@ -62,10 +62,9 @@ const FriendRequestsPage: React.FC = () => {
   };
 
   const sendToId = async (p: ProfileRow) => {
-    if (!p.google_email) return;
-    const res = await sendFriendRequest(p.google_email);
+    const res = await sendFriendRequest(p.user_id, { byUserId: true });
     if (res.ok) {
-      toast({ title: `Request sent to ${p.google_name}` });
+      toast({ title: `Request sent to ${p.google_name ?? 'user'}` });
     } else {
       toast({ title: res.reason ?? 'Could not send', variant: 'destructive' });
     }
