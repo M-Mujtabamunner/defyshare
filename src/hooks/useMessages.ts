@@ -25,6 +25,7 @@ export interface ReactionRow {
   emoji: string;
 }
 
+const INITIAL_PAGE_SIZE = 7;
 const PAGE_SIZE = 30;
 
 export const useMessages = (conversationId: string | null) => {
