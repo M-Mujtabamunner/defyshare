@@ -495,6 +495,15 @@ export type Database = {
         Args: { _member_ids: string[]; _name: string; _photo: string }
         Returns: string
       }
+      find_profile_by_email: {
+        Args: { _email: string }
+        Returns: {
+          google_email: string
+          google_name: string
+          google_photo: string
+          user_id: string
+        }[]
+      }
       get_or_create_direct_conversation: {
         Args: { _other: string }
         Returns: string
