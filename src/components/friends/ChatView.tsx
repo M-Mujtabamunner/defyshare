@@ -494,6 +494,18 @@ export const ChatView: React.FC<Props> = ({
                       ))}
                     </div>
                   )}
+                  {mine && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (confirm('Delete this message?')) deleteMessage(m.id);
+                      }}
+                      className="mt-0.5 pr-1 text-[10px] text-muted-foreground hover:text-destructive inline-flex items-center gap-1 opacity-0 group-hover/msg:opacity-100 transition self-end"
+                      aria-label="Delete message"
+                    >
+                      <Trash2 className="w-3 h-3" /> Delete
+                    </button>
+                  )}
                   {mine && idx === lastSeenMineIdx && (
                     <div className="text-[10px] text-muted-foreground mt-0.5 pr-1 text-right">
                       Seen
