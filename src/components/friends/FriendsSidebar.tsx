@@ -21,7 +21,7 @@ import { UserAvatar } from '@/components/friends/UserAvatar';
 import { useFriendsData } from '@/hooks/useFriendsData';
 import { useConversations } from '@/hooks/useConversations';
 import { usePinnedConversations } from '@/hooks/usePinnedConversations';
-import { userSlug, groupSlug, idFromSlug } from '@/lib/slug';
+import { userSlug, groupSlug } from '@/lib/slug';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
