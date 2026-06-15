@@ -282,7 +282,7 @@ export const FriendsSidebar: React.FC<Props> = ({
             <ul className="space-y-0.5">
               {filteredFriends.map((f) => {
                 const slug = userSlug(f.friend_id, f.profile?.google_name);
-                const active = params.friendSlug === slug;
+                const active = activeFriendId === f.friend_id;
                 const conv = directConvByOther.get(f.friend_id);
                 const convId = conv?.conversationId;
                 const unread = conv?.unread ?? 0;
@@ -383,22 +383,17 @@ export const FriendsSidebar: React.FC<Props> = ({
               {filteredGroups.map((s) => {
                 const g = s.group!;
                 const slug = groupSlug(s.conversation.id, g.group_name);
-                const active = params.groupSlug === slug;
+                const active = activeGroupConvId === s.conversation.id;
                 const convId = s.conversation.id;
                 const pinned = isPinned(convId);
-                const showUnread =
-                  s.unreadCount > 0 &&
-                  !(activeGroupIdTail && convId.startsWith(activeGroupIdTail));
+                const showUnread = s.unreadCount > 0 && activeGroupConvId !== convId;
 
                 const actions: RowActionsProps = {
                   onPin: () => togglePin(convId),
                   isPinned: pinned,
                   onMarkRead: () => markAsRead(convId),
                   hasUnread: showUnread,
-                  onOpen: () => {
-                    navigate(`/friends/group/${slug}`);
-                    onItemClick?.();
-                  },
+                  onOpen: () => openGroup(convId, slug),
                   onRemove: () => leaveGroup(convId),
                   removeLabel: 'Leave group',
                   removeIcon: <LogOut className="w-4 h-4 mr-2" />,
