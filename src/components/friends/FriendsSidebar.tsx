@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import type { FriendsSelection } from '@/pages/FriendsLayout';
 import {
   Search,
   UserPlus,
@@ -41,7 +42,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 interface Props {
-  activeId?: string | null;
+  activeSelection: FriendsSelection;
+  onSelectFriend: (friendId: string, name?: string | null) => void;
+  onSelectGroup: (conversationId: string, slug: string) => void;
+  onBack?: () => void;
   onCreateGroup: () => void;
   onItemClick?: () => void;
 }
@@ -135,27 +139,32 @@ const DropdownItems: React.FC<RowActionsProps> = ({
   </>
 );
 
-export const FriendsSidebar: React.FC<Props> = ({ activeId, onCreateGroup, onItemClick }) => {
+export const FriendsSidebar: React.FC<Props> = ({
+  activeSelection,
+  onSelectFriend,
+  onSelectGroup,
+  onCreateGroup,
+  onItemClick,
+}) => {
   const { user } = useAuth();
   const { friends, unreadRequestsCount, removeFriend } = useFriendsData();
   const { summaries, getOrCreateDirect, markAsRead } = useConversations();
   const { isPinned, togglePin } = usePinnedConversations();
-  const navigate = useNavigate();
-  const params = useParams();
   const [q, setQ] = useState('');
 
   const groups = useMemo(() => summaries.filter((s) => s.conversation.type === 'group'), [
     summaries,
   ]);
-  const activeFriendIdTail = idFromSlug(params.friendSlug);
-  const activeGroupIdTail = idFromSlug(params.groupSlug);
+  const activeFriendId =
+    activeSelection?.kind === 'friend' ? activeSelection.friendId : null;
+  const activeGroupConvId =
+    activeSelection?.kind === 'group' ? activeSelection.conversationId : null;
 
   const directConvByOther = useMemo(() => {
     const m = new Map<string, { conversationId: string; unread: number }>();
     for (const s of summaries) {
       if (s.conversation.type === 'direct' && s.otherUserId) {
-        const isActive =
-          !!activeFriendIdTail && s.otherUserId.startsWith(activeFriendIdTail);
+        const isActive = activeFriendId === s.otherUserId;
         m.set(s.otherUserId, {
           conversationId: s.conversation.id,
           unread: isActive ? 0 : s.unreadCount,
@@ -163,7 +172,7 @@ export const FriendsSidebar: React.FC<Props> = ({ activeId, onCreateGroup, onIte
       }
     }
     return m;
-  }, [summaries, activeFriendIdTail]);
+  }, [summaries, activeFriendId]);
 
   const filteredFriends = useMemo(() => {
     const t = q.trim().toLowerCase();
@@ -200,8 +209,14 @@ export const FriendsSidebar: React.FC<Props> = ({ activeId, onCreateGroup, onIte
   }, [groups, q, isPinned]);
 
   const openFriend = async (friendId: string, name?: string | null) => {
-    await getOrCreateDirect(friendId);
-    navigate(`/friends/${userSlug(friendId, name)}`);
+    // fire-and-forget; ChatView opens immediately
+    getOrCreateDirect(friendId);
+    onSelectFriend(friendId, name);
+    onItemClick?.();
+  };
+
+  const openGroup = (conversationId: string, slug: string) => {
+    onSelectGroup(conversationId, slug);
     onItemClick?.();
   };
 
