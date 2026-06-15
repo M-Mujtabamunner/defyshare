@@ -6,17 +6,24 @@ import { useFriendsData } from '@/hooks/useFriendsData';
 import { useConversations } from '@/hooks/useConversations';
 import { idFromSlug } from '@/lib/slug';
 
-const FriendChat: React.FC = () => {
+interface Props {
+  friendId?: string;
+}
+
+const FriendChat: React.FC<Props> = ({ friendId }) => {
   const { friendSlug } = useParams<{ friendSlug: string }>();
-  const idTail = idFromSlug(friendSlug);
+  const idTail = friendId ?? idFromSlug(friendSlug);
   const { friends, blocks, profiles } = useFriendsData();
   const { getOrCreateDirect } = useConversations();
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const friend = useMemo(
-    () => friends.find((f) => f.friend_id.startsWith(idTail ?? '__')),
-    [friends, idTail],
+    () =>
+      friendId
+        ? friends.find((f) => f.friend_id === friendId)
+        : friends.find((f) => f.friend_id.startsWith(idTail ?? '__')),
+    [friends, idTail, friendId],
   );
 
   useEffect(() => {
