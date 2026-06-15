@@ -27,11 +27,10 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/friends/request" element={<FriendRequestsPage />} />
-            <Route path="/friends" element={<FriendsLayout />}>
-              <Route index element={<FriendsEmpty />} />
-              <Route path="group/:groupSlug" element={<GroupChat />} />
-              <Route path=":friendSlug" element={<FriendChat />} />
-            </Route>
+            <Route path="/friends" element={<FriendsLayout />} />
+            {/* legacy chat URLs collapse back to /friends */}
+            <Route path="/friends/group/:groupSlug" element={<FriendsLayout />} />
+            <Route path="/friends/:friendSlug" element={<FriendsLayout />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <PoweredByBadge />

@@ -7,19 +7,27 @@ import { idFromSlug } from '@/lib/slug';
 import { supabase } from '@/integrations/supabase/client';
 import type { ProfileRow } from '@/hooks/useFriendsData';
 
-const GroupChat: React.FC = () => {
+interface Props {
+  conversationId?: string;
+}
+
+const GroupChat: React.FC<Props> = ({ conversationId }) => {
   const { groupSlug: slug } = useParams<{ groupSlug: string }>();
-  const idTail = idFromSlug(slug);
+  const idTail = conversationId ?? idFromSlug(slug);
   const { summaries, refresh } = useConversations();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [memberProfiles, setMemberProfiles] = useState<Map<string, ProfileRow>>(new Map());
 
   const summary = useMemo(
     () =>
-      summaries.find(
-        (s) => s.conversation.type === 'group' && s.conversation.id.startsWith(idTail ?? '__'),
-      ),
-    [summaries, idTail],
+      conversationId
+        ? summaries.find(
+            (s) => s.conversation.type === 'group' && s.conversation.id === conversationId,
+          )
+        : summaries.find(
+            (s) => s.conversation.type === 'group' && s.conversation.id.startsWith(idTail ?? '__'),
+          ),
+    [summaries, idTail, conversationId],
   );
 
   useEffect(() => {

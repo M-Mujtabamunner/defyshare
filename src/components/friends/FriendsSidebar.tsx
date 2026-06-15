@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import type { FriendsSelection } from '@/pages/FriendsLayout';
 import {
   Search,
   UserPlus,
@@ -20,7 +21,7 @@ import { UserAvatar } from '@/components/friends/UserAvatar';
 import { useFriendsData } from '@/hooks/useFriendsData';
 import { useConversations } from '@/hooks/useConversations';
 import { usePinnedConversations } from '@/hooks/usePinnedConversations';
-import { userSlug, groupSlug, idFromSlug } from '@/lib/slug';
+import { userSlug, groupSlug } from '@/lib/slug';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -41,7 +42,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 interface Props {
-  activeId?: string | null;
+  activeSelection: FriendsSelection;
+  onSelectFriend: (friendId: string, name?: string | null) => void;
+  onSelectGroup: (conversationId: string, slug: string) => void;
+  onBack?: () => void;
   onCreateGroup: () => void;
   onItemClick?: () => void;
 }
@@ -135,27 +139,32 @@ const DropdownItems: React.FC<RowActionsProps> = ({
   </>
 );
 
-export const FriendsSidebar: React.FC<Props> = ({ activeId, onCreateGroup, onItemClick }) => {
+export const FriendsSidebar: React.FC<Props> = ({
+  activeSelection,
+  onSelectFriend,
+  onSelectGroup,
+  onCreateGroup,
+  onItemClick,
+}) => {
   const { user } = useAuth();
   const { friends, unreadRequestsCount, removeFriend } = useFriendsData();
   const { summaries, getOrCreateDirect, markAsRead } = useConversations();
   const { isPinned, togglePin } = usePinnedConversations();
-  const navigate = useNavigate();
-  const params = useParams();
   const [q, setQ] = useState('');
 
   const groups = useMemo(() => summaries.filter((s) => s.conversation.type === 'group'), [
     summaries,
   ]);
-  const activeFriendIdTail = idFromSlug(params.friendSlug);
-  const activeGroupIdTail = idFromSlug(params.groupSlug);
+  const activeFriendId =
+    activeSelection?.kind === 'friend' ? activeSelection.friendId : null;
+  const activeGroupConvId =
+    activeSelection?.kind === 'group' ? activeSelection.conversationId : null;
 
   const directConvByOther = useMemo(() => {
     const m = new Map<string, { conversationId: string; unread: number }>();
     for (const s of summaries) {
       if (s.conversation.type === 'direct' && s.otherUserId) {
-        const isActive =
-          !!activeFriendIdTail && s.otherUserId.startsWith(activeFriendIdTail);
+        const isActive = activeFriendId === s.otherUserId;
         m.set(s.otherUserId, {
           conversationId: s.conversation.id,
           unread: isActive ? 0 : s.unreadCount,
@@ -163,7 +172,7 @@ export const FriendsSidebar: React.FC<Props> = ({ activeId, onCreateGroup, onIte
       }
     }
     return m;
-  }, [summaries, activeFriendIdTail]);
+  }, [summaries, activeFriendId]);
 
   const filteredFriends = useMemo(() => {
     const t = q.trim().toLowerCase();
@@ -200,8 +209,14 @@ export const FriendsSidebar: React.FC<Props> = ({ activeId, onCreateGroup, onIte
   }, [groups, q, isPinned]);
 
   const openFriend = async (friendId: string, name?: string | null) => {
-    await getOrCreateDirect(friendId);
-    navigate(`/friends/${userSlug(friendId, name)}`);
+    // fire-and-forget; ChatView opens immediately
+    getOrCreateDirect(friendId);
+    onSelectFriend(friendId, name);
+    onItemClick?.();
+  };
+
+  const openGroup = (conversationId: string, slug: string) => {
+    onSelectGroup(conversationId, slug);
     onItemClick?.();
   };
 
@@ -267,7 +282,7 @@ export const FriendsSidebar: React.FC<Props> = ({ activeId, onCreateGroup, onIte
             <ul className="space-y-0.5">
               {filteredFriends.map((f) => {
                 const slug = userSlug(f.friend_id, f.profile?.google_name);
-                const active = params.friendSlug === slug;
+                const active = activeFriendId === f.friend_id;
                 const conv = directConvByOther.get(f.friend_id);
                 const convId = conv?.conversationId;
                 const unread = conv?.unread ?? 0;
@@ -368,22 +383,17 @@ export const FriendsSidebar: React.FC<Props> = ({ activeId, onCreateGroup, onIte
               {filteredGroups.map((s) => {
                 const g = s.group!;
                 const slug = groupSlug(s.conversation.id, g.group_name);
-                const active = params.groupSlug === slug;
+                const active = activeGroupConvId === s.conversation.id;
                 const convId = s.conversation.id;
                 const pinned = isPinned(convId);
-                const showUnread =
-                  s.unreadCount > 0 &&
-                  !(activeGroupIdTail && convId.startsWith(activeGroupIdTail));
+                const showUnread = s.unreadCount > 0 && activeGroupConvId !== convId;
 
                 const actions: RowActionsProps = {
                   onPin: () => togglePin(convId),
                   isPinned: pinned,
                   onMarkRead: () => markAsRead(convId),
                   hasUnread: showUnread,
-                  onOpen: () => {
-                    navigate(`/friends/group/${slug}`);
-                    onItemClick?.();
-                  },
+                  onOpen: () => openGroup(convId, slug),
                   onRemove: () => leaveGroup(convId),
                   removeLabel: 'Leave group',
                   removeIcon: <LogOut className="w-4 h-4 mr-2" />,
@@ -399,10 +409,10 @@ export const FriendsSidebar: React.FC<Props> = ({ activeId, onCreateGroup, onIte
                             active && 'bg-secondary text-foreground',
                           )}
                         >
-                          <Link
-                            to={`/friends/group/${slug}`}
-                            onClick={onItemClick}
-                            className="flex items-center gap-2 min-w-0 flex-1"
+                          <button
+                            type="button"
+                            onClick={() => openGroup(convId, slug)}
+                            className="flex items-center gap-2 min-w-0 flex-1 text-left"
                           >
                             <div className="relative">
                               <UserAvatar
@@ -422,7 +432,7 @@ export const FriendsSidebar: React.FC<Props> = ({ activeId, onCreateGroup, onIte
                                 {s.members.length} members
                               </div>
                             </div>
-                          </Link>
+                          </button>
                           {showUnread && (
                             <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 text-[10px] rounded-full bg-destructive text-destructive-foreground">
                               {s.unreadCount}

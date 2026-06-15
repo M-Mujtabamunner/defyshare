@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { getB2UploadUrl, getSignedChatUrl, toB2Path } from '@/lib/storageUrls';
+import { getCachedMessages, primeMessages } from '@/lib/messagesCache';
 
 
 export interface MessageRow {
@@ -89,8 +90,16 @@ export const useMessages = (conversationId: string | null) => {
       return;
     }
     let active = true;
-    setLoading(true);
-    setHasMore(false);
+    const cached = getCachedMessages(conversationId);
+    if (cached && cached.length) {
+      setMessages(cached);
+      setHasMore(cached.length === INITIAL_PAGE_SIZE);
+      setLoading(false);
+    } else {
+      setMessages([]);
+      setLoading(true);
+      setHasMore(false);
+    }
     supabase
       .from('messages')
       .select('*')
@@ -101,6 +110,7 @@ export const useMessages = (conversationId: string | null) => {
         if (!active) return;
         const rows = ((data ?? []) as MessageRow[]).slice().reverse();
         setMessages(rows);
+        primeMessages(conversationId, rows);
         setHasMore((data ?? []).length === INITIAL_PAGE_SIZE);
         setLoading(false);
         const ids = rows.map((m) => m.id);
