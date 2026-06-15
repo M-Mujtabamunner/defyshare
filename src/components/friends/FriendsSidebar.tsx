@@ -409,10 +409,10 @@ export const FriendsSidebar: React.FC<Props> = ({
                             active && 'bg-secondary text-foreground',
                           )}
                         >
-                          <Link
-                            to={`/friends/group/${slug}`}
-                            onClick={onItemClick}
-                            className="flex items-center gap-2 min-w-0 flex-1"
+                          <button
+                            type="button"
+                            onClick={() => openGroup(convId, slug)}
+                            className="flex items-center gap-2 min-w-0 flex-1 text-left"
                           >
                             <div className="relative">
                               <UserAvatar
@@ -432,7 +432,7 @@ export const FriendsSidebar: React.FC<Props> = ({
                                 {s.members.length} members
                               </div>
                             </div>
-                          </Link>
+                          </button>
                           {showUnread && (
                             <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 text-[10px] rounded-full bg-destructive text-destructive-foreground">
                               {s.unreadCount}
