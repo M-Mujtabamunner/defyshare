@@ -165,10 +165,8 @@ async function presign(method: 'PUT' | 'GET' | 'DELETE', key: string, expires: n
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
-    const auth = await requireUser(req);
-    if (auth instanceof Response) return auth;
-
     const body = await req.json();
+
     const action = body?.action as 'put' | 'get' | 'delete';
     const keys: string[] = Array.isArray(body?.keys)
       ? body.keys
