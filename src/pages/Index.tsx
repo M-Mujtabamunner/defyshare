@@ -1,16 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Trash2, FileIcon, MessageSquareText, Download, Users, ArrowRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Trash2, FileIcon, MessageSquareText, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import DropZone from '@/components/DropZone';
+import DropZone, { collectFilesFromDataTransfer } from '@/components/DropZone';
 import FileList from '@/components/FileList';
 import RoomInfo from '@/components/RoomInfo';
 import TextShare from '@/components/TextShare';
 import ThemeToggle from '@/components/ThemeToggle';
 import OnlineIndicator from '@/components/OnlineIndicator';
 import UploadProgress from '@/components/UploadProgress';
-import UploadMetadataModal from '@/components/UploadMetadataModal';
 import AuthButton from '@/components/AuthButton';
 import SettingsSheet from '@/components/SettingsSheet';
 import FilePreviewModal from '@/components/FilePreviewModal';
@@ -20,29 +18,24 @@ import { useFileSharing, SharedFile } from '@/hooks/useFileSharing';
 import { useTextSharing } from '@/hooks/useTextSharing';
 import { useOnlinePresence } from '@/hooks/useOnlinePresence';
 import { useAuth } from '@/hooks/useAuth';
-import { useProfileSync } from '@/hooks/useProfileSync';
-import { FriendsNavButton } from '@/components/FriendsNavButton';
 import { usePromoOverride } from '@/hooks/usePromoOverride';
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from '@/components/ThemeProvider';
 import logoLight from '@/assets/logo.png';
 import logoDark from '@/assets/logo-dark.png';
 
-
 const NOTIF_KEY = 'defyshare:notifications';
 
 const Index = () => {
   const { theme } = useTheme();
   const { publicIP, roomId } = usePublicIP();
-  const { files, loading: filesLoading, uploadState, addFile, removeFile, downloadFile, clearAll } = useFileSharing(roomId);
+  const { files, loading: filesLoading, uploadState, addFiles, removeFile, downloadFile, clearAll } = useFileSharing(roomId);
   const { texts, loading: textsLoading, addText, removeText, clearAllTexts } = useTextSharing(roomId);
   const onlineCount = useOnlinePresence(roomId);
   const { user } = useAuth();
-  useProfileSync();
   const { keepForever, overrideSeconds, durationChosen } = usePromoOverride();
   const { toast } = useToast();
 
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [previewFile, setPreviewFile] = useState<SharedFile | null>(null);
 
   const logo = theme === 'dark' ? logoDark : logoLight;
@@ -50,56 +43,56 @@ const Index = () => {
   const notificationsEnabled = () =>
     typeof window === 'undefined' || localStorage.getItem(NOTIF_KEY) !== 'false';
 
-  const handleFileDrop = async (file: File) => setPendingFile(file);
+  const defaultUploaderName =
+    (user?.user_metadata?.full_name as string) || user?.email?.split('@')[0] || 'Anonymous';
 
-  // Global paste handler: upload pasted files (Ctrl/Cmd+V).
-  // If clipboard contains only text, let the default paste happen (e.g., in textareas).
-  useEffect(() => {
-    const onPaste = (e: ClipboardEvent) => {
-      const data = e.clipboardData;
-      if (!data) return;
-      const files = Array.from(data.files || []);
-      if (files.length === 0) return; // text-only paste → let it through
-      const target = e.target as HTMLElement | null;
-      const tag = target?.tagName;
-      const text = data.getData('text');
-      // If user is typing in a textarea/input and clipboard also has text, prefer text paste.
-      if (text && (tag === 'TEXTAREA' || tag === 'INPUT')) return;
-      e.preventDefault();
-      setPendingFile(files[0]);
-    };
-    window.addEventListener('paste', onPaste);
-    return () => window.removeEventListener('paste', onPaste);
-  }, []);
-
-
-  const handleMetadataSubmit = async (data: { uploader_name: string; subject: string }) => {
-    const file = pendingFile;
-    setPendingFile(null);
-    if (!file) return;
+  const uploadBatch = async (incoming: File[]) => {
+    if (incoming.length === 0) return;
     try {
-      await addFile(file, {
-        uploader_name: data.uploader_name,
-        subject: data.subject,
+      const result = await addFiles(incoming, {
+        uploader_name: defaultUploaderName,
         uploader_email: user?.email ?? null,
         uploader_id: user?.id ?? null,
         keep_forever: keepForever && durationChosen,
         expires_seconds: keepForever && durationChosen ? overrideSeconds : undefined,
       });
       if (notificationsEnabled()) {
-        toast({
-          title: 'File shared',
-          description: `${data.subject} is now available on this network`,
-        });
+        if (result.failed > 0) {
+          toast({
+            title: `${result.ok} uploaded, ${result.failed} failed`,
+            description: 'Some files could not be shared',
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: incoming.length === 1 ? 'File shared' : `${result.ok} files shared`,
+            description: 'Available on this network',
+          });
+        }
       }
     } catch {
-      toast({
-        title: 'Upload failed',
-        description: 'Could not share the file',
-        variant: 'destructive',
-      });
+      toast({ title: 'Upload failed', description: 'Could not share the files', variant: 'destructive' });
     }
   };
+
+  // Global paste: upload pasted files
+  useEffect(() => {
+    const onPaste = (e: ClipboardEvent) => {
+      const data = e.clipboardData;
+      if (!data) return;
+      const files = Array.from(data.files || []);
+      if (files.length === 0) return;
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      const text = data.getData('text');
+      if (text && (tag === 'TEXTAREA' || tag === 'INPUT')) return;
+      e.preventDefault();
+      uploadBatch(files);
+    };
+    window.addEventListener('paste', onPaste);
+    return () => window.removeEventListener('paste', onPaste);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultUploaderName, keepForever, overrideSeconds, durationChosen]);
 
   const handleClearAllFiles = async () => {
     await clearAll();
@@ -112,7 +105,6 @@ const Index = () => {
   };
 
   const totalItems = files.length + texts.length;
-  const defaultUploaderName = (user?.user_metadata?.full_name as string) || user?.email?.split('@')[0] || '';
 
   return (
     <div className="min-h-screen bg-background">
@@ -133,35 +125,13 @@ const Index = () => {
             </div>
             <div className="flex items-center gap-2">
               <OnlineIndicator count={onlineCount} />
-              <FriendsNavButton />
               <ThemeToggle />
               <SettingsSheet />
               <AuthButton />
             </div>
           </div>
-          <p className="text-muted-foreground text-sm">
-            Real-time file & text sharing • Auto-rooms by network
-          </p>
+          <p className="text-muted-foreground text-sm">Real-time file & text sharing • Auto-rooms by network</p>
         </header>
-
-        <div className="mb-6 animate-fade-in">
-          <Link to="/friends" className="block group">
-            <div className="flex items-center gap-3 p-4 rounded-xl border border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50 transition-all">
-              <div className="p-2 rounded-lg bg-primary/15 text-primary">
-                <Users className="w-5 h-5" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm md:text-base text-foreground group-hover:text-primary transition-colors">
-                  Share with Friends
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Share outside your local network
-                </p>
-              </div>
-              <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
-            </div>
-          </Link>
-        </div>
 
         <div className="mb-6 animate-fade-in">
           <RoomInfo localIP={publicIP} roomId={roomId} fileCount={totalItems} />
@@ -169,37 +139,34 @@ const Index = () => {
 
         <Tabs defaultValue="files" className="animate-fade-in" style={{ animationDelay: '100ms' }}>
           <TabsList className="grid w-full grid-cols-2 bg-secondary/50 border border-border/50">
-            <TabsTrigger
-              value="files"
-              className="gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
-            >
+            <TabsTrigger value="files" className="gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
               <FileIcon className="w-4 h-4" />
               Files
               {files.length > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-primary/20 text-primary">
-                  {files.length}
-                </span>
+                <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-primary/20 text-primary">{files.length}</span>
               )}
             </TabsTrigger>
-            <TabsTrigger
-              value="text"
-              className="gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
-            >
+            <TabsTrigger value="text" className="gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
               <MessageSquareText className="w-4 h-4" />
               Text
               {texts.length > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-primary/20 text-primary">
-                  {texts.length}
-                </span>
+                <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-primary/20 text-primary">{texts.length}</span>
               )}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="files" className="mt-6 space-y-6">
-            <DropZone onFileDrop={handleFileDrop} isUploading={uploadState.isUploading} />
+            <DropZone onFilesDrop={uploadBatch} isUploading={uploadState.isUploading} />
 
             {uploadState.isUploading && (
-              <UploadProgress progress={uploadState.progress} fileName={uploadState.fileName} />
+              <UploadProgress
+                progress={uploadState.progress}
+                fileName={
+                  uploadState.totalFiles > 1
+                    ? `${uploadState.completedFiles}/${uploadState.totalFiles} files`
+                    : uploadState.fileName
+                }
+              />
             )}
 
             <div>
@@ -259,20 +226,14 @@ const Index = () => {
         </footer>
       </div>
 
-      <UploadMetadataModal
-        file={pendingFile}
-        open={!!pendingFile}
-        defaultName={defaultUploaderName}
-        onCancel={() => setPendingFile(null)}
-        onSubmit={handleMetadataSubmit}
-      />
-
       <FilePreviewModal file={previewFile} onClose={() => setPreviewFile(null)} />
 
-      <GlobalDropOverlay onFiles={(files) => setPendingFile(files[0])} />
-
-
-
+      <GlobalDropOverlay
+        onDrop={async (dt) => {
+          const files = await collectFilesFromDataTransfer(dt);
+          uploadBatch(files);
+        }}
+      />
     </div>
   );
 };

@@ -3,13 +3,13 @@ import { Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Props {
-  onFiles: (files: File[]) => void;
+  onDrop: (dt: DataTransfer) => void | Promise<void>;
 }
 
 const hasFiles = (e: DragEvent) =>
   !!e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
 
-const GlobalDropOverlay: React.FC<Props> = ({ onFiles }) => {
+const GlobalDropOverlay: React.FC<Props> = ({ onDrop }) => {
   const [active, setActive] = useState(false);
   const counter = useRef(0);
 
@@ -27,26 +27,26 @@ const GlobalDropOverlay: React.FC<Props> = ({ onFiles }) => {
     const onOver = (e: DragEvent) => {
       if (hasFiles(e)) e.preventDefault();
     };
-    const onDrop = (e: DragEvent) => {
+    const onDropEvt = (e: DragEvent) => {
       if (!hasFiles(e)) return;
       e.preventDefault();
       counter.current = 0;
       setActive(false);
-      const files = Array.from(e.dataTransfer?.files || []);
-      if (files.length) onFiles(files);
+      if (e.dataTransfer) onDrop(e.dataTransfer);
     };
 
     window.addEventListener('dragenter', onEnter);
     window.addEventListener('dragleave', onLeave);
     window.addEventListener('dragover', onOver);
-    window.addEventListener('drop', onDrop);
+    window.addEventListener('drop', onDropEvt);
     return () => {
       window.removeEventListener('dragenter', onEnter);
       window.removeEventListener('dragleave', onLeave);
       window.removeEventListener('dragover', onOver);
-      window.removeEventListener('drop', onDrop);
+      window.removeEventListener('drop', onDropEvt);
     };
-  }, [onFiles]);
+  }, [onDrop]);
+
 
   return (
     <div
