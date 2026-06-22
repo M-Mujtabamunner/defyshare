@@ -1,8 +1,7 @@
 // Presigns S3-compatible URLs for Backblaze B2 (path-style),
 // and performs hard deletes via B2 native API (removes all file versions).
-// Requires a valid Supabase JWT — anonymous callers receive HTTP 401.
+// Public endpoint: room-based file sharing is anonymous by design.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
-import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const KEY_ID = Deno.env.get('B2_KEY_ID')!;
 const APP_KEY = Deno.env.get('B2_APPLICATION_KEY')!;
@@ -11,30 +10,6 @@ const ENDPOINT = 's3.us-east-005.backblazeb2.com';
 const REGION = 'us-east-005';
 const SERVICE = 's3';
 
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
-
-async function requireUser(req: Request): Promise<{ userId: string } | Response> {
-  const authHeader = req.headers.get('Authorization') ?? '';
-  if (!authHeader.startsWith('Bearer ')) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-  const token = authHeader.slice('Bearer '.length);
-  const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    global: { headers: { Authorization: authHeader } },
-  });
-  const { data, error } = await sb.auth.getClaims(token);
-  if (error || !data?.claims?.sub) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-  return { userId: data.claims.sub as string };
-}
 
 
 // --- B2 native API auth (cached for the lifetime of the isolate) ---
