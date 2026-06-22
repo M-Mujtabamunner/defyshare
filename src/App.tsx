@@ -7,11 +7,6 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
-import FriendsLayout from "./pages/FriendsLayout";
-import FriendsEmpty from "./pages/FriendsEmpty";
-import FriendChat from "./pages/FriendChat";
-import GroupChat from "./pages/GroupChat";
-import FriendRequestsPage from "./pages/FriendRequests";
 import { PoweredByBadge } from "./components/PoweredByBadge";
 
 const queryClient = new QueryClient();
@@ -26,11 +21,6 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/admin" element={<Admin />} />
-            <Route path="/friends/request" element={<FriendRequestsPage />} />
-            <Route path="/friends" element={<FriendsLayout />} />
-            {/* legacy chat URLs collapse back to /friends */}
-            <Route path="/friends/group/:groupSlug" element={<FriendsLayout />} />
-            <Route path="/friends/:friendSlug" element={<FriendsLayout />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <PoweredByBadge />
