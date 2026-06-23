@@ -1,1 +1,7 @@
 project_id = "zdkstkgwgggssvyjipqp"
+
+[functions.b2-sign]
+verify_jwt = false
+
+[functions.b2-cleanup]
+verify_jwt = false
