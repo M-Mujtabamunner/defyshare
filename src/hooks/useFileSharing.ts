@@ -68,6 +68,7 @@ export const useFileSharing = (roomKey: string) => {
     progress: 0,
     totalFiles: 0,
     completedFiles: 0,
+    items: [],
   });
   const loadedRef = useRef<Map<string, number>>(new Map());
   const totalsRef = useRef<Map<string, number>>(new Map());
