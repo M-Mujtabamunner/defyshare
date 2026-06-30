@@ -27,12 +27,22 @@ export interface UploadMetadata {
   expires_seconds?: number | null;
 }
 
+export interface PerFileProgress {
+  id: string;
+  name: string;
+  size: number;
+  loaded: number;
+  status: 'queued' | 'uploading' | 'done' | 'error';
+  error?: string;
+}
+
 export interface UploadState {
   isUploading: boolean;
   progress: number; // 0-100 aggregate
   fileName?: string;
   totalFiles: number;
   completedFiles: number;
+  items: PerFileProgress[];
 }
 
 const CONCURRENCY = 6;
@@ -58,6 +68,7 @@ export const useFileSharing = (roomKey: string) => {
     progress: 0,
     totalFiles: 0,
     completedFiles: 0,
+    items: [],
   });
   const loadedRef = useRef<Map<string, number>>(new Map());
   const totalsRef = useRef<Map<string, number>>(new Map());
@@ -127,6 +138,13 @@ export const useFileSharing = (roomKey: string) => {
     setUploadState((prev) => ({ ...prev, progress }));
   }, []);
 
+  const updateItem = useCallback((id: string, patch: Partial<PerFileProgress>) => {
+    setUploadState((prev) => ({
+      ...prev,
+      items: prev.items.map((it) => (it.id === id ? { ...it, ...patch } : it)),
+    }));
+  }, []);
+
   const uploadOne = useCallback(
     async (file: File, metadata: UploadMetadata | undefined, id: string) => {
       const safeName = file.name.replace(/[^\w.\-]+/g, '_');
@@ -134,10 +152,12 @@ export const useFileSharing = (roomKey: string) => {
       const filePath = toB2Path(key);
       totalsRef.current.set(id, file.size);
       loadedRef.current.set(id, 0);
+      updateItem(id, { status: 'uploading' });
 
       const uploadUrl = await getB2UploadUrl(key, file.type);
       await xhrPut(uploadUrl, file, (loaded) => {
         loadedRef.current.set(id, loaded);
+        updateItem(id, { loaded });
         recomputeProgress();
       });
 
@@ -160,8 +180,9 @@ export const useFileSharing = (roomKey: string) => {
       }
       const { error: dbError } = await supabase.from('shared_files').insert(insertRow as never);
       if (dbError) throw dbError;
+      updateItem(id, { status: 'done', loaded: file.size });
     },
-    [roomKey, recomputeProgress],
+    [roomKey, recomputeProgress, updateItem],
   );
 
   const addFiles = useCallback(
@@ -169,12 +190,20 @@ export const useFileSharing = (roomKey: string) => {
       if (!roomKey || incoming.length === 0) return { ok: 0, failed: 0 };
       loadedRef.current.clear();
       totalsRef.current.clear();
+      const items: PerFileProgress[] = incoming.map((f, i) => ({
+        id: `${i}-${f.name}`,
+        name: f.name,
+        size: f.size,
+        loaded: 0,
+        status: 'queued',
+      }));
       setUploadState({
         isUploading: true,
         progress: 0,
         fileName: incoming.length === 1 ? incoming[0].name : `${incoming.length} files`,
         totalFiles: incoming.length,
         completedFiles: 0,
+        items,
       });
 
       let ok = 0;
@@ -188,20 +217,25 @@ export const useFileSharing = (roomKey: string) => {
           try {
             await uploadOne(file, metadata, id);
             ok++;
-          } catch {
+          } catch (e) {
             failed++;
+            updateItem(id, { status: 'error', error: e instanceof Error ? e.message : 'Upload failed' });
           }
           setUploadState((prev) => ({ ...prev, completedFiles: prev.completedFiles + 1 }));
         }
       };
       await Promise.all(Array.from({ length: Math.min(CONCURRENCY, incoming.length) }, worker));
 
-      setUploadState({ isUploading: false, progress: 100, totalFiles: incoming.length, completedFiles: incoming.length });
-      setTimeout(() => setUploadState({ isUploading: false, progress: 0, totalFiles: 0, completedFiles: 0 }), 600);
+      setUploadState((prev) => ({ ...prev, isUploading: false, progress: 100, completedFiles: incoming.length }));
+      setTimeout(
+        () => setUploadState({ isUploading: false, progress: 0, totalFiles: 0, completedFiles: 0, items: [] }),
+        1500,
+      );
       return { ok, failed };
     },
-    [roomKey, uploadOne],
+    [roomKey, uploadOne, updateItem],
   );
+
 
   const addFile = useCallback(
     async (file: File, metadata?: UploadMetadata) => {

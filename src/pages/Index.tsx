@@ -9,6 +9,7 @@ import TextShare from '@/components/TextShare';
 import ThemeToggle from '@/components/ThemeToggle';
 import OnlineIndicator from '@/components/OnlineIndicator';
 import UploadProgress from '@/components/UploadProgress';
+import UploadProgressList from '@/components/UploadProgressList';
 import AuthButton from '@/components/AuthButton';
 import SettingsSheet from '@/components/SettingsSheet';
 import FilePreviewModal from '@/components/FilePreviewModal';
@@ -159,16 +160,16 @@ const Index = () => {
           <TabsContent value="files" className="mt-6 space-y-6">
             <DropZone onFilesDrop={uploadBatch} isUploading={uploadState.isUploading} />
 
-            {uploadState.isUploading && (
-              <UploadProgress
-                progress={uploadState.progress}
-                fileName={
-                  uploadState.totalFiles > 1
-                    ? `${uploadState.completedFiles}/${uploadState.totalFiles} files`
-                    : uploadState.fileName
-                }
+            {uploadState.items.length > 0 ? (
+              <UploadProgressList
+                items={uploadState.items}
+                aggregate={uploadState.progress}
+                totalFiles={uploadState.totalFiles}
+                completedFiles={uploadState.completedFiles}
               />
-            )}
+            ) : uploadState.isUploading ? (
+              <UploadProgress progress={uploadState.progress} fileName={uploadState.fileName} />
+            ) : null}
 
             <div>
               <div className="flex items-center justify-between mb-4">
