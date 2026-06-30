@@ -82,6 +82,33 @@ const Thumb: React.FC<{ file: SharedFile }> = ({ file }) => {
 };
 
 const FileList: React.FC<FileListProps> = ({ files, loading, onDownload, onRemove, onPreview }) => {
+  const { toast } = useToast();
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const flash = (id: string) => {
+    setCopiedId(id);
+    setTimeout(() => setCopiedId((c) => (c === id ? null : c)), 1200);
+  };
+
+  const copyText = async (text: string, label: string, id: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      flash(id);
+      toast({ title: `${label} copied`, description: text.length > 60 ? text.slice(0, 60) + '…' : text });
+    } catch {
+      toast({ title: 'Copy failed', variant: 'destructive' });
+    }
+  };
+
+  const copyLink = async (file: SharedFile) => {
+    const url = await getSignedFileUrl(file.file_path);
+    if (!url) {
+      toast({ title: 'Could not create link', variant: 'destructive' });
+      return;
+    }
+    await copyText(url, 'Link', `link-${file.id}`);
+  };
+
   if (loading) {
     return (
       <div className="text-center py-12 text-muted-foreground">
