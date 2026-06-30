@@ -114,24 +114,25 @@ const Index = () => {
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-accent/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1.5s' }} />
       </div>
 
-      <div className="relative max-w-2xl mx-auto px-4 py-8 md:py-12">
-        <header className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <img src={logo} alt="DefyShare Logo" className="w-10 h-10 md:w-12 md:h-12" />
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+      <div className="relative max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-12 w-full">
+        <header className="mb-6 sm:mb-8">
+          <div className="flex items-center justify-between gap-2 mb-4 w-full min-w-0">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <img src={logo} alt="DefyShare Logo" className="w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 shrink-0" />
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight truncate">
                 Defy<span className="text-primary text-glow">Share</span>
               </h1>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
               <OnlineIndicator count={onlineCount} />
               <ThemeToggle />
               <SettingsSheet />
               <AuthButton />
             </div>
           </div>
-          <p className="text-muted-foreground text-sm">Real-time file & text sharing • Auto-rooms by network</p>
+          <p className="text-muted-foreground text-xs sm:text-sm">Real-time file & text sharing • Auto-rooms by network</p>
         </header>
+
 
         <div className="mb-6 animate-fade-in">
           <RoomInfo localIP={publicIP} roomId={roomId} fileCount={totalItems} />
