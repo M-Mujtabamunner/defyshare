@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Download, Trash2, FileText, Image as ImageIcon, Film, Music, Archive, File, Loader2, Infinity as InfinityIcon, Clock } from 'lucide-react';
+import { Download, Trash2, FileText, Image as ImageIcon, Film, Music, Archive, File, Loader2, Infinity as InfinityIcon, Clock, Link2, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SharedFile } from '@/hooks/useFileSharing';
 import { getSignedFileUrl } from '@/lib/storageUrls';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 interface FileListProps {
