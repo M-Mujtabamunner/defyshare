@@ -29,9 +29,11 @@ const GlobalDropOverlay: React.FC<Props> = ({ onDrop }) => {
     };
     const onDropEvt = (e: DragEvent) => {
       if (!hasFiles(e)) return;
-      e.preventDefault();
       counter.current = 0;
       setActive(false);
+      // If a child dropzone already handled the drop, skip to avoid duplicate uploads.
+      if (e.defaultPrevented) return;
+      e.preventDefault();
       if (e.dataTransfer) onDrop(e.dataTransfer);
     };
 
