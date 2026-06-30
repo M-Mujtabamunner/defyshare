@@ -160,16 +160,16 @@ const Index = () => {
           <TabsContent value="files" className="mt-6 space-y-6">
             <DropZone onFilesDrop={uploadBatch} isUploading={uploadState.isUploading} />
 
-            {uploadState.isUploading && (
-              <UploadProgress
-                progress={uploadState.progress}
-                fileName={
-                  uploadState.totalFiles > 1
-                    ? `${uploadState.completedFiles}/${uploadState.totalFiles} files`
-                    : uploadState.fileName
-                }
+            {uploadState.items.length > 0 ? (
+              <UploadProgressList
+                items={uploadState.items}
+                aggregate={uploadState.progress}
+                totalFiles={uploadState.totalFiles}
+                completedFiles={uploadState.completedFiles}
               />
-            )}
+            ) : uploadState.isUploading ? (
+              <UploadProgress progress={uploadState.progress} fileName={uploadState.fileName} />
+            ) : null}
 
             <div>
               <div className="flex items-center justify-between mb-4">
