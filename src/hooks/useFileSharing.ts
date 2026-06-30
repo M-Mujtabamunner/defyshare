@@ -27,12 +27,22 @@ export interface UploadMetadata {
   expires_seconds?: number | null;
 }
 
+export interface PerFileProgress {
+  id: string;
+  name: string;
+  size: number;
+  loaded: number;
+  status: 'queued' | 'uploading' | 'done' | 'error';
+  error?: string;
+}
+
 export interface UploadState {
   isUploading: boolean;
   progress: number; // 0-100 aggregate
   fileName?: string;
   totalFiles: number;
   completedFiles: number;
+  items: PerFileProgress[];
 }
 
 const CONCURRENCY = 6;
