@@ -9,6 +9,7 @@ import TextShare from '@/components/TextShare';
 import ThemeToggle from '@/components/ThemeToggle';
 import OnlineIndicator from '@/components/OnlineIndicator';
 import UploadProgress from '@/components/UploadProgress';
+import UploadProgressList from '@/components/UploadProgressList';
 import AuthButton from '@/components/AuthButton';
 import SettingsSheet from '@/components/SettingsSheet';
 import FilePreviewModal from '@/components/FilePreviewModal';
