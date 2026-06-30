@@ -174,13 +174,32 @@ const FileList: React.FC<FileListProps> = ({ files, loading, onDownload, onRemov
             </div>
 
             <div
-              className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity"
               onClick={(e) => e.stopPropagation()}
             >
               <Button
                 variant="ghost"
                 size="icon"
+                onClick={() => copyText(file.subject || file.name, 'Name', `name-${file.id}`)}
+                title="Copy file name"
+                className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+              >
+                {copiedId === `name-${file.id}` ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4" />}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => copyLink(file)}
+                title="Copy share link"
+                className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+              >
+                {copiedId === `link-${file.id}` ? <Check className="w-4 h-4 text-primary" /> : <Link2 className="w-4 h-4" />}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => onDownload(file)}
+                title="Download"
                 className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
               >
                 <Download className="w-4 h-4" />
@@ -189,6 +208,7 @@ const FileList: React.FC<FileListProps> = ({ files, loading, onDownload, onRemov
                 variant="ghost"
                 size="icon"
                 onClick={() => onRemove(file.id)}
+                title="Remove"
                 className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
               >
                 <Trash2 className="w-4 h-4" />
