@@ -32,7 +32,7 @@ export interface PerFileProgress {
   name: string;
   size: number;
   loaded: number;
-  status: 'queued' | 'uploading' | 'done' | 'error';
+  status: 'queued' | 'uploading' | 'done' | 'error' | 'canceled';
   error?: string;
 }
 
@@ -47,9 +47,22 @@ export interface UploadState {
 
 const CONCURRENCY = 6;
 
-const xhrPut = (url: string, file: File, onProgress: (loaded: number) => void) =>
+class UploadCanceledError extends Error {
+  constructor() {
+    super('Upload canceled');
+    this.name = 'UploadCanceledError';
+  }
+}
+
+const xhrPut = (
+  url: string,
+  file: File,
+  onProgress: (loaded: number) => void,
+  registerXhr: (xhr: XMLHttpRequest) => void,
+) =>
   new Promise<void>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
+    registerXhr(xhr);
     xhr.open('PUT', url);
     if (file.type) xhr.setRequestHeader('Content-Type', file.type);
     xhr.upload.onprogress = (e) => {
@@ -57,6 +70,7 @@ const xhrPut = (url: string, file: File, onProgress: (loaded: number) => void) =
     };
     xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Upload failed (${xhr.status})`)));
     xhr.onerror = () => reject(new Error('Network error during upload'));
+    xhr.onabort = () => reject(new UploadCanceledError());
     xhr.send(file);
   });
 
@@ -72,6 +86,10 @@ export const useFileSharing = (roomKey: string) => {
   });
   const loadedRef = useRef<Map<string, number>>(new Map());
   const totalsRef = useRef<Map<string, number>>(new Map());
+  const xhrsRef = useRef<Map<string, XMLHttpRequest>>(new Map());
+  const fileMapRef = useRef<Map<string, File>>(new Map());
+  const metadataRef = useRef<UploadMetadata | undefined>(undefined);
+  const canceledRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (!roomKey) return;
@@ -152,14 +170,23 @@ export const useFileSharing = (roomKey: string) => {
       const filePath = toB2Path(key);
       totalsRef.current.set(id, file.size);
       loadedRef.current.set(id, 0);
-      updateItem(id, { status: 'uploading' });
+      updateItem(id, { status: 'uploading', loaded: 0, error: undefined });
 
       const uploadUrl = await getB2UploadUrl(key, file.type);
-      await xhrPut(uploadUrl, file, (loaded) => {
-        loadedRef.current.set(id, loaded);
-        updateItem(id, { loaded });
-        recomputeProgress();
-      });
+      if (canceledRef.current.has(id)) throw new UploadCanceledError();
+      await xhrPut(
+        uploadUrl,
+        file,
+        (loaded) => {
+          loadedRef.current.set(id, loaded);
+          updateItem(id, { loaded });
+          recomputeProgress();
+        },
+        (xhr) => {
+          xhrsRef.current.set(id, xhr);
+        },
+      );
+      xhrsRef.current.delete(id);
 
       const expires_seconds = metadata?.expires_seconds;
       const keep_forever = metadata?.keep_forever ?? false;
@@ -185,18 +212,39 @@ export const useFileSharing = (roomKey: string) => {
     [roomKey, recomputeProgress, updateItem],
   );
 
+  const runOne = useCallback(
+    async (id: string, file: File, metadata: UploadMetadata | undefined) => {
+      try {
+        await uploadOne(file, metadata, id);
+        return 'ok' as const;
+      } catch (e) {
+        if (e instanceof UploadCanceledError || canceledRef.current.has(id)) {
+          updateItem(id, { status: 'canceled', error: 'Canceled' });
+          return 'canceled' as const;
+        }
+        updateItem(id, { status: 'error', error: e instanceof Error ? e.message : 'Upload failed' });
+        return 'failed' as const;
+      } finally {
+        xhrsRef.current.delete(id);
+      }
+    },
+    [uploadOne, updateItem],
+  );
+
   const addFiles = useCallback(
     async (incoming: File[], metadata?: UploadMetadata) => {
       if (!roomKey || incoming.length === 0) return { ok: 0, failed: 0 };
       loadedRef.current.clear();
       totalsRef.current.clear();
-      const items: PerFileProgress[] = incoming.map((f, i) => ({
-        id: `${i}-${f.name}`,
-        name: f.name,
-        size: f.size,
-        loaded: 0,
-        status: 'queued',
-      }));
+      xhrsRef.current.clear();
+      fileMapRef.current.clear();
+      canceledRef.current.clear();
+      metadataRef.current = metadata;
+      const items: PerFileProgress[] = incoming.map((f, i) => {
+        const id = `${i}-${f.name}`;
+        fileMapRef.current.set(id, f);
+        return { id, name: f.name, size: f.size, loaded: 0, status: 'queued' };
+      });
       setUploadState({
         isUploading: true,
         progress: 0,
@@ -214,28 +262,23 @@ export const useFileSharing = (roomKey: string) => {
           const i = cursor++;
           const file = incoming[i];
           const id = `${i}-${file.name}`;
-          try {
-            await uploadOne(file, metadata, id);
-            ok++;
-          } catch (e) {
-            failed++;
-            updateItem(id, { status: 'error', error: e instanceof Error ? e.message : 'Upload failed' });
+          if (canceledRef.current.has(id)) {
+            updateItem(id, { status: 'canceled', error: 'Canceled' });
+          } else {
+            const res = await runOne(id, file, metadata);
+            if (res === 'ok') ok++;
+            else if (res === 'failed') failed++;
           }
           setUploadState((prev) => ({ ...prev, completedFiles: prev.completedFiles + 1 }));
         }
       };
       await Promise.all(Array.from({ length: Math.min(CONCURRENCY, incoming.length) }, worker));
 
-      setUploadState((prev) => ({ ...prev, isUploading: false, progress: 100, completedFiles: incoming.length }));
-      setTimeout(
-        () => setUploadState({ isUploading: false, progress: 0, totalFiles: 0, completedFiles: 0, items: [] }),
-        1500,
-      );
+      setUploadState((prev) => ({ ...prev, isUploading: false, progress: 100 }));
       return { ok, failed };
     },
-    [roomKey, uploadOne, updateItem],
+    [roomKey, runOne, updateItem],
   );
-
 
   const addFile = useCallback(
     async (file: File, metadata?: UploadMetadata) => {
@@ -243,6 +286,46 @@ export const useFileSharing = (roomKey: string) => {
     },
     [addFiles],
   );
+
+  const cancelUpload = useCallback((id: string) => {
+    canceledRef.current.add(id);
+    const xhr = xhrsRef.current.get(id);
+    if (xhr) {
+      try { xhr.abort(); } catch { /* noop */ }
+      xhrsRef.current.delete(id);
+    } else {
+      // Not started yet (queued) — mark canceled immediately
+      updateItem(id, { status: 'canceled', error: 'Canceled' });
+    }
+    loadedRef.current.set(id, 0);
+    recomputeProgress();
+  }, [recomputeProgress, updateItem]);
+
+  const retryUpload = useCallback(async (id: string) => {
+    const file = fileMapRef.current.get(id);
+    if (!file) return;
+    canceledRef.current.delete(id);
+    setUploadState((prev) => ({
+      ...prev,
+      isUploading: true,
+      items: prev.items.map((it) => (it.id === id ? { ...it, status: 'queued', loaded: 0, error: undefined } : it)),
+    }));
+    const res = await runOne(id, file, metadataRef.current);
+    setUploadState((prev) => {
+      const stillActive = prev.items.some((it) => it.status === 'uploading' || it.status === 'queued');
+      return { ...prev, isUploading: stillActive };
+    });
+    return res;
+  }, [runOne]);
+
+  const dismissUploads = useCallback(() => {
+    loadedRef.current.clear();
+    totalsRef.current.clear();
+    xhrsRef.current.clear();
+    fileMapRef.current.clear();
+    canceledRef.current.clear();
+    setUploadState({ isUploading: false, progress: 0, totalFiles: 0, completedFiles: 0, items: [] });
+  }, []);
 
   const removeFile = useCallback(
     async (fileId: string) => {
@@ -273,5 +356,17 @@ export const useFileSharing = (roomKey: string) => {
     await supabase.from('shared_files').delete().eq('room_key', roomKey);
   }, [files, roomKey]);
 
-  return { files, loading, uploadState, addFile, addFiles, removeFile, downloadFile, clearAll };
+  return {
+    files,
+    loading,
+    uploadState,
+    addFile,
+    addFiles,
+    removeFile,
+    downloadFile,
+    clearAll,
+    cancelUpload,
+    retryUpload,
+    dismissUploads,
+  };
 };
