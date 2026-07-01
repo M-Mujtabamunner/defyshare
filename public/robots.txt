@@ -1,8 +1,14 @@
 User-agent: Googlebot
 Allow: /
+Disallow: /api/
+Disallow: /_supabase/
+Disallow: /admin
 
 User-agent: Bingbot
 Allow: /
+Disallow: /api/
+Disallow: /_supabase/
+Disallow: /admin
 
 User-agent: Twitterbot
 Allow: /
@@ -12,3 +18,8 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /_supabase/
+Disallow: /admin
+
+Sitemap: https://defyshare.app/sitemap.xml
