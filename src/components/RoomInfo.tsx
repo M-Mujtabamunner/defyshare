@@ -3,6 +3,7 @@ import { Wifi, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useLocalNetwork } from '@/hooks/useLocalNetwork';
 
 interface RoomInfoProps {
   localIP: string;
@@ -12,6 +13,7 @@ interface RoomInfoProps {
 
 const RoomInfo: React.FC<RoomInfoProps> = ({ localIP, roomId, fileCount }) => {
   const [copied, setCopied] = useState(false);
+  const { networkName, connectionType } = useLocalNetwork();
 
   const copyIP = async () => {
     await navigator.clipboard.writeText(localIP);
@@ -19,17 +21,22 @@ const RoomInfo: React.FC<RoomInfoProps> = ({ localIP, roomId, fileCount }) => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const isDetecting = localIP === 'detecting...' || networkName === 'detecting...';
+
   return (
     <div className="flex items-center justify-between gap-3 p-3 sm:p-4 rounded-lg bg-secondary/30 border border-border/50 w-full min-w-0">
       <div className="flex items-center gap-3 min-w-0 flex-1">
         <div className={cn(
           "p-2 rounded-lg shrink-0",
-          localIP !== 'detecting...' ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+          !isDetecting ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
         )}>
           <Wifi className="w-4 h-4" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-xs sm:text-sm text-muted-foreground">Your Network</p>
+          {/* Show the actual detected network label instead of static "Your Network" */}
+          <p className="text-xs sm:text-sm text-muted-foreground truncate">
+            {isDetecting ? 'Your Network' : networkName}
+          </p>
           <div className="flex items-center gap-1 min-w-0">
             <code className="font-mono text-xs sm:text-sm text-foreground truncate">{localIP}</code>
             {localIP !== 'detecting...' && (
@@ -57,7 +64,6 @@ const RoomInfo: React.FC<RoomInfoProps> = ({ localIP, roomId, fileCount }) => {
         </p>
       </div>
     </div>
-
   );
 };
 
