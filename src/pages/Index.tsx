@@ -227,7 +227,7 @@ const Index = () => {
         </Tabs>
 
         <footer className="mt-12 text-center text-xs text-muted-foreground">
-          <p>Real-time sync powered by defyscale</p>
+          <p>Real-time sync powered by DefyScale</p>
         </footer>
       </div>
 
