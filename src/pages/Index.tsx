@@ -30,7 +30,7 @@ const NOTIF_KEY = 'defyshare:notifications';
 const Index = () => {
   const { theme } = useTheme();
   const { publicIP, roomId } = usePublicIP();
-  const { files, loading: filesLoading, uploadState, addFiles, removeFile, downloadFile, clearAll } = useFileSharing(roomId);
+  const { files, loading: filesLoading, uploadState, addFiles, removeFile, downloadFile, clearAll, cancelUpload, retryUpload, dismissUploads } = useFileSharing(roomId);
   const { texts, loading: textsLoading, addText, removeText, clearAllTexts } = useTextSharing(roomId);
   const onlineCount = useOnlinePresence(roomId);
   const { user } = useAuth();
@@ -166,6 +166,9 @@ const Index = () => {
                 aggregate={uploadState.progress}
                 totalFiles={uploadState.totalFiles}
                 completedFiles={uploadState.completedFiles}
+                onCancel={cancelUpload}
+                onRetry={retryUpload}
+                onDismiss={!uploadState.isUploading ? dismissUploads : undefined}
               />
             ) : uploadState.isUploading ? (
               <UploadProgress progress={uploadState.progress} fileName={uploadState.fileName} />
