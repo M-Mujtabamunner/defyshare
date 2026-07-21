@@ -1,4 +1,4 @@
-import defyscaleLogo from '@/assets/defyshare-logo.png.asset.json';
+import defyscaleLogo from '@/assets/defyscale-logo.png.asset.json';
 
 export const PoweredByBadge = () => (
   <a
