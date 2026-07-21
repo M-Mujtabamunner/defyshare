@@ -1,5 +1,5 @@
 // DefyShare service worker - app shell caching + offline fallback
-const VERSION = 'v1';
+const VERSION = 'v2';
 const SHELL = `defyshare-shell-${VERSION}`;
 const RUNTIME = `defyshare-runtime-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
