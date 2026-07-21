@@ -104,20 +104,20 @@ const DropZone: React.FC<DropZoneProps> = ({ onFilesDrop, isUploading }) => {
         aria-label="Choose files"
       />
 
-      <div className="p-10 md:p-12 flex flex-col items-center justify-center gap-4 relative z-0">
+      <div className="px-4 py-5 sm:p-10 md:p-12 flex flex-col items-center justify-center gap-2.5 sm:gap-4 relative z-0">
         <div
           className={cn(
-            'p-4 rounded-full bg-secondary transition-all duration-300',
+            'p-2.5 sm:p-4 rounded-full bg-secondary transition-all duration-300',
             isDragOver && 'bg-primary/20 scale-110',
             'group-hover:bg-primary/10',
           )}
         >
           {isUploading ? (
-            <FileIcon className="w-8 h-8 text-primary animate-pulse" />
+            <FileIcon className="w-5 h-5 sm:w-8 sm:h-8 text-primary animate-pulse" />
           ) : (
             <Upload
               className={cn(
-                'w-8 h-8 transition-colors duration-300',
+                'w-5 h-5 sm:w-8 sm:h-8 transition-colors duration-300',
                 isDragOver ? 'text-primary' : 'text-muted-foreground group-hover:text-primary',
               )}
             />
@@ -125,10 +125,10 @@ const DropZone: React.FC<DropZoneProps> = ({ onFilesDrop, isUploading }) => {
         </div>
 
         <div className="text-center">
-          <p className={cn('font-medium transition-colors duration-300', isDragOver ? 'text-primary text-glow' : 'text-foreground')}>
-            {isUploading ? 'Uploading…' : 'Drop files or folders here'}
+          <p className={cn('font-medium text-sm sm:text-base transition-colors duration-300', isDragOver ? 'text-primary text-glow' : 'text-foreground')}>
+            {isUploading ? 'Uploading…' : 'Drop files or tap to upload'}
           </p>
-          <p className="text-sm text-muted-foreground mt-1">click to pick files, or use the folder button below</p>
+          <p className="hidden sm:block text-sm text-muted-foreground mt-1">click to pick files, or use the folder button below</p>
         </div>
 
         <button
