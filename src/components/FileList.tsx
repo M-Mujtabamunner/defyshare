@@ -136,7 +136,7 @@ const FileList: React.FC<FileListProps> = ({ files, loading, onDownload, onRemov
           <div
             key={file.id}
             className={cn(
-              'group flex items-center gap-4 p-4 rounded-lg bg-secondary/50 border border-border/50',
+              'group flex items-center gap-3 p-3 sm:gap-4 sm:p-4 rounded-lg bg-secondary/50 border border-border/50',
               'hover:bg-secondary hover:border-primary/30 transition-all duration-200',
               'animate-fade-in',
               canPreview && 'cursor-pointer',
@@ -147,23 +147,18 @@ const FileList: React.FC<FileListProps> = ({ files, loading, onDownload, onRemov
             <Thumb file={file} />
 
             <div className="flex-1 min-w-0">
-              <p className="font-medium truncate font-mono text-sm">
+              <p className="font-medium truncate font-mono text-[13px] sm:text-sm leading-tight">
                 {file.subject || file.name}
               </p>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5 flex-wrap">
+              <div className="flex items-center gap-x-1.5 gap-y-0.5 text-[11px] sm:text-xs text-muted-foreground mt-1 flex-wrap">
                 {file.uploader_name && (
-                  <>
-                    <span className="text-primary/80">{file.uploader_name}</span>
-                    <span>•</span>
-                  </>
+                  <span className="text-primary/80 truncate max-w-[110px]">{file.uploader_name}</span>
                 )}
-                <span className="truncate max-w-[140px]">{file.name}</span>
-                <span>•</span>
-                <span>{formatFileSize(file.size)}</span>
-                <span>•</span>
-                <span>{formatTime(file.created_at)}</span>
-                <span>•</span>
-                <span className="inline-flex items-center gap-1">
+                <span className="tabular-nums">{formatFileSize(file.size)}</span>
+                <span className="opacity-40">·</span>
+                <span className="tabular-nums">{formatTime(file.created_at)}</span>
+                <span className="opacity-40">·</span>
+                <span className="inline-flex items-center gap-0.5 tabular-nums">
                   {file.keep_forever ? (
                     <><InfinityIcon className="w-3 h-3" /> kept</>
                   ) : (
@@ -174,7 +169,7 @@ const FileList: React.FC<FileListProps> = ({ files, loading, onDownload, onRemov
             </div>
 
             <div
-              className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity"
+              className="flex items-center gap-0.5 sm:gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
               onClick={(e) => e.stopPropagation()}
             >
               <Button
@@ -182,7 +177,7 @@ const FileList: React.FC<FileListProps> = ({ files, loading, onDownload, onRemov
                 size="icon"
                 onClick={() => copyText(file.subject || file.name, 'Name', `name-${file.id}`)}
                 title="Copy file name"
-                className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                className="hidden sm:inline-flex h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
               >
                 {copiedId === `name-${file.id}` ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4" />}
               </Button>
