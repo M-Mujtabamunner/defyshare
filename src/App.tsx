@@ -12,6 +12,8 @@ import PressPage from "./pages/PressPage";
 import VsPage from "./pages/VsPage";
 import SeoDynamicPage from "./pages/SeoDynamicPage";
 import { PoweredByBadge } from "./components/PoweredByBadge";
+import { InstallPrompt } from "./components/InstallPrompt";
+
 
 const queryClient = new QueryClient();
 
@@ -47,6 +49,8 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           <PoweredByBadge />
+          <InstallPrompt />
+
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>

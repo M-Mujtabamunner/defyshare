@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Offline — DefyShare</title>
+  <link rel="icon" href="/favicon.ico" />
+  <style>
+    :root { color-scheme: dark; }
+    html, body { margin: 0; height: 100%; background: #0b0b12; color: #e5e7eb; font-family: Inter, system-ui, sans-serif; }
+    .wrap { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; }
+    img { width: 88px; height: 88px; margin-bottom: 20px; }
+    h1 { font-size: 24px; margin: 0 0 8px; }
+    p { color: #9ca3af; max-width: 32ch; margin: 0 0 20px; }
+    button { background: #7C3AED; color: white; border: 0; border-radius: 12px; padding: 12px 20px; font-weight: 600; font-size: 15px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <img src="/icons/icon-192.png" alt="DefyShare" />
+    <h1>You're offline</h1>
+    <p>DefyShare needs a connection to sync files across devices. Reconnect and try again.</p>
+    <button onclick="location.reload()">Retry</button>
+  </div>
+</body>
+</html>
