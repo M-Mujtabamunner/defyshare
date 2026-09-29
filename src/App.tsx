@@ -11,6 +11,7 @@ import BrandPage from "./pages/BrandPage";
 import PressPage from "./pages/PressPage";
 import VsPage from "./pages/VsPage";
 import SeoDynamicPage from "./pages/SeoDynamicPage";
+import InfoPage from "./pages/InfoPage";
 import { PoweredByBadge } from "./components/PoweredByBadge";
 import { InstallPrompt } from "./components/InstallPrompt";
 
@@ -32,6 +33,10 @@ const App = () => (
             {/* Static SEO pages */}
             <Route path="/brand" element={<BrandPage />} />
             <Route path="/press" element={<PressPage />} />
+            <Route path="/about" element={<InfoPage />} />
+            <Route path="/privacy" element={<InfoPage />} />
+            <Route path="/terms" element={<InfoPage />} />
+            <Route path="/contact" element={<InfoPage />} />
 
             {/* Comparison pages: /vs/snapdrop */}
             <Route path="/vs/:competitor" element={<VsPage />} />

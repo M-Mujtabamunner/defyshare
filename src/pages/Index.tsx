@@ -226,7 +226,41 @@ const Index = () => {
           </TabsContent>
         </Tabs>
 
-        <footer className="mt-12 text-center text-xs text-muted-foreground">
+        <section className="mt-16 space-y-8 text-sm leading-relaxed">
+          <div>
+            <h2 className="text-xl font-semibold mb-2">Share files between your devices in seconds</h2>
+            <p className="text-muted-foreground">DefyShare lets you move photos, documents, videos, folders and text between your phone, laptop and tablet without cables, email or sign-up. Open this page on every device connected to the same Wi-Fi and they join the same private room automatically.</p>
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold mb-2">How to use DefyShare</h2>
+            <ol className="list-decimal pl-5 space-y-1 text-muted-foreground">
+              <li>Open defyshare.app on two or more devices on the same network.</li>
+              <li>Drop files or a whole folder into the box above, or paste them with Ctrl+V.</li>
+              <li>They appear instantly on your other devices — tap to preview or download.</li>
+              <li>Items delete themselves automatically after about 30 hours.</li>
+            </ol>
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold mb-2">Frequently asked questions</h2>
+            <h3 className="font-medium mt-3">Do I need an account?</h3>
+            <p className="text-muted-foreground">No. Signing in with Google is optional and only adds your name to files you share.</p>
+            <h3 className="font-medium mt-3">Who can see my files?</h3>
+            <p className="text-muted-foreground">Only devices on the same network, which share your room. Other networks never see them.</p>
+            <h3 className="font-medium mt-3">Does it work on iPhone and Android?</h3>
+            <p className="text-muted-foreground">Yes — it runs in any modern browser on Windows, macOS, Linux, Android, iOS and ChromeOS, and can be installed as an app.</p>
+            <h3 className="font-medium mt-3">Can I send folders?</h3>
+            <p className="text-muted-foreground">Yes. Drag a folder in and every file inside uploads in parallel with per-file progress.</p>
+          </div>
+        </section>
+
+        <footer className="mt-12 text-center text-xs text-muted-foreground space-y-2">
+          <nav className="flex flex-wrap justify-center gap-x-4 gap-y-1">
+            <a href="/about" className="hover:text-primary">About</a>
+            <a href="/privacy" className="hover:text-primary">Privacy</a>
+            <a href="/terms" className="hover:text-primary">Terms</a>
+            <a href="/contact" className="hover:text-primary">Contact</a>
+            <a href="/press" className="hover:text-primary">Press</a>
+          </nav>
           <p>Real-time sync powered by DefyScale</p>
         </footer>
       </div>
