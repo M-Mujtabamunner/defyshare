@@ -11094,4 +11094,8 @@
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
+  <url><loc>https://defyshare.app/about</loc></url>
+  <url><loc>https://defyshare.app/privacy</loc></url>
+  <url><loc>https://defyshare.app/terms</loc></url>
+  <url><loc>https://defyshare.app/contact</loc></url>
 </urlset>
