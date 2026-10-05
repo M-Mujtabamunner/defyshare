@@ -12,7 +12,7 @@ import UploadProgressList from '@/components/UploadProgressList';
 import SettingsSheet from '@/components/SettingsSheet';
 import FilePreviewModal from '@/components/FilePreviewModal';
 import UploadAnywhere from '@/components/UploadAnywhere';
-import AdSlot, { AD_SLOTS } from '@/components/AdSlot';
+import AdSlot from '@/components/AdSlot';
 import { usePublicIP } from '@/hooks/usePublicIP';
 import { useFileSharing, SharedFile } from '@/hooks/useFileSharing';
 import { useTextSharing } from '@/hooks/useTextSharing';
@@ -117,7 +117,7 @@ const Index = () => {
         data-upload-surface
       >
         <div className="hidden xl:block pt-24" data-upload-surface>
-          <AdSlot slot={AD_SLOTS.rail} format="vertical" className="sticky top-6 w-[160px] h-[600px]" />
+          <AdSlot placement="rail" className="sticky top-6" />
         </div>
 
         <main className="w-full max-w-2xl mx-auto py-5 sm:py-8" data-upload-surface>
@@ -207,7 +207,7 @@ const Index = () => {
             </TabsContent>
           </Tabs>
 
-          <AdSlot slot={AD_SLOTS.inContent} className="mt-8 w-full h-[100px] sm:h-[90px]" format="horizontal" />
+          <AdSlot placement="inContent" className="mt-8" />
 
           <section className="mt-10 space-y-7 text-sm leading-relaxed">
             <div>
@@ -238,7 +238,7 @@ const Index = () => {
             </div>
           </section>
 
-          <AdSlot slot={AD_SLOTS.footer} className="mt-10 w-full h-[250px] sm:h-[120px]" format="auto" />
+          <AdSlot placement="rectangle" className="mt-10" />
 
           <footer className="mt-8 pb-14 text-center text-xs text-muted-foreground space-y-2">
             <nav className="flex flex-wrap justify-center gap-x-4 gap-y-1">
@@ -253,7 +253,7 @@ const Index = () => {
         </main>
 
         <div className="hidden xl:block pt-24" data-upload-surface>
-          <AdSlot slot={AD_SLOTS.rail} format="vertical" className="sticky top-6 w-[160px] h-[600px]" />
+          <AdSlot placement="rail" className="sticky top-6" />
         </div>
       </div>
 
