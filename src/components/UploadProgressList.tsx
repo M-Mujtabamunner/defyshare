@@ -44,7 +44,8 @@ const UploadProgressList: React.FC<Props> = ({
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
           <p className="text-sm font-medium">
-            Uploading <span className="text-primary">{completedFiles}/{totalFiles}</span>
+            {completedFiles >= totalFiles ? 'Uploaded' : 'Uploading'}{' '}
+            <span className="text-primary">{completedFiles}/{totalFiles}</span>
           </p>
           <p className="text-xs text-muted-foreground">{Math.round(aggregate)}% complete</p>
         </div>

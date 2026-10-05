@@ -2,6 +2,7 @@ import { useLocation, Link } from 'react-router-dom';
 import { CheckCircle2, XCircle, Zap, Shield, Globe, ArrowRight } from 'lucide-react';
 import { COMPETITORS, DEFYSHARE_FEATURES } from '@/data/seoData';
 import { SeoHead } from '@/components/SeoHead';
+import { getSeoMeta } from '@/data/seoMeta';
 import { JsonLd, buildBreadcrumbSchema, buildFaqSchema, buildWebAppSchema } from '@/components/JsonLd';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { TableOfContents } from '@/components/TableOfContents';
@@ -25,10 +26,10 @@ export default function AlternativePage() {
 
   if (!competitor) {
     return (
-      <div className="min-h-screen bg-[#0B0B0F] flex items-center justify-center text-zinc-400">
+      <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
         <div className="text-center">
-          <p className="text-2xl font-bold text-zinc-200 mb-2">Page not found</p>
-          <Link to="/" className="text-violet-400 hover:underline">
+          <p className="text-2xl font-bold text-foreground/90 mb-2">Page not found</p>
+          <Link to="/" className="text-primary hover:underline">
             Go to DefyShare →
           </Link>
         </div>
@@ -36,8 +37,9 @@ export default function AlternativePage() {
     );
   }
 
-  const title = `Best ${competitor.name} Alternative in 2025 — DefyShare`;
-  const description = `Looking for a ${competitor.name} alternative? DefyShare is a free, browser-based P2P file sharing app with no file size limits, no account required, and zero cloud uploads.`;
+  const defaultTitle = `Best ${competitor.name} Alternative in 2026 — DefyShare`;
+  const defaultDescription = `Looking for a ${competitor.name} alternative? DefyShare is a free, browser-based P2P file sharing app with no file size limits, no account required, and zero cloud uploads.`;
+  const { title, description } = getSeoMeta(pathname) ?? { title: defaultTitle, description: defaultDescription };
   const canonical = `https://defyshare.app/${competitor.slug}-alternative`;
 
   const faqs = [
@@ -79,7 +81,7 @@ export default function AlternativePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0B0B0F] text-zinc-100">
+    <div className="min-h-screen bg-background text-foreground">
       <SeoHead
         title={title}
         description={description}
@@ -114,21 +116,21 @@ export default function AlternativePage() {
           <div className="flex-1 min-w-0">
             {/* Hero */}
             <div className="mb-10">
-              <div className="inline-flex items-center gap-2 rounded-full bg-violet-500/10 border border-violet-500/20 px-3 py-1 text-xs text-violet-400 font-medium mb-4">
+              <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-xs text-primary font-medium mb-4">
                 <Zap className="w-3 h-3" />
                 Free {competitor.name} Alternative
               </div>
-              <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-zinc-100 mb-4">
-                Best {competitor.name} Alternative in 2025
+              <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
+                Best {competitor.name} Alternative in 2026
               </h1>
-              <p className="text-lg text-zinc-400 max-w-2xl leading-relaxed">
+              <p className="text-lg text-muted-foreground max-w-2xl leading-relaxed">
                 {competitor.name} is {competitor.description}. While it works well, many users need
-                something faster, more private, and completely free. <strong className="text-zinc-200">DefyShare</strong> delivers
+                something faster, more private, and completely free. <strong className="text-foreground/90">DefyShare</strong> delivers
                 all of that — directly in your browser, with no installs, no accounts, and no cloud uploads.
               </p>
               <Link
                 to="/"
-                className="mt-6 inline-flex items-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold px-6 py-3 transition-colors"
+                className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary hover:bg-primary/90 text-white font-semibold px-6 py-3 transition-colors"
               >
                 Try DefyShare Free <ArrowRight className="w-4 h-4" />
               </Link>
@@ -136,15 +138,15 @@ export default function AlternativePage() {
 
             {/* What is competitor */}
             <section id="what-is" className="mb-10 scroll-mt-24">
-              <h2 className="text-2xl font-bold text-zinc-100 mb-4">
+              <h2 className="text-2xl font-bold text-foreground mb-4">
                 What is {competitor.name}?
               </h2>
-              <p className="text-zinc-400 leading-relaxed mb-4">
+              <p className="text-muted-foreground leading-relaxed mb-4">
                 {competitor.name} is {competitor.description}. It has been a popular choice for
                 quick file transfers, but it comes with constraints that increasingly frustrate users
                 in professional and everyday use cases.
               </p>
-              <p className="text-zinc-400 leading-relaxed">
+              <p className="text-muted-foreground leading-relaxed">
                 As your file transfer needs grow — whether you're dealing with large video files,
                 confidential documents, or cross-platform teams — the limitations of {competitor.name}{' '}
                 become more apparent. That's why thousands of users search for a {competitor.name}{' '}
@@ -154,15 +156,15 @@ export default function AlternativePage() {
 
             {/* Limitations */}
             <section id="limitations" className="mb-10 scroll-mt-24">
-              <h2 className="text-2xl font-bold text-zinc-100 mb-4">
+              <h2 className="text-2xl font-bold text-foreground mb-4">
                 Why People Look for a {competitor.name} Alternative
               </h2>
-              <div className="rounded-xl border border-red-500/20 bg-red-950/10 p-5 mb-6">
+              <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-5 mb-6">
                 <div className="flex items-start gap-3">
-                  <XCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                  <XCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-semibold text-zinc-200 mb-1">Key Limitation of {competitor.name}</p>
-                    <p className="text-zinc-400 text-sm leading-relaxed">
+                    <p className="font-semibold text-foreground/90 mb-1">Key Limitation of {competitor.name}</p>
+                    <p className="text-muted-foreground text-sm leading-relaxed">
                       {competitor.name} {competitor.limitation}. This means that professionals
                       dealing with large files, sensitive data, or cross-platform environments often
                       hit a wall.
@@ -177,8 +179,8 @@ export default function AlternativePage() {
                   `Account requirements or app installations creating friction for recipients`,
                   `File size restrictions blocking transfer of large videos, CAD files, and datasets`,
                 ].map((item) => (
-                  <li key={item} className="flex items-start gap-3 text-zinc-400 text-sm">
-                    <XCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                  <li key={item} className="flex items-start gap-3 text-muted-foreground text-sm">
+                    <XCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                     {item}
                   </li>
                 ))}
@@ -187,10 +189,10 @@ export default function AlternativePage() {
 
             {/* Why DefyShare */}
             <section id="why-defyshare" className="mb-10 scroll-mt-24">
-              <h2 className="text-2xl font-bold text-zinc-100 mb-4">
+              <h2 className="text-2xl font-bold text-foreground mb-4">
                 Why DefyShare is the Best {competitor.name} Alternative
               </h2>
-              <p className="text-zinc-400 leading-relaxed mb-6">
+              <p className="text-muted-foreground leading-relaxed mb-6">
                 DefyShare uses WebRTC peer-to-peer technology to transfer files directly between
                 devices on the same local network. This means your files never touch our servers
                 — they go straight from one device to the other at the full speed of your local
@@ -199,28 +201,28 @@ export default function AlternativePage() {
               <div className="grid sm:grid-cols-3 gap-4">
                 {[
                   {
-                    icon: <Zap className="w-5 h-5 text-yellow-400" />,
+                    icon: <Zap className="w-5 h-5 text-amber-500" />,
                     title: 'Blazing Fast',
                     desc: 'Transfer at full LAN speed — up to 1 Gbps on modern networks',
                   },
                   {
-                    icon: <Shield className="w-5 h-5 text-green-400" />,
+                    icon: <Shield className="w-5 h-5 text-green-600" />,
                     title: 'Truly Private',
                     desc: 'P2P transfer — zero data uploaded to any server',
                   },
                   {
-                    icon: <Globe className="w-5 h-5 text-violet-400" />,
+                    icon: <Globe className="w-5 h-5 text-primary" />,
                     title: 'Universal',
                     desc: 'Works on Windows, Mac, Linux, iOS, and Android',
                   },
                 ].map((card) => (
                   <div
                     key={card.title}
-                    className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5"
+                    className="rounded-xl border border-border bg-card p-5"
                   >
                     <div className="mb-3">{card.icon}</div>
-                    <p className="font-semibold text-zinc-200 mb-1">{card.title}</p>
-                    <p className="text-xs text-zinc-400 leading-relaxed">{card.desc}</p>
+                    <p className="font-semibold text-foreground/90 mb-1">{card.title}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{card.desc}</p>
                   </div>
                 ))}
               </div>
@@ -228,16 +230,16 @@ export default function AlternativePage() {
 
             {/* Comparison table */}
             <section id="comparison" className="mb-10 scroll-mt-24">
-              <h2 className="text-2xl font-bold text-zinc-100 mb-4">
+              <h2 className="text-2xl font-bold text-foreground mb-4">
                 DefyShare vs {competitor.name}: Feature Comparison
               </h2>
-              <div className="overflow-x-auto rounded-xl border border-zinc-800">
+              <div className="overflow-x-auto rounded-xl border border-border">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-zinc-800 bg-zinc-900/60">
-                      <th className="text-left px-4 py-3 font-semibold text-zinc-300">Feature</th>
-                      <th className="text-center px-4 py-3 font-semibold text-violet-400">DefyShare</th>
-                      <th className="text-center px-4 py-3 font-semibold text-zinc-400">
+                    <tr className="border-b border-border bg-card">
+                      <th className="text-left px-4 py-3 font-semibold text-foreground/80">Feature</th>
+                      <th className="text-center px-4 py-3 font-semibold text-primary">DefyShare</th>
+                      <th className="text-center px-4 py-3 font-semibold text-muted-foreground">
                         {competitor.name}
                       </th>
                     </tr>
@@ -246,17 +248,17 @@ export default function AlternativePage() {
                     {DEFYSHARE_FEATURES.map((row, i) => (
                       <tr
                         key={row.feature}
-                        className={`border-b border-zinc-800/50 ${i % 2 === 0 ? 'bg-zinc-900/20' : ''}`}
+                        className={`border-b border-border/60 ${i % 2 === 0 ? 'bg-card/50' : ''}`}
                       >
-                        <td className="px-4 py-3 text-zinc-300">
+                        <td className="px-4 py-3 text-foreground/80">
                           <div>{row.feature}</div>
-                          <div className="text-xs text-zinc-500">{row.description}</div>
+                          <div className="text-xs text-muted-foreground">{row.description}</div>
                         </td>
                         <td className="px-4 py-3 text-center">
-                          <CheckCircle2 className="w-5 h-5 text-green-400 mx-auto" />
+                          <CheckCircle2 className="w-5 h-5 text-green-600 mx-auto" />
                         </td>
                         <td className="px-4 py-3 text-center">
-                          <XCircle className="w-5 h-5 text-red-400 mx-auto" />
+                          <XCircle className="w-5 h-5 text-red-600 mx-auto" />
                         </td>
                       </tr>
                     ))}
@@ -267,10 +269,10 @@ export default function AlternativePage() {
 
             {/* How to switch */}
             <section id="how-to-switch" className="mb-10 scroll-mt-24">
-              <h2 className="text-2xl font-bold text-zinc-100 mb-4">
+              <h2 className="text-2xl font-bold text-foreground mb-4">
                 How to Switch from {competitor.name} to DefyShare
               </h2>
-              <p className="text-zinc-400 leading-relaxed mb-6">
+              <p className="text-muted-foreground leading-relaxed mb-6">
                 Switching from {competitor.name} to DefyShare takes less than 30 seconds. There is
                 nothing to uninstall, no data to migrate, and no settings to configure.
               </p>
@@ -298,12 +300,12 @@ export default function AlternativePage() {
                   },
                 ].map((item) => (
                   <li key={item.step} className="flex gap-4">
-                    <div className="w-8 h-8 rounded-full bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-400 font-bold text-sm shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center text-primary font-bold text-sm shrink-0">
                       {item.step}
                     </div>
                     <div>
-                      <p className="font-semibold text-zinc-200 mb-1">{item.title}</p>
-                      <p className="text-sm text-zinc-400 leading-relaxed">{item.desc}</p>
+                      <p className="font-semibold text-foreground/90 mb-1">{item.title}</p>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
                     </div>
                   </li>
                 ))}
@@ -312,17 +314,17 @@ export default function AlternativePage() {
 
             {/* FAQ */}
             <section id="faq" className="mb-10 scroll-mt-24">
-              <h2 className="text-2xl font-bold text-zinc-100 mb-6">
+              <h2 className="text-2xl font-bold text-foreground mb-6">
                 Frequently Asked Questions
               </h2>
               <div className="space-y-4">
                 {faqs.map((faq) => (
                   <div
                     key={faq.question}
-                    className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-5"
+                    className="rounded-xl border border-border bg-card/70 p-5"
                   >
-                    <h3 className="font-semibold text-zinc-200 mb-2">{faq.question}</h3>
-                    <p className="text-sm text-zinc-400 leading-relaxed">{faq.answer}</p>
+                    <h3 className="font-semibold text-foreground/90 mb-2">{faq.question}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{faq.answer}</p>
                   </div>
                 ))}
               </div>
@@ -332,16 +334,16 @@ export default function AlternativePage() {
             <InternalLinks links={relatedLinks} />
 
             {/* CTA */}
-            <div className="mt-12 rounded-2xl bg-gradient-to-br from-violet-600/20 to-purple-900/20 border border-violet-500/20 p-8 text-center">
-              <h2 className="text-2xl font-bold text-zinc-100 mb-2">
+            <div className="mt-12 rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20 p-8 text-center">
+              <h2 className="text-2xl font-bold text-foreground mb-2">
                 Ready to try the best {competitor.name} alternative?
               </h2>
-              <p className="text-zinc-400 mb-6">
+              <p className="text-muted-foreground mb-6">
                 No sign-up. No download. No file size limits. Just open and share.
               </p>
               <Link
                 to="/"
-                className="inline-flex items-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold px-8 py-3 transition-colors"
+                className="inline-flex items-center gap-2 rounded-xl bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-3 transition-colors"
               >
                 Start Using DefyShare Free <ArrowRight className="w-4 h-4" />
               </Link>

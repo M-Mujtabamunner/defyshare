@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { Upload, FileIcon, FolderUp } from 'lucide-react';
+import { Upload, FolderUp, FilePlus2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface DropZoneProps {
@@ -7,14 +7,14 @@ interface DropZoneProps {
   isUploading: boolean;
 }
 
-// Recursively walk a DataTransferItem entry to gather files (folder support)
-const readEntries = (reader: any): Promise<any[]> =>
+// Recursively walk a dropped entry to gather files (folder support)
+const readEntries = (reader: FileSystemDirectoryReader): Promise<FileSystemEntry[]> =>
   new Promise((resolve, reject) => reader.readEntries(resolve, reject));
 
-const walkEntry = async (entry: any, path = ''): Promise<File[]> => {
+const walkEntry = async (entry: FileSystemEntry, path = ''): Promise<File[]> => {
   if (entry.isFile) {
     return new Promise<File[]>((resolve, reject) =>
-      entry.file((file: File) => {
+      (entry as FileSystemFileEntry).file((file: File) => {
         try {
           // preserve relative path
           Object.defineProperty(file, 'webkitRelativePath', { value: path + file.name });
@@ -24,7 +24,7 @@ const walkEntry = async (entry: any, path = ''): Promise<File[]> => {
     );
   }
   if (entry.isDirectory) {
-    const reader = entry.createReader();
+    const reader = (entry as FileSystemDirectoryEntry).createReader();
     const all: File[] = [];
     let batch = await readEntries(reader);
     while (batch.length > 0) {
@@ -42,8 +42,8 @@ const walkEntry = async (entry: any, path = ''): Promise<File[]> => {
 export const collectFilesFromDataTransfer = async (dt: DataTransfer): Promise<File[]> => {
   const items = dt.items ? Array.from(dt.items) : [];
   const entries = items
-    .map((item) => (item as any).webkitGetAsEntry?.())
-    .filter(Boolean);
+    .map((item) => item.webkitGetAsEntry?.())
+    .filter((e): e is FileSystemEntry => !!e);
   if (entries.length > 0) {
     const groups = await Promise.all(entries.map((e) => walkEntry(e)));
     return groups.flat();
@@ -53,17 +53,8 @@ export const collectFilesFromDataTransfer = async (dt: DataTransfer): Promise<Fi
 
 const DropZone: React.FC<DropZoneProps> = ({ onFilesDrop, isUploading }) => {
   const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-  }, []);
 
   const handleDrop = useCallback(
     async (e: React.DragEvent) => {
@@ -84,83 +75,84 @@ const DropZone: React.FC<DropZoneProps> = ({ onFilesDrop, isUploading }) => {
     [onFilesDrop],
   );
 
+  const pick = (ref: React.RefObject<HTMLInputElement>) => (e: React.MouseEvent) => {
+    e.stopPropagation();
+    ref.current?.click();
+  };
+
   return (
     <div
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
+      role="button"
+      tabIndex={0}
+      data-upload-zone
+      onClick={() => fileInputRef.current?.click()}
+      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && fileInputRef.current?.click()}
+      onDragOver={(e) => {
+        e.preventDefault();
+        setIsDragOver(true);
+      }}
+      onDragLeave={() => setIsDragOver(false)}
       onDrop={handleDrop}
       className={cn(
-        'relative overflow-hidden rounded-xl border-2 border-dashed transition-all duration-300 group',
-        isDragOver ? 'border-primary bg-primary/5 glow-primary' : 'border-border hover:border-primary/50 hover:bg-secondary/30',
+        'group flex items-center gap-3 rounded-xl border-2 border-dashed px-3 py-2.5 cursor-pointer transition-colors',
+        isDragOver ? 'border-primary bg-primary/10' : 'border-border bg-card/60 hover:border-primary/60 hover:bg-primary/5',
         isUploading && 'pointer-events-none opacity-70',
       )}
     >
+      <div className="grid place-items-center w-9 h-9 rounded-lg bg-primary text-primary-foreground shrink-0">
+        {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+      </div>
+      <p className="flex-1 min-w-0 text-sm font-medium truncate">
+        {isUploading ? 'Uploading…' : isDragOver ? 'Release to upload' : (
+          <>
+            <span className="sm:hidden">Add files</span>
+            <span className="hidden sm:inline">Drop files or folders here</span>
+          </>
+        )}
+      </p>
+      <div className="flex items-center gap-1.5 shrink-0">
+        <button
+          type="button"
+          onClick={pick(fileInputRef)}
+          disabled={isUploading}
+          className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md border border-border bg-background hover:border-primary/50 hover:text-primary transition-colors"
+        >
+          <FilePlus2 className="w-3.5 h-3.5" />
+          Files
+        </button>
+        <button
+          type="button"
+          onClick={pick(folderInputRef)}
+          disabled={isUploading}
+          className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md border border-border bg-background hover:border-primary/50 hover:text-primary transition-colors"
+        >
+          <FolderUp className="w-3.5 h-3.5" />
+          Folder
+        </button>
+      </div>
       <input
+        ref={fileInputRef}
         type="file"
         multiple
         onChange={handleFileSelect}
-        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+        onClick={(e) => e.stopPropagation()}
+        className="hidden"
         disabled={isUploading}
         aria-label="Choose files"
       />
-
-      <div className="px-4 py-5 sm:p-10 md:p-12 flex flex-col items-center justify-center gap-2.5 sm:gap-4 relative z-0">
-        <div
-          className={cn(
-            'p-2.5 sm:p-4 rounded-full bg-secondary transition-all duration-300',
-            isDragOver && 'bg-primary/20 scale-110',
-            'group-hover:bg-primary/10',
-          )}
-        >
-          {isUploading ? (
-            <FileIcon className="w-5 h-5 sm:w-8 sm:h-8 text-primary animate-pulse" />
-          ) : (
-            <Upload
-              className={cn(
-                'w-5 h-5 sm:w-8 sm:h-8 transition-colors duration-300',
-                isDragOver ? 'text-primary' : 'text-muted-foreground group-hover:text-primary',
-              )}
-            />
-          )}
-        </div>
-
-        <div className="text-center">
-          <p className={cn('font-medium text-sm sm:text-base transition-colors duration-300', isDragOver ? 'text-primary text-glow' : 'text-foreground')}>
-            {isUploading ? 'Uploading…' : 'Drop files or tap to upload'}
-          </p>
-          <p className="hidden sm:block text-sm text-muted-foreground mt-1">click to pick files, or use the folder button below</p>
-        </div>
-
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            folderInputRef.current?.click();
-          }}
-          className="relative z-20 inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-md border border-border bg-background/60 hover:bg-primary/10 hover:border-primary/40 hover:text-primary transition"
-          disabled={isUploading}
-        >
-          <FolderUp className="w-4 h-4" />
-          Upload folder
-        </button>
-        <input
-          ref={folderInputRef}
-          type="file"
-          // @ts-expect-error non-standard but widely supported
-          webkitdirectory=""
-          directory=""
-          multiple
-          onChange={handleFileSelect}
-          className="hidden"
-          disabled={isUploading}
-        />
-      </div>
-
-      {isDragOver && (
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/20 to-transparent animate-pulse" />
-        </div>
-      )}
+      <input
+        ref={folderInputRef}
+        type="file"
+        // @ts-expect-error non-standard but widely supported
+        webkitdirectory=""
+        directory=""
+        multiple
+        onChange={handleFileSelect}
+        onClick={(e) => e.stopPropagation()}
+        className="hidden"
+        disabled={isUploading}
+        aria-label="Choose a folder"
+      />
     </div>
   );
 };

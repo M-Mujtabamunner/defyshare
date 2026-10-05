@@ -2,6 +2,7 @@ import { useLocation, Link } from 'react-router-dom';
 import { CheckCircle2, ArrowRight, Zap, Shield, FileIcon } from 'lucide-react';
 import { FORMATS } from '@/data/seoData';
 import { SeoHead } from '@/components/SeoHead';
+import { getSeoMeta } from '@/data/seoMeta';
 import { JsonLd, buildBreadcrumbSchema, buildFaqSchema, buildWebAppSchema } from '@/components/JsonLd';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { TableOfContents } from '@/components/TableOfContents';
@@ -24,17 +25,18 @@ export default function FormatPage() {
 
   if (!format) {
     return (
-      <div className="min-h-screen bg-[#0B0B0F] flex items-center justify-center text-zinc-400">
+      <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
         <div className="text-center">
-          <p className="text-2xl font-bold text-zinc-200 mb-2">Page not found</p>
-          <Link to="/" className="text-violet-400 hover:underline">Go to DefyShare →</Link>
+          <p className="text-2xl font-bold text-foreground/90 mb-2">Page not found</p>
+          <Link to="/" className="text-primary hover:underline">Go to DefyShare →</Link>
         </div>
       </div>
     );
   }
 
-  const title = `Share ${format.name} Files Instantly — Free & No Size Limit | DefyShare`;
-  const description = `Transfer ${format.description} of any size directly between devices over your local network. No cloud uploads, no accounts, no size limits. Free forever.`;
+  const defaultTitle = `Share ${format.name} Files Instantly — Free & No Size Limit | DefyShare`;
+  const defaultDescription = `Transfer ${format.description} of any size directly between devices over your local network. No cloud uploads, no accounts, no size limits. Free forever.`;
+  const { title, description } = getSeoMeta(pathname) ?? { title: defaultTitle, description: defaultDescription };
   const canonical = `https://defyshare.app/share-${format.slug}-files`;
 
   const faqs = [
@@ -76,7 +78,7 @@ export default function FormatPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0B0B0F] text-zinc-100">
+    <div className="min-h-screen bg-background text-foreground">
       <SeoHead
         title={title}
         description={description}
@@ -103,17 +105,17 @@ export default function FormatPage() {
             {/* Hero */}
             <div className="mb-10">
               <div className="text-5xl mb-4">{format.icon}</div>
-              <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-zinc-100 mb-4">
+              <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
                 Share {format.name} Files Instantly
               </h1>
-              <p className="text-lg text-zinc-400 max-w-2xl leading-relaxed">
+              <p className="text-lg text-muted-foreground max-w-2xl leading-relaxed">
                 Transfer {format.description} — commonly used for {format.useCases} — of any size,
-                directly between devices. <strong className="text-zinc-200">No cloud upload.
+                directly between devices. <strong className="text-foreground/90">No cloud upload.
                 No account. No size limit.</strong> Works in any browser.
               </p>
               <Link
                 to="/"
-                className="mt-6 inline-flex items-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold px-6 py-3 transition-colors"
+                className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary hover:bg-primary/90 text-white font-semibold px-6 py-3 transition-colors"
               >
                 Share {format.name} Files Now <ArrowRight className="w-4 h-4" />
               </Link>
@@ -121,10 +123,10 @@ export default function FormatPage() {
 
             {/* Overview */}
             <section id="overview" className="mb-10 scroll-mt-24">
-              <h2 className="text-2xl font-bold text-zinc-100 mb-4">
+              <h2 className="text-2xl font-bold text-foreground mb-4">
                 The Problem with Sharing {format.name} Files
               </h2>
-              <p className="text-zinc-400 leading-relaxed mb-4">
+              <p className="text-muted-foreground leading-relaxed mb-4">
                 {format.name} files are used for {format.useCases}. They can be {format.avgSize},
                 which creates real problems when trying to share them:
               </p>
@@ -135,14 +137,14 @@ export default function FormatPage() {
                   `WeTransfer limits free transfers to 2 GB`,
                   `USB drives require physical access and aren't always available`,
                 ].map((item) => (
-                  <li key={item} className="flex items-center gap-3 text-zinc-400 text-sm">
+                  <li key={item} className="flex items-center gap-3 text-muted-foreground text-sm">
                     <div className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
                     {item}
                   </li>
                 ))}
               </ul>
-              <p className="text-zinc-400 leading-relaxed">
-                <strong className="text-zinc-200">DefyShare eliminates all of these constraints.</strong>{' '}
+              <p className="text-muted-foreground leading-relaxed">
+                <strong className="text-foreground/90">DefyShare eliminates all of these constraints.</strong>{' '}
                 By using WebRTC peer-to-peer technology, it creates a direct connection between two
                 devices on the same network and transfers your {format.name} files at full LAN speed.
               </p>
@@ -150,36 +152,36 @@ export default function FormatPage() {
 
             {/* Why DefyShare */}
             <section id="why-defyshare" className="mb-10 scroll-mt-24">
-              <h2 className="text-2xl font-bold text-zinc-100 mb-4">
+              <h2 className="text-2xl font-bold text-foreground mb-4">
                 Why DefyShare is the Best Way to Share {format.name} Files
               </h2>
               <div className="grid sm:grid-cols-2 gap-4">
                 {[
                   {
-                    icon: <Zap className="w-5 h-5 text-yellow-400" />,
+                    icon: <Zap className="w-5 h-5 text-amber-500" />,
                     title: `No ${format.name} file size limit`,
                     desc: `Transfer ${format.name} files of any size — from small ${format.avgSize} files to entire archives — without restrictions.`,
                   },
                   {
-                    icon: <Shield className="w-5 h-5 text-green-400" />,
+                    icon: <Shield className="w-5 h-5 text-green-600" />,
                     title: 'Files stay private',
                     desc: `Your ${format.name} files never touch a server. They go directly from device to device over your encrypted local network.`,
                   },
                   {
-                    icon: <FileIcon className="w-5 h-5 text-blue-400" />,
+                    icon: <FileIcon className="w-5 h-5 text-blue-600" />,
                     title: 'No conversion or compression',
                     desc: `${format.name} files transfer byte-for-byte intact. Zero quality loss, no format conversion, no compression.`,
                   },
                   {
-                    icon: <CheckCircle2 className="w-5 h-5 text-violet-400" />,
+                    icon: <CheckCircle2 className="w-5 h-5 text-primary" />,
                     title: 'Works on all devices',
                     desc: `Share ${format.name} files between Windows, Mac, Linux, iPhone, iPad, Android, and Chromebook — all in the browser.`,
                   },
                 ].map((card) => (
-                  <div key={card.title} className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
+                  <div key={card.title} className="rounded-xl border border-border bg-card/80 p-5">
                     <div className="mb-3">{card.icon}</div>
-                    <p className="font-semibold text-zinc-200 mb-1">{card.title}</p>
-                    <p className="text-xs text-zinc-400 leading-relaxed">{card.desc}</p>
+                    <p className="font-semibold text-foreground/90 mb-1">{card.title}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{card.desc}</p>
                   </div>
                 ))}
               </div>
@@ -187,7 +189,7 @@ export default function FormatPage() {
 
             {/* How to */}
             <section id="how-to" className="mb-10 scroll-mt-24">
-              <h2 className="text-2xl font-bold text-zinc-100 mb-6">
+              <h2 className="text-2xl font-bold text-foreground mb-6">
                 How to Share {format.name} Files with DefyShare
               </h2>
               <ol className="space-y-5">
@@ -198,12 +200,12 @@ export default function FormatPage() {
                   { step: '4', title: 'Transfer completes at full network speed', desc: `The ${format.name} file arrives on the other device in seconds. Transfer speed depends on your network — Wi-Fi 6 can achieve 500+ Mbps, meaning a 1 GB file transfers in about 15 seconds.` },
                 ].map((item) => (
                   <li key={item.step} className="flex gap-4">
-                    <div className="w-8 h-8 rounded-full bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-400 font-bold text-sm shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center text-primary font-bold text-sm shrink-0">
                       {item.step}
                     </div>
                     <div>
-                      <p className="font-semibold text-zinc-200 mb-1">{item.title}</p>
-                      <p className="text-sm text-zinc-400 leading-relaxed">{item.desc}</p>
+                      <p className="font-semibold text-foreground/90 mb-1">{item.title}</p>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
                     </div>
                   </li>
                 ))}
@@ -212,10 +214,10 @@ export default function FormatPage() {
 
             {/* Use cases */}
             <section id="use-cases" className="mb-10 scroll-mt-24">
-              <h2 className="text-2xl font-bold text-zinc-100 mb-4">
+              <h2 className="text-2xl font-bold text-foreground mb-4">
                 Common Use Cases for Sharing {format.name} Files
               </h2>
-              <p className="text-zinc-400 leading-relaxed mb-4">
+              <p className="text-muted-foreground leading-relaxed mb-4">
                 {format.name} files are commonly used for {format.useCases}. Here are the most
                 frequent scenarios where DefyShare saves time:
               </p>
@@ -227,8 +229,8 @@ export default function FormatPage() {
                   `Transferring ${format.name} files between operating systems (Windows to Mac, or Linux to Android)`,
                   `Sharing ${format.name} files on-site with clients without uploading to the cloud`,
                 ].map((uc) => (
-                  <li key={uc} className="flex items-start gap-3 text-zinc-400 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-violet-400 shrink-0 mt-0.5" />
+                  <li key={uc} className="flex items-start gap-3 text-muted-foreground text-sm">
+                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                     {uc}
                   </li>
                 ))}
@@ -237,12 +239,12 @@ export default function FormatPage() {
 
             {/* FAQ */}
             <section id="faq" className="mb-10 scroll-mt-24">
-              <h2 className="text-2xl font-bold text-zinc-100 mb-6">Frequently Asked Questions</h2>
+              <h2 className="text-2xl font-bold text-foreground mb-6">Frequently Asked Questions</h2>
               <div className="space-y-4">
                 {faqs.map((faq) => (
-                  <div key={faq.question} className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-5">
-                    <h3 className="font-semibold text-zinc-200 mb-2">{faq.question}</h3>
-                    <p className="text-sm text-zinc-400 leading-relaxed">{faq.answer}</p>
+                  <div key={faq.question} className="rounded-xl border border-border bg-card/70 p-5">
+                    <h3 className="font-semibold text-foreground/90 mb-2">{faq.question}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{faq.answer}</p>
                   </div>
                 ))}
               </div>
@@ -251,12 +253,12 @@ export default function FormatPage() {
             <ReviewTrust />
             <InternalLinks links={relatedLinks} />
 
-            <div className="mt-12 rounded-2xl bg-gradient-to-br from-violet-600/20 to-purple-900/20 border border-violet-500/20 p-8 text-center">
-              <h2 className="text-2xl font-bold text-zinc-100 mb-2">
+            <div className="mt-12 rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20 p-8 text-center">
+              <h2 className="text-2xl font-bold text-foreground mb-2">
                 Share your {format.name} files right now — it's free
               </h2>
-              <p className="text-zinc-400 mb-6">No sign-up. No size limit. Just open and drag.</p>
-              <Link to="/" className="inline-flex items-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold px-8 py-3 transition-colors">
+              <p className="text-muted-foreground mb-6">No sign-up. No size limit. Just open and drag.</p>
+              <Link to="/" className="inline-flex items-center gap-2 rounded-xl bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-3 transition-colors">
                 Open DefyShare <ArrowRight className="w-4 h-4" />
               </Link>
             </div>

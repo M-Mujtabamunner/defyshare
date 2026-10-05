@@ -2,83 +2,48 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
-
 @layer base {
   :root {
-    --background: 220 20% 6%;
-    --foreground: 210 20% 92%;
+    /* Light theme: cream #F4EFE6 base, orange #FD6F3B accent */
+    --background: 39 39% 93%;
+    --foreground: 24 16% 11%;
 
-    --card: 220 18% 10%;
-    --card-foreground: 210 20% 92%;
+    --card: 40 50% 97%;
+    --card-foreground: 24 16% 11%;
 
-    --popover: 220 18% 10%;
-    --popover-foreground: 210 20% 92%;
+    --popover: 40 50% 98%;
+    --popover-foreground: 24 16% 11%;
 
-    --primary: 175 80% 50%;
-    --primary-foreground: 220 20% 6%;
+    --primary: 16 98% 61%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 16% 16%;
-    --secondary-foreground: 210 20% 92%;
+    --secondary: 37 32% 88%;
+    --secondary-foreground: 24 16% 11%;
 
-    --muted: 220 14% 14%;
-    --muted-foreground: 215 15% 55%;
+    --muted: 37 32% 88%;
+    --muted-foreground: 25 9% 38%;
 
-    --accent: 175 80% 50%;
-    --accent-foreground: 220 20% 6%;
+    --accent: 16 98% 61%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 210 20% 98%;
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 220 14% 18%;
-    --input: 220 14% 18%;
-    --ring: 175 80% 50%;
+    --border: 35 24% 82%;
+    --input: 35 24% 82%;
+    --ring: 16 98% 61%;
+
+    --link: 217 91% 48%;
+    --link-bg: 214 95% 93%;
 
     --radius: 0.75rem;
 
-    /* Custom tokens */
-    --glow-primary: 175 80% 50%;
-    --glow-secondary: 260 70% 60%;
-    --surface-elevated: 220 16% 12%;
-    --gradient-primary: linear-gradient(135deg, hsl(175 80% 50% / 0.1), hsl(260 70% 60% / 0.1));
-    --gradient-glow: linear-gradient(135deg, hsl(175 80% 50%), hsl(260 70% 60%));
-    
-    --font-mono: 'JetBrains Mono', monospace;
+    --glow-primary: 16 98% 61%;
+    --glow-secondary: 16 98% 61%;
+    --surface-elevated: 40 50% 98%;
+
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
     --font-sans: 'Inter', system-ui, sans-serif;
-  }
-
-  .light {
-    --background: 220 14% 93%;
-    --foreground: 222 47% 11%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-
-    --primary: 175 80% 40%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 222 47% 11%;
-
-    --muted: 220 14% 96%;
-    --muted-foreground: 215 16% 47%;
-
-    --accent: 175 80% 40%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 175 80% 40%;
-
-    --glow-primary: 175 80% 40%;
-    --glow-secondary: 260 70% 50%;
-    --surface-elevated: 0 0% 98%;
   }
 }
 
@@ -112,8 +77,7 @@
 
 @layer utilities {
   .glow-primary {
-    box-shadow: 0 0 20px hsl(var(--glow-primary) / 0.3),
-                0 0 40px hsl(var(--glow-primary) / 0.1);
+    box-shadow: 0 0 0 4px hsl(var(--glow-primary) / 0.15);
   }
   
   .glow-primary-intense {
@@ -122,7 +86,7 @@
   }
   
   .text-glow {
-    text-shadow: 0 0 20px hsl(var(--glow-primary) / 0.5);
+    text-shadow: none;
   }
   
   .gradient-border {

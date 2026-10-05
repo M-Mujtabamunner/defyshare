@@ -38,7 +38,7 @@ export const TableOfContents = ({ items }: TableOfContentsProps) => {
 
   return (
     <aside className="hidden xl:block sticky top-24 w-56 shrink-0">
-      <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-3">
+      <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">
         On this page
       </p>
       <ul className="space-y-1.5">
@@ -48,8 +48,8 @@ export const TableOfContents = ({ items }: TableOfContentsProps) => {
               onClick={() => handleClick(item.id)}
               className={`text-left text-sm leading-snug transition-colors w-full ${
                 activeId === item.id
-                  ? 'text-violet-400 font-medium'
-                  : 'text-zinc-400 hover:text-zinc-200'
+                  ? 'text-primary font-medium'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               {item.label}

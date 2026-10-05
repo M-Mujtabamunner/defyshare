@@ -1,135 +1,112 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="light">
   <head>
-    <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3440868789646344"
-     crossorigin="anonymous"></script>
-
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
-    <!-- Primary Meta Tags (Expanded for SEO) -->
-    <title>DefyShare — #1 Free Local Network File Sharing App, No Size Limits</title>
-    <meta name="description" content="DefyShare is the fastest free file sharing on local network. Transfer files of any size between Windows, Mac, Linux, Android and iPhone over your local network instantly — no account, no cloud, no limits." />
-    <meta name="keywords" content="file sharing on local network, local network file sharing, local network file transfer, p2p file sharing, free file sharing, snapdrop alternative, airdrop alternative, send files without internet, browser file transfer, WebRTC file sharing, share files between devices, wireless file sharing, local wifi file sharing, defyshare, free file transfer, no size limit file sharing, file sharing no account, peer to peer file sharing, lan file sharing, intranet file sharing" />
-    <meta name="author" content="defyshare" />
+    <!-- Per-route title, description, canonical and og/twitter tags are written into
+         each page's HTML at build time by scripts/prerender-seo.mjs. -->
+    <title>DefyShare: Share Files Between Phone & PC Instantly (Free)</title>
+    <meta name="description" content="Send files, folders, photos, videos and text between your phone, laptop and tablet on the same Wi-Fi. No app, no sign-up — just open and drop. 100% free." />
+    <link rel="canonical" href="https://defyshare.app/" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-    <meta name="theme-color" content="#0b0b12" media="(prefers-color-scheme: dark)" />
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#F4EFE6" />
+    <meta name="color-scheme" content="light" />
 
-    <!-- Google Search Console Verification (replace with your actual token) -->
-    <meta name="google-site-verification" content="REPLACE_WITH_GOOGLE_SEARCH_CONSOLE_TOKEN" />
-
-    <!-- Open Graph (Expanded) -->
+    <!-- Open Graph / Twitter -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="DefyShare — Free Local Network File Sharing, No Size Limits" />
-    <meta property="og:description" content="Transfer files of any size between any devices on your local network. No account, no cloud upload, no file size limit. Free forever." />
-    <meta property="og:url" content="https://defyshare.app" />
     <meta property="og:site_name" content="DefyShare" />
     <meta property="og:locale" content="en_US" />
-    <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/8iunJyo06EbbnxLsNIJ9WF3sMym1/social-images/social-1767475210896-Screenshot_2026-01-04_021611-removebg-preview.png" />
+    <meta property="og:title" content="DefyShare: Share Files Between Phone & PC Instantly (Free)" />
+    <meta property="og:description" content="Send files, folders, photos, videos and text between your phone, laptop and tablet on the same Wi-Fi. No app, no sign-up — just open and drop. 100% free." />
+    <meta property="og:url" content="https://defyshare.app/" />
+    <meta property="og:image" content="https://defyshare.app/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="DefyShare - Free Local Network File Sharing" />
-
-    <!-- Twitter Card (Expanded) -->
+    <meta property="og:image:alt" content="DefyShare — share files and text between devices on the same Wi-Fi" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@defyshare" />
-    <meta name="twitter:creator" content="@defyshare" />
-    <meta name="twitter:title" content="DefyShare — Free Local Network File Sharing, No Size Limits" />
-    <meta name="twitter:description" content="Transfer files of any size between any devices on your local network. No account, no cloud, no limits. Free forever." />
-    <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/8iunJyo06EbbnxLsNIJ9WF3sMym1/social-images/social-1767475210896-Screenshot_2026-01-04_021611-removebg-preview.png" />
+    <meta name="twitter:title" content="DefyShare: Share Files Between Phone & PC Instantly (Free)" />
+    <meta name="twitter:description" content="Send files, folders, photos, videos and text between your phone, laptop and tablet on the same Wi-Fi. No app, no sign-up — just open and drop. 100% free." />
+    <meta name="twitter:image" content="https://defyshare.app/og-image.png" />
 
-    <!-- Canonical -->
-    <link rel="canonical" href="https://defyshare.app" />
-
-    <!-- International SEO (Hreflang) -->
-    <link rel="alternate" hreflang="x-default" href="https://defyshare.app" />
-    <link rel="alternate" hreflang="en" href="https://defyshare.app" />
-
-    <!-- Favicon — transparent DefyShare brand logo -->
-    <link rel="icon" href="/favicon.png?v=7" type="image/png" sizes="192x192" />
-    <link rel="icon" href="/icons/icon-48.png?v=7" type="image/png" sizes="48x48" />
-    <link rel="icon" href="/icons/icon-96.png?v=7" type="image/png" sizes="96x96" />
-    <link rel="icon" href="/favicon.ico?v=7" sizes="any" />
-    <link rel="shortcut icon" href="/favicon.ico?v=7" />
-
-    <!-- PWA manifest -->
-    <link rel="manifest" href="/manifest.webmanifest?v=7" />
-
-    <!-- iOS home-screen (standalone) support -->
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=7" sizes="180x180" />
+    <!-- Icons: white plane on black so it stays visible in search results and tabs -->
+    <link rel="icon" href="/favicon.ico?v=8" sizes="any" />
+    <link rel="icon" href="/icons/icon-48.png?v=8" type="image/png" sizes="48x48" />
+    <link rel="icon" href="/icons/icon-96.png?v=8" type="image/png" sizes="96x96" />
+    <link rel="icon" href="/favicon.png?v=8" type="image/png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=8" sizes="180x180" />
+    <link rel="manifest" href="/manifest.webmanifest?v=8" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="DefyShare" />
     <meta name="application-name" content="DefyShare" />
     <meta name="format-detection" content="telephone=no" />
 
+    <!-- Warm up connections the app needs on first paint -->
+    <link rel="preconnect" href="https://zdkstkgwgggssvyjipqp.supabase.co" crossorigin />
+    <link rel="preconnect" href="https://api.ipify.org" crossorigin />
+    <link rel="preconnect" href="https://s3.us-east-005.backblazeb2.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
 
-    <!-- Sitemap reference -->
     <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
 
-    <!-- JSON-LD: WebApplication Schema (global) -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "DefyShare",
-      "url": "https://defyshare.app",
-      "description": "DefyShare is a free, browser-based peer-to-peer file sharing app. Transfer files of any size instantly over your local network — no accounts, no upload limits, no cloud servers.",
-      "applicationCategory": "UtilitiesApplication",
-      "operatingSystem": "Windows, macOS, Linux, Android, iOS, ChromeOS",
-      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-      "featureList": [
-        "No file size limit",
-        "No account required",
-        "Peer-to-peer — files never touch our servers",
-        "Works on all devices and browsers",
-        "Real-time text sharing",
-        "Drag and drop interface",
-        "Transfer history ledger",
-        "Dark mode premium UI"
-      ],
-      "creator": {
-        "@type": "Organization",
-        "name": "DefyShare",
-        "url": "https://defyshare.app"
-      }
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://defyshare.app/#organization",
+          "name": "DefyShare",
+          "url": "https://defyshare.app/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://defyshare.app/logo-512.png",
+            "width": 512,
+            "height": 512
+          }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://defyshare.app/#website",
+          "name": "DefyShare",
+          "url": "https://defyshare.app/",
+          "publisher": { "@id": "https://defyshare.app/#organization" }
+        },
+        {
+          "@type": "WebApplication",
+          "name": "DefyShare",
+          "url": "https://defyshare.app/",
+          "description": "Free browser app for sending files, folders and text between phones, tablets and computers on the same Wi-Fi network. No account or install needed; shared items are deleted after 3 hours.",
+          "applicationCategory": "UtilitiesApplication",
+          "operatingSystem": "Windows, macOS, Linux, Android, iOS, ChromeOS",
+          "browserRequirements": "Requires a modern web browser",
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+          "image": "https://defyshare.app/og-image.png",
+          "featureList": [
+            "No account required",
+            "Works in any modern browser",
+            "Any file type, including folders, ZIP and RAR",
+            "Real-time text and link sharing",
+            "Drag and drop or paste to upload",
+            "Files auto-delete after 3 hours"
+          ],
+          "publisher": { "@id": "https://defyshare.app/#organization" }
+        }
+      ]
     }
     </script>
 
-    <!-- Google Analytics 4 — async, non-render-blocking (replace G-XXXXXXXXXX with your ID) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-XXXXXXXXXX', { send_page_view: true });
-    </script>
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3440868789646344" crossorigin="anonymous"></script>
   </head>
 
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <!-- SPA routing shim: redirects GitHub Pages 404 query-string encoded paths -->
-    <script type="text/javascript">
-    (function (l) {
-      if (l.search[1] === "/") {
-        var decoded = l.search
-          .slice(1)
-          .split("&")
-          .map(function (s) {
-            return s.replace(/~and~/g, "&");
-          })
-          .join("?");
-        window.history.replaceState(
-          null,
-          null,
-          l.pathname.slice(0, -1) + decoded + l.hash
-        );
-      }
-    })(window.location);
-    </script>
   </body>
 </html>

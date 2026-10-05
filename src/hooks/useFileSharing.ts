@@ -1,6 +1,15 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { getB2UploadUrl, isB2Path, toB2Path, b2Key, deleteB2Objects } from '@/lib/storageUrls';
+import {
+  getB2UploadUrl,
+  isB2Path,
+  toB2Path,
+  b2Key,
+  deleteB2Objects,
+  getDownloadUrl,
+  triggerDownload,
+} from '@/lib/storageUrls';
+import { mimeTypeFor } from '@/lib/fileTypes';
 
 export interface SharedFile {
   id: string;
@@ -20,11 +29,8 @@ export interface SharedFile {
 
 export interface UploadMetadata {
   uploader_name?: string;
-  subject?: string;
-  uploader_email?: string;
-  uploader_id?: string;
-  keep_forever?: boolean;
-  expires_seconds?: number | null;
+  uploader_email?: string | null;
+  uploader_id?: string | null;
 }
 
 export interface PerFileProgress {
@@ -45,7 +51,32 @@ export interface UploadState {
   items: PerFileProgress[];
 }
 
+/** Every shared file is removed 3 hours after upload. */
+export const FILE_TTL_MS = 3 * 60 * 60 * 1000;
+
 const CONCURRENCY = 6;
+const FILE_COLUMNS =
+  'id, name, size, type, file_path, room_key, created_at, expires_at, keep_forever, uploader_name, subject, uploader_email, uploader_id';
+
+const cacheKey = (room: string) => `defyshare:files:${room}`;
+const isLive = (f: SharedFile) => new Date(f.expires_at).getTime() > Date.now();
+
+const readCache = (room: string): SharedFile[] => {
+  try {
+    const raw = localStorage.getItem(cacheKey(room));
+    return raw ? (JSON.parse(raw) as SharedFile[]).filter(isLive) : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeCache = (room: string, files: SharedFile[]) => {
+  try {
+    localStorage.setItem(cacheKey(room), JSON.stringify(files.slice(0, 100)));
+  } catch {
+    /* storage full or blocked */
+  }
+};
 
 class UploadCanceledError extends Error {
   constructor() {
@@ -57,6 +88,7 @@ class UploadCanceledError extends Error {
 const xhrPut = (
   url: string,
   file: File,
+  contentType: string,
   onProgress: (loaded: number) => void,
   registerXhr: (xhr: XMLHttpRequest) => void,
 ) =>
@@ -64,7 +96,7 @@ const xhrPut = (
     const xhr = new XMLHttpRequest();
     registerXhr(xhr);
     xhr.open('PUT', url);
-    if (file.type) xhr.setRequestHeader('Content-Type', file.type);
+    xhr.setRequestHeader('Content-Type', contentType);
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) onProgress(e.loaded);
     };
@@ -74,8 +106,11 @@ const xhrPut = (
     xhr.send(file);
   });
 
+/** Display name keeps the folder path for files picked/dropped as part of a folder. */
+const displayName = (file: File) => (file as File & { webkitRelativePath?: string }).webkitRelativePath || file.name;
+
 export const useFileSharing = (roomKey: string) => {
-  const [files, setFiles] = useState<SharedFile[]>([]);
+  const [files, setFiles] = useState<SharedFile[]>(() => (roomKey ? readCache(roomKey) : []));
   const [loading, setLoading] = useState(true);
   const [uploadState, setUploadState] = useState<UploadState>({
     isUploading: false,
@@ -93,37 +128,33 @@ export const useFileSharing = (roomKey: string) => {
 
   useEffect(() => {
     if (!roomKey) return;
+    let active = true;
 
-    const cleanupExpired = async () => {
-      const { data: expired } = await supabase
-        .from('shared_files')
-        .select('id, file_path')
-        .eq('room_key', roomKey)
-        .eq('keep_forever', false)
-        .lt('expires_at', new Date().toISOString());
+    // Paint the last known list instantly, then refresh from the server.
+    const cached = readCache(roomKey);
+    setFiles(cached);
+    setLoading(cached.length === 0);
 
-      if (expired && expired.length > 0) {
-        const cloudPaths = expired.filter((f) => !isB2Path(f.file_path)).map((f) => f.file_path);
-        const b2Keys = expired.filter((f) => isB2Path(f.file_path)).map((f) => b2Key(f.file_path));
-        if (cloudPaths.length > 0) await supabase.storage.from('shared-files').remove(cloudPaths);
-        if (b2Keys.length > 0) await deleteB2Objects(b2Keys);
-        await supabase.from('shared_files').delete().in('id', expired.map((f) => f.id));
-      }
-    };
+    supabase
+      .from('shared_files')
+      .select(FILE_COLUMNS)
+      .eq('room_key', roomKey)
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false })
+      .limit(300)
+      .then(({ data, error }) => {
+        if (!active) return;
+        if (!error && data) setFiles(data as SharedFile[]);
+        setLoading(false);
+      });
 
-    const fetchFiles = async () => {
-      setLoading(true);
-      await cleanupExpired();
-      const { data, error } = await supabase
-        .from('shared_files')
-        .select('*')
-        .eq('room_key', roomKey)
-        .order('created_at', { ascending: false });
-      if (!error && data) setFiles(data as SharedFile[]);
-      setLoading(false);
-    };
-
-    fetchFiles();
+    // Expired rows are also removed by the server cron; this just tidies up early.
+    supabase
+      .from('shared_files')
+      .delete()
+      .eq('room_key', roomKey)
+      .lt('expires_at', new Date().toISOString())
+      .then(() => undefined);
 
     const channel = supabase
       .channel(`files-${roomKey}`)
@@ -132,7 +163,8 @@ export const useFileSharing = (roomKey: string) => {
         { event: '*', schema: 'public', table: 'shared_files', filter: `room_key=eq.${roomKey}` },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            setFiles((prev) => (prev.some((f) => f.id === (payload.new as SharedFile).id) ? prev : [payload.new as SharedFile, ...prev]));
+            const row = payload.new as SharedFile;
+            setFiles((prev) => (prev.some((f) => f.id === row.id) ? prev : [row, ...prev]));
           } else if (payload.eventType === 'DELETE') {
             setFiles((prev) => prev.filter((f) => f.id !== payload.old.id));
           } else if (payload.eventType === 'UPDATE') {
@@ -142,10 +174,21 @@ export const useFileSharing = (roomKey: string) => {
       )
       .subscribe();
 
+    // Drop files from view the moment they expire.
+    const tick = setInterval(() => {
+      setFiles((prev) => (prev.every(isLive) ? prev : prev.filter(isLive)));
+    }, 30_000);
+
     return () => {
+      active = false;
+      clearInterval(tick);
       supabase.removeChannel(channel);
     };
   }, [roomKey]);
+
+  useEffect(() => {
+    if (roomKey && !loading) writeCache(roomKey, files);
+  }, [roomKey, files, loading]);
 
   const recomputeProgress = useCallback(() => {
     let loaded = 0;
@@ -165,18 +208,20 @@ export const useFileSharing = (roomKey: string) => {
 
   const uploadOne = useCallback(
     async (file: File, metadata: UploadMetadata | undefined, id: string) => {
-      const safeName = file.name.replace(/[^\w.\-]+/g, '_');
+      const name = displayName(file);
+      const contentType = mimeTypeFor(file);
+      const safeName = file.name.replace(/[^\w.-]+/g, '_') || 'file';
       const key = `${roomKey}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`;
-      const filePath = toB2Path(key);
       totalsRef.current.set(id, file.size);
       loadedRef.current.set(id, 0);
       updateItem(id, { status: 'uploading', loaded: 0, error: undefined });
 
-      const uploadUrl = await getB2UploadUrl(key, file.type);
+      const uploadUrl = await getB2UploadUrl(key);
       if (canceledRef.current.has(id)) throw new UploadCanceledError();
       await xhrPut(
         uploadUrl,
         file,
+        contentType,
         (loaded) => {
           loadedRef.current.set(id, loaded);
           updateItem(id, { loaded });
@@ -188,25 +233,29 @@ export const useFileSharing = (roomKey: string) => {
       );
       xhrsRef.current.delete(id);
 
-      const expires_seconds = metadata?.expires_seconds;
-      const keep_forever = metadata?.keep_forever ?? false;
-      const insertRow: Record<string, unknown> = {
-        room_key: roomKey,
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        file_path: filePath,
-        uploader_name: metadata?.uploader_name ?? null,
-        subject: metadata?.subject ?? file.name,
-        uploader_email: metadata?.uploader_email ?? null,
-        uploader_id: metadata?.uploader_id ?? null,
-        keep_forever,
-      };
-      if (expires_seconds && expires_seconds > 0) {
-        insertRow.expires_at = new Date(Date.now() + expires_seconds * 1000).toISOString();
+      const { data, error: dbError } = await supabase
+        .from('shared_files')
+        .insert({
+          room_key: roomKey,
+          name,
+          size: file.size,
+          type: contentType,
+          file_path: toB2Path(key),
+          uploader_name: metadata?.uploader_name ?? null,
+          subject: name,
+          uploader_email: metadata?.uploader_email ?? null,
+          uploader_id: metadata?.uploader_id ?? null,
+          keep_forever: false,
+          expires_at: new Date(Date.now() + FILE_TTL_MS).toISOString(),
+        } as never)
+        .select(FILE_COLUMNS)
+        .single();
+      if (dbError) {
+        deleteB2Objects([key]);
+        throw dbError;
       }
-      const { error: dbError } = await supabase.from('shared_files').insert(insertRow as never);
-      if (dbError) throw dbError;
+      const row = data as unknown as SharedFile;
+      setFiles((prev) => (prev.some((f) => f.id === row.id) ? prev : [row, ...prev]));
       updateItem(id, { status: 'done', loaded: file.size });
     },
     [roomKey, recomputeProgress, updateItem],
@@ -241,14 +290,14 @@ export const useFileSharing = (roomKey: string) => {
       canceledRef.current.clear();
       metadataRef.current = metadata;
       const items: PerFileProgress[] = incoming.map((f, i) => {
-        const id = `${i}-${f.name}`;
+        const id = `${i}-${displayName(f)}`;
         fileMapRef.current.set(id, f);
-        return { id, name: f.name, size: f.size, loaded: 0, status: 'queued' };
+        return { id, name: displayName(f), size: f.size, loaded: 0, status: 'queued' };
       });
       setUploadState({
         isUploading: true,
         progress: 0,
-        fileName: incoming.length === 1 ? incoming[0].name : `${incoming.length} files`,
+        fileName: incoming.length === 1 ? displayName(incoming[0]) : `${incoming.length} files`,
         totalFiles: incoming.length,
         completedFiles: 0,
         items,
@@ -261,7 +310,7 @@ export const useFileSharing = (roomKey: string) => {
         while (cursor < incoming.length) {
           const i = cursor++;
           const file = incoming[i];
-          const id = `${i}-${file.name}`;
+          const id = items[i].id;
           if (canceledRef.current.has(id)) {
             updateItem(id, { status: 'canceled', error: 'Canceled' });
           } else {
@@ -278,13 +327,6 @@ export const useFileSharing = (roomKey: string) => {
       return { ok, failed };
     },
     [roomKey, runOne, updateItem],
-  );
-
-  const addFile = useCallback(
-    async (file: File, metadata?: UploadMetadata) => {
-      await addFiles([file], metadata);
-    },
-    [addFiles],
   );
 
   const cancelUpload = useCallback((id: string) => {
@@ -327,32 +369,35 @@ export const useFileSharing = (roomKey: string) => {
     setUploadState({ isUploading: false, progress: 0, totalFiles: 0, completedFiles: 0, items: [] });
   }, []);
 
+  const removeStored = (list: SharedFile[]) => {
+    const cloudPaths = list.filter((f) => !isB2Path(f.file_path)).map((f) => f.file_path);
+    const keys = list.filter((f) => isB2Path(f.file_path)).map((f) => b2Key(f.file_path));
+    if (cloudPaths.length > 0) supabase.storage.from('shared-files').remove(cloudPaths);
+    deleteB2Objects(keys);
+  };
+
   const removeFile = useCallback(
     async (fileId: string) => {
       const file = files.find((f) => f.id === fileId);
       if (!file) return;
       setFiles((prev) => prev.filter((f) => f.id !== fileId));
-      if (isB2Path(file.file_path)) await deleteB2Objects([b2Key(file.file_path)]);
-      else await supabase.storage.from('shared-files').remove([file.file_path]);
+      removeStored([file]);
       await supabase.from('shared_files').delete().eq('id', fileId);
     },
     [files],
   );
 
   const downloadFile = useCallback(async (file: SharedFile) => {
-    const { getSignedFileUrl, triggerBlobDownload } = await import('@/lib/storageUrls');
-    const url = await getSignedFileUrl(file.file_path);
+    const filename = file.name.split('/').pop() || file.name;
+    const url = await getDownloadUrl(file.file_path, filename);
     if (!url) throw new Error('Could not generate download link');
-    await triggerBlobDownload(url, file.name);
+    triggerDownload(url, filename);
   }, []);
 
   const clearAll = useCallback(async () => {
     const prevFiles = [...files];
     setFiles([]);
-    const cloudPaths = prevFiles.filter((f) => !isB2Path(f.file_path)).map((f) => f.file_path);
-    const b2Keys = prevFiles.filter((f) => isB2Path(f.file_path)).map((f) => b2Key(f.file_path));
-    if (cloudPaths.length > 0) await supabase.storage.from('shared-files').remove(cloudPaths);
-    if (b2Keys.length > 0) await deleteB2Objects(b2Keys);
+    removeStored(prevFiles);
     await supabase.from('shared_files').delete().eq('room_key', roomKey);
   }, [files, roomKey]);
 
@@ -360,7 +405,6 @@ export const useFileSharing = (roomKey: string) => {
     files,
     loading,
     uploadState,
-    addFile,
     addFiles,
     removeFile,
     downloadFile,

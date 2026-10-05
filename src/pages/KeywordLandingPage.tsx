@@ -2,6 +2,7 @@ import { useLocation, Link } from 'react-router-dom';
 import { CheckCircle2, ArrowRight, Zap, Shield, Globe, Wifi } from 'lucide-react';
 import { KEYWORD_PAGES } from '@/data/seoData';
 import { SeoHead } from '@/components/SeoHead';
+import { getSeoMeta } from '@/data/seoMeta';
 import { JsonLd, buildBreadcrumbSchema, buildFaqSchema, buildWebAppSchema } from '@/components/JsonLd';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { ReviewTrust } from '@/components/ReviewTrust';
@@ -9,11 +10,11 @@ import { InternalLinks } from '@/components/InternalLinks';
 import NotFound from './NotFound';
 
 const ICON_MAP: Record<string, React.ReactNode> = {
-  general: <Globe className="w-5 h-5 text-violet-400" />,
-  feature: <Shield className="w-5 h-5 text-green-400" />,
-  speed: <Zap className="w-5 h-5 text-yellow-400" />,
-  platform: <Wifi className="w-5 h-5 text-blue-400" />,
-  howto: <CheckCircle2 className="w-5 h-5 text-violet-400" />,
+  general: <Globe className="w-5 h-5 text-primary" />,
+  feature: <Shield className="w-5 h-5 text-green-600" />,
+  speed: <Zap className="w-5 h-5 text-amber-500" />,
+  platform: <Wifi className="w-5 h-5 text-blue-600" />,
+  howto: <CheckCircle2 className="w-5 h-5 text-primary" />,
 };
 
 export default function KeywordLandingPage() {
@@ -23,6 +24,7 @@ export default function KeywordLandingPage() {
 
   if (!page) return <NotFound />;
 
+  const seo = getSeoMeta(pathname);
   const canonical = `https://defyshare.app/${page.slug}`;
 
   const faqs = [
@@ -50,13 +52,13 @@ export default function KeywordLandingPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#0B0B0F] text-zinc-100">
+    <div className="min-h-screen bg-background text-foreground">
       <SeoHead
-        title={page.title}
-        description={page.description}
+        title={seo?.title ?? page.title}
+        description={seo?.description ?? page.description}
         canonical={canonical}
-        ogTitle={page.title}
-        ogDescription={page.description}
+        ogTitle={seo?.title ?? page.title}
+        ogDescription={seo?.description ?? page.description}
       />
       <JsonLd schema={[
         buildWebAppSchema(),
@@ -73,35 +75,35 @@ export default function KeywordLandingPage() {
         <div className="mb-10">
           <div className="flex items-center gap-2 mb-4">
             {ICON_MAP[page.category]}
-            <span className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
               {page.category === 'howto' ? 'How-To Guide' : page.category.charAt(0).toUpperCase() + page.category.slice(1)}
             </span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-zinc-100 mb-4">
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
             {page.h1}
           </h1>
-          <p className="text-lg text-zinc-400 max-w-2xl leading-relaxed">
+          <p className="text-lg text-muted-foreground max-w-2xl leading-relaxed">
             {page.intro}
           </p>
-          <Link to="/" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold px-6 py-3 transition-colors">
+          <Link to="/" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary hover:bg-primary/90 text-white font-semibold px-6 py-3 transition-colors">
             Try DefyShare Free <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
         <section className="mb-10">
-          <h2 className="text-2xl font-bold text-zinc-100 mb-6">
+          <h2 className="text-2xl font-bold text-foreground mb-6">
             Why DefyShare is the Answer
           </h2>
           <div className="grid sm:grid-cols-3 gap-4 mb-6">
             {[
-              { icon: <Zap className="w-5 h-5 text-yellow-400" />, title: 'Full LAN Speed', desc: 'Up to 1 Gbps — no server upload bottleneck' },
-              { icon: <Shield className="w-5 h-5 text-green-400" />, title: 'Zero Cloud Storage', desc: 'Files never touch any server — fully private' },
-              { icon: <CheckCircle2 className="w-5 h-5 text-violet-400" />, title: 'No Size Limit', desc: 'Transfer any file, any size, completely free' },
+              { icon: <Zap className="w-5 h-5 text-amber-500" />, title: 'Full LAN Speed', desc: 'Up to 1 Gbps — no server upload bottleneck' },
+              { icon: <Shield className="w-5 h-5 text-green-600" />, title: 'Zero Cloud Storage', desc: 'Files never touch any server — fully private' },
+              { icon: <CheckCircle2 className="w-5 h-5 text-primary" />, title: 'No Size Limit', desc: 'Transfer any file, any size, completely free' },
             ].map((card) => (
-              <div key={card.title} className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
+              <div key={card.title} className="rounded-xl border border-border bg-card/80 p-4">
                 <div className="mb-2">{card.icon}</div>
-                <p className="font-semibold text-zinc-200 text-sm mb-1">{card.title}</p>
-                <p className="text-xs text-zinc-400">{card.desc}</p>
+                <p className="font-semibold text-foreground/90 text-sm mb-1">{card.title}</p>
+                <p className="text-xs text-muted-foreground">{card.desc}</p>
               </div>
             ))}
           </div>
@@ -115,8 +117,8 @@ export default function KeywordLandingPage() {
               'Real-time text sharing alongside file transfers',
               'Transfer history stored locally in your browser',
             ].map((item) => (
-              <li key={item} className="flex items-center gap-3 text-zinc-400 text-sm">
-                <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
+              <li key={item} className="flex items-center gap-3 text-muted-foreground text-sm">
+                <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
                 {item}
               </li>
             ))}
@@ -124,7 +126,7 @@ export default function KeywordLandingPage() {
         </section>
 
         <section className="mb-10">
-          <h2 className="text-2xl font-bold text-zinc-100 mb-6">How to Get Started in 30 Seconds</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-6">How to Get Started in 30 Seconds</h2>
           <ol className="space-y-4">
             {[
               { step: '1', title: 'Open DefyShare on the sending device', desc: 'Go to defyshare.app in any browser. No download, no account, no permission dialogs.' },
@@ -133,12 +135,12 @@ export default function KeywordLandingPage() {
               { step: '4', title: 'Files arrive instantly', desc: 'The receiving device gets the files at full local network speed — up to 1 Gbps. No upload delay, no compression.' },
             ].map((item) => (
               <li key={item.step} className="flex gap-4">
-                <div className="w-8 h-8 rounded-full bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-400 font-bold text-sm shrink-0">
+                <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center text-primary font-bold text-sm shrink-0">
                   {item.step}
                 </div>
                 <div>
-                  <p className="font-semibold text-zinc-200 mb-1">{item.title}</p>
-                  <p className="text-sm text-zinc-400 leading-relaxed">{item.desc}</p>
+                  <p className="font-semibold text-foreground/90 mb-1">{item.title}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
                 </div>
               </li>
             ))}
@@ -146,12 +148,12 @@ export default function KeywordLandingPage() {
         </section>
 
         <section className="mb-10">
-          <h2 className="text-2xl font-bold text-zinc-100 mb-6">Frequently Asked Questions</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-6">Frequently Asked Questions</h2>
           <div className="space-y-4">
             {faqs.map((faq) => (
-              <div key={faq.question} className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-5">
-                <h3 className="font-semibold text-zinc-200 mb-2">{faq.question}</h3>
-                <p className="text-sm text-zinc-400 leading-relaxed">{faq.answer}</p>
+              <div key={faq.question} className="rounded-xl border border-border bg-card/70 p-5">
+                <h3 className="font-semibold text-foreground/90 mb-2">{faq.question}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{faq.answer}</p>
               </div>
             ))}
           </div>
@@ -161,10 +163,10 @@ export default function KeywordLandingPage() {
 
         {relatedLinks.length > 0 && <InternalLinks links={relatedLinks} title="Related Guides" />}
 
-        <div className="mt-12 rounded-2xl bg-gradient-to-br from-violet-600/20 to-purple-900/20 border border-violet-500/20 p-8 text-center">
-          <h2 className="text-2xl font-bold text-zinc-100 mb-2">{page.h1.split('—')[0].trim()}</h2>
-          <p className="text-zinc-400 mb-6">Open DefyShare and start in seconds — no account, no download, no limits.</p>
-          <Link to="/" className="inline-flex items-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold px-8 py-3 transition-colors">
+        <div className="mt-12 rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20 p-8 text-center">
+          <h2 className="text-2xl font-bold text-foreground mb-2">{page.h1.split('—')[0].trim()}</h2>
+          <p className="text-muted-foreground mb-6">Open DefyShare and start in seconds — no account, no download, no limits.</p>
+          <Link to="/" className="inline-flex items-center gap-2 rounded-xl bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-3 transition-colors">
             Open DefyShare Free <ArrowRight className="w-4 h-4" />
           </Link>
         </div>

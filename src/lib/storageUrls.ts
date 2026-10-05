@@ -1,83 +1,115 @@
 import { supabase } from '@/integrations/supabase/client';
 
 const B2_PREFIX = 'b2://';
+const SIGN_ENDPOINT = '/api/b2-sign';
 const SIGNED_TTL_SECONDS = 60 * 60; // 1 hour
 const REFRESH_BUFFER_MS = 60_000;
-
-const fileCache = new Map<string, { url: string; expiresAt: number }>();
-const chatCache = new Map<string, { url: string; expiresAt: number }>();
+const MAX_BATCH = 200;
 
 export const isB2Path = (p: string) => p.startsWith(B2_PREFIX);
 export const toB2Path = (key: string) => B2_PREFIX + key;
 export const b2Key = (p: string) => p.slice(B2_PREFIX.length);
 
-async function b2SignedUrl(action: 'put' | 'get', key: string, contentType?: string) {
-  const { data, error } = await supabase.functions.invoke('b2-sign', {
-    body: { action, key, contentType, expires: SIGNED_TTL_SECONDS },
+async function signRequest<T>(body: Record<string, unknown>): Promise<T> {
+  const res = await fetch(SIGN_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
   });
-  if (error || !data?.url) throw new Error(error?.message || 'Failed to sign B2 URL');
-  return data.url as string;
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json?.error || `Signing failed (${res.status})`);
+  return json as T;
 }
 
-export const getB2UploadUrl = (key: string, contentType?: string) =>
-  b2SignedUrl('put', key, contentType);
+export const getB2UploadUrl = async (key: string) => {
+  const { url } = await signRequest<{ url: string }>({ action: 'put', key });
+  return url;
+};
 
 export const deleteB2Objects = async (keys: string[]) => {
   if (keys.length === 0) return;
-  await supabase.functions.invoke('b2-sign', { body: { action: 'delete', keys } });
+  await signRequest({ action: 'delete', keys }).catch(() => undefined);
 };
 
-async function getSigned(
-  filePath: string,
-  bucket: 'shared-files' | 'chat-media',
-  cache: Map<string, { url: string; expiresAt: number }>,
-): Promise<string | null> {
-  const cached = cache.get(filePath);
-  if (cached && cached.expiresAt - Date.now() > REFRESH_BUFFER_MS) {
-    return cached.url;
-  }
+// --- Batched GET signing: every thumbnail/preview asked for in the same tick
+// goes out as a single request.
+const cache = new Map<string, { url: string; expiresAt: number }>();
+const inflight = new Map<string, Promise<string | null>>();
+let queue: { key: string; resolve: (url: string | null) => void }[] = [];
+let flushScheduled = false;
 
-  let url: string | null = null;
-
-  if (isB2Path(filePath)) {
+const flush = async () => {
+  const batch = queue;
+  queue = [];
+  flushScheduled = false;
+  const keys = [...new Set(batch.map((p) => p.key))];
+  const urls: Record<string, string> = {};
+  for (let i = 0; i < keys.length; i += MAX_BATCH) {
     try {
-      url = await b2SignedUrl('get', b2Key(filePath));
+      const res = await signRequest<{ urls: Record<string, string> }>({
+        action: 'get',
+        keys: keys.slice(i, i + MAX_BATCH),
+        expires: SIGNED_TTL_SECONDS,
+      });
+      Object.assign(urls, res.urls);
     } catch {
-      url = null;
+      /* leave missing; callers get null */
     }
-  } else {
-    const { data } = await supabase.storage.from(bucket).createSignedUrl(filePath, SIGNED_TTL_SECONDS);
-    url = data?.signedUrl ?? null;
   }
+  const expiresAt = Date.now() + SIGNED_TTL_SECONDS * 1000;
+  for (const k of keys) if (urls[k]) cache.set(k, { url: urls[k], expiresAt });
+  for (const p of batch) p.resolve(urls[p.key] ?? null);
+};
 
-  if (url) {
-    cache.set(filePath, { url, expiresAt: Date.now() + SIGNED_TTL_SECONDS * 1000 });
-  }
-  return url;
+const signGet = (key: string): Promise<string | null> => {
+  const cached = cache.get(key);
+  if (cached && cached.expiresAt - Date.now() > REFRESH_BUFFER_MS) return Promise.resolve(cached.url);
+  const pending = inflight.get(key);
+  if (pending) return pending;
+  const promise = new Promise<string | null>((resolve) => {
+    queue.push({ key, resolve });
+    if (!flushScheduled) {
+      flushScheduled = true;
+      setTimeout(flush, 0);
+    }
+  }).finally(() => inflight.delete(key));
+  inflight.set(key, promise);
+  return promise;
+};
+
+async function getSigned(filePath: string, bucket: 'shared-files' | 'chat-media'): Promise<string | null> {
+  if (isB2Path(filePath)) return signGet(b2Key(filePath));
+  // Legacy rows stored in Supabase Storage
+  const { data } = await supabase.storage.from(bucket).createSignedUrl(filePath, SIGNED_TTL_SECONDS);
+  return data?.signedUrl ?? null;
 }
 
-export const getSignedFileUrl = (filePath: string) =>
-  getSigned(filePath, 'shared-files', fileCache);
+export const getSignedFileUrl = (filePath: string) => getSigned(filePath, 'shared-files');
 
-export const getSignedChatUrl = (filePath: string) =>
-  getSigned(filePath, 'chat-media', chatCache);
+export const getSignedChatUrl = (filePath: string) => getSigned(filePath, 'chat-media');
 
-/**
- * Force a real browser download from a (possibly cross-origin) URL.
- */
-export const triggerBlobDownload = async (url: string, filename: string) => {
+/** URL that makes the browser save the file under `filename` (streams; no memory copy). */
+export const getDownloadUrl = async (filePath: string, filename: string): Promise<string | null> => {
+  if (!isB2Path(filePath)) return getSignedFileUrl(filePath);
   try {
-    const res = await fetch(url);
-    const blob = await res.blob();
-    const objectUrl = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = objectUrl;
-    a.download = filename || 'download';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    const { url } = await signRequest<{ url: string }>({
+      action: 'get',
+      key: b2Key(filePath),
+      download: filename,
+      expires: SIGNED_TTL_SECONDS,
+    });
+    return url;
   } catch {
-    window.open(url, '_blank', 'noopener');
+    return null;
   }
+};
+
+export const triggerDownload = (url: string, filename: string) => {
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename || 'download';
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
 };

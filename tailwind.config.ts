@@ -58,6 +58,10 @@ export default {
         surface: {
           elevated: "hsl(var(--surface-elevated))",
         },
+        link: {
+          DEFAULT: "hsl(var(--link))",
+          bg: "hsl(var(--link-bg))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

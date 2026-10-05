@@ -1,4 +1,4 @@
-import defyscaleLogo from '@/assets/defyscale-logo.png.asset.json';
+import defyscaleLogo from '@/assets/defyscale-logo.png';
 
 export const PoweredByBadge = () => (
   <a
@@ -7,10 +7,10 @@ export const PoweredByBadge = () => (
     rel="noopener noreferrer"
     aria-label="Powered by DefyScale"
     style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}
-    className="fixed left-2 z-40 inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/80 backdrop-blur px-2 py-1 text-[10px] sm:text-xs font-medium text-foreground shadow-md hover:bg-card hover:scale-105 transition"
+    className="fixed left-2 z-40 inline-flex items-center gap-1.5 rounded-full border border-border bg-card/90 backdrop-blur px-2.5 py-1 text-[10px] sm:text-xs font-medium text-foreground shadow-sm hover:border-primary/40 transition-colors"
   >
     <span className="text-muted-foreground font-normal">Powered by</span>
-    <img src={defyscaleLogo.url} alt="" className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-    <span className="whitespace-nowrap">DefyScale</span>
+    <img src={defyscaleLogo} alt="" width={16} height={16} className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+    <span className="whitespace-nowrap font-semibold">DefyScale</span>
   </a>
 );

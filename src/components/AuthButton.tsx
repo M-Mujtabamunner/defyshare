@@ -58,7 +58,7 @@ const AuthButton: React.FC = () => {
         size="sm"
         variant="outline"
         disabled={signingIn}
-        className="gap-2 bg-background hover:bg-secondary/60 border-border/70 font-medium"
+        className="gap-1.5 sm:gap-2 px-2.5 sm:px-3 bg-background hover:bg-secondary/60 border-border/70 font-medium"
       >
         {signingIn ? (
           <>
@@ -73,7 +73,8 @@ const AuthButton: React.FC = () => {
               <path fill="#4CAF50" d="M24 43.5c5 0 9.5-1.9 12.9-5l-6-5c-1.9 1.4-4.3 2.2-6.9 2.2-5.3 0-9.7-3.1-11.3-7.5l-6.5 5C9.5 39 16.2 43.5 24 43.5z"/>
               <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.5l6 5c-.4.4 6.7-4.9 6.7-14.5 0-1.3-.1-2.3-.4-3.5z"/>
             </svg>
-            <span>Sign in with Google</span>
+            <span className="sm:hidden">Sign in</span>
+            <span className="hidden sm:inline">Sign in with Google</span>
           </>
         )}
       </Button>

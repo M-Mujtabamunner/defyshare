@@ -2,6 +2,7 @@ import { useLocation, Link } from 'react-router-dom';
 import { CheckCircle2, ArrowRight, Zap, Shield, Wifi } from 'lucide-react';
 import { DEVICES } from '@/data/seoData';
 import { SeoHead } from '@/components/SeoHead';
+import { getSeoMeta } from '@/data/seoMeta';
 import { JsonLd, buildBreadcrumbSchema, buildFaqSchema, buildWebAppSchema } from '@/components/JsonLd';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { TableOfContents } from '@/components/TableOfContents';
@@ -31,8 +32,9 @@ export default function DeviceSharingPage() {
     }
   }
 
-  const title = `How to Share Files Between ${device1.name} and ${device2.name} for Free (2025)`;
-  const description = `The fastest way to transfer files between a ${device1.name} and a ${device2.name} — no cables, no accounts, no cloud uploads. Use DefyShare for instant local P2P file transfer.`;
+  const defaultTitle = `How to Share Files Between ${device1.name} and ${device2.name} for Free (2026)`;
+  const defaultDescription = `The fastest way to transfer files between a ${device1.name} and a ${device2.name} — no cables, no accounts, no cloud uploads. Use DefyShare for instant local P2P file transfer.`;
+  const { title, description } = getSeoMeta(pathname) ?? { title: defaultTitle, description: defaultDescription };
   const canonical = `https://defyshare.app/share-files-between-${d1Slug || device1.slug}-and-${d2Slug || device2.slug}`;
 
   const faqs = [
@@ -74,7 +76,7 @@ export default function DeviceSharingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0B0B0F] text-zinc-100">
+    <div className="min-h-screen bg-background text-foreground">
       <SeoHead
         title={title}
         description={description}
@@ -102,22 +104,22 @@ export default function DeviceSharingPage() {
           <div className="flex-1 min-w-0">
             {/* Hero */}
             <div className="mb-10">
-              <div className="inline-flex items-center gap-2 rounded-full bg-violet-500/10 border border-violet-500/20 px-3 py-1 text-xs text-violet-400 font-medium mb-4">
+              <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-xs text-primary font-medium mb-4">
                 <Wifi className="w-3 h-3" />
                 Local Network Transfer
               </div>
-              <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-zinc-100 mb-4">
+              <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
                 Share Files Between {device1.name} and {device2.name}
               </h1>
-              <p className="text-lg text-zinc-400 max-w-2xl leading-relaxed">
+              <p className="text-lg text-muted-foreground max-w-2xl leading-relaxed">
                 The fastest, easiest, and most private way to transfer any file — no matter how
-                large — from your <strong className="text-zinc-200">{device1.name}</strong> to your{' '}
-                <strong className="text-zinc-200">{device2.name}</strong>. No USB cables, no cloud
+                large — from your <strong className="text-foreground/90">{device1.name}</strong> to your{' '}
+                <strong className="text-foreground/90">{device2.name}</strong>. No USB cables, no cloud
                 uploads, no accounts required.
               </p>
               <Link
                 to="/"
-                className="mt-6 inline-flex items-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold px-6 py-3 transition-colors"
+                className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary hover:bg-primary/90 text-white font-semibold px-6 py-3 transition-colors"
               >
                 Transfer Files Now <ArrowRight className="w-4 h-4" />
               </Link>
@@ -125,17 +127,17 @@ export default function DeviceSharingPage() {
 
             {/* Overview */}
             <section id="overview" className="mb-10 scroll-mt-24">
-              <h2 className="text-2xl font-bold text-zinc-100 mb-4">
+              <h2 className="text-2xl font-bold text-foreground mb-4">
                 The Best Way to Transfer Files from {device1.name} to {device2.name}
               </h2>
-              <p className="text-zinc-400 leading-relaxed mb-4">
+              <p className="text-muted-foreground leading-relaxed mb-4">
                 Most people struggle to share files between a {device1.name} and a {device2.name}{' '}
                 because they rely on email (which has size limits), USB drives (which require
                 physical connectors), or cloud services (which upload everything to a server and are
                 slow).
               </p>
-              <p className="text-zinc-400 leading-relaxed">
-                <strong className="text-zinc-200">DefyShare</strong> solves this by using WebRTC — the
+              <p className="text-muted-foreground leading-relaxed">
+                <strong className="text-foreground/90">DefyShare</strong> solves this by using WebRTC — the
                 same technology that powers video calls in Chrome — to create a direct peer-to-peer
                 connection between your {device1.name} and {device2.name} over your local Wi-Fi.
                 Files transfer at your network's maximum speed: commonly 50–500 Mbps depending on
@@ -143,14 +145,14 @@ export default function DeviceSharingPage() {
               </p>
               <div className="mt-6 grid sm:grid-cols-3 gap-4">
                 {[
-                  { icon: <Zap className="w-5 h-5 text-yellow-400" />, label: 'Full LAN Speed', desc: 'Up to 1 Gbps — not limited by internet upload' },
-                  { icon: <Shield className="w-5 h-5 text-green-400" />, label: 'Zero Cloud Upload', desc: 'Files never leave your local network' },
-                  { icon: <CheckCircle2 className="w-5 h-5 text-violet-400" />, label: 'No Size Limit', desc: 'Transfer files of any size — GB, TB, no cap' },
+                  { icon: <Zap className="w-5 h-5 text-amber-500" />, label: 'Full LAN Speed', desc: 'Up to 1 Gbps — not limited by internet upload' },
+                  { icon: <Shield className="w-5 h-5 text-green-600" />, label: 'Zero Cloud Upload', desc: 'Files never leave your local network' },
+                  { icon: <CheckCircle2 className="w-5 h-5 text-primary" />, label: 'No Size Limit', desc: 'Transfer files of any size — GB, TB, no cap' },
                 ].map((card) => (
-                  <div key={card.label} className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
+                  <div key={card.label} className="rounded-xl border border-border bg-card/80 p-4">
                     <div className="mb-2">{card.icon}</div>
-                    <p className="font-semibold text-zinc-200 text-sm mb-1">{card.label}</p>
-                    <p className="text-xs text-zinc-400">{card.desc}</p>
+                    <p className="font-semibold text-foreground/90 text-sm mb-1">{card.label}</p>
+                    <p className="text-xs text-muted-foreground">{card.desc}</p>
                   </div>
                 ))}
               </div>
@@ -158,7 +160,7 @@ export default function DeviceSharingPage() {
 
             {/* Requirements */}
             <section id="requirements" className="mb-10 scroll-mt-24">
-              <h2 className="text-2xl font-bold text-zinc-100 mb-4">What You Need</h2>
+              <h2 className="text-2xl font-bold text-foreground mb-4">What You Need</h2>
               <ul className="space-y-3">
                 {[
                   `Your ${device1.name} with ${device1.browser}`,
@@ -166,8 +168,8 @@ export default function DeviceSharingPage() {
                   'Both devices connected to the same Wi-Fi network (or same Ethernet switch)',
                   'No app installation, no account, no payment required',
                 ].map((item) => (
-                  <li key={item} className="flex items-center gap-3 text-zinc-400 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
+                  <li key={item} className="flex items-center gap-3 text-muted-foreground text-sm">
+                    <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
                     {item}
                   </li>
                 ))}
@@ -176,7 +178,7 @@ export default function DeviceSharingPage() {
 
             {/* Step by step */}
             <section id="step-by-step" className="mb-10 scroll-mt-24">
-              <h2 className="text-2xl font-bold text-zinc-100 mb-6">
+              <h2 className="text-2xl font-bold text-foreground mb-6">
                 Step-by-Step: How to Transfer Files from {device1.name} to {device2.name}
               </h2>
               <ol className="space-y-5">
@@ -208,12 +210,12 @@ export default function DeviceSharingPage() {
                   },
                 ].map((item) => (
                   <li key={item.step} className="flex gap-4">
-                    <div className="w-8 h-8 rounded-full bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-400 font-bold text-sm shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center text-primary font-bold text-sm shrink-0">
                       {item.step}
                     </div>
                     <div>
-                      <p className="font-semibold text-zinc-200 mb-1">{item.title}</p>
-                      <p className="text-sm text-zinc-400 leading-relaxed">{item.desc}</p>
+                      <p className="font-semibold text-foreground/90 mb-1">{item.title}</p>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
                     </div>
                   </li>
                 ))}
@@ -222,7 +224,7 @@ export default function DeviceSharingPage() {
 
             {/* Speed tips */}
             <section id="tips" className="mb-10 scroll-mt-24">
-              <h2 className="text-2xl font-bold text-zinc-100 mb-4">
+              <h2 className="text-2xl font-bold text-foreground mb-4">
                 Tips for Maximum Transfer Speed
               </h2>
               <ul className="space-y-3">
@@ -233,8 +235,8 @@ export default function DeviceSharingPage() {
                   'Use Chrome or Edge for the fastest WebRTC implementation on both devices',
                   'Transfer in the same room to minimize Wi-Fi signal loss and improve throughput',
                 ].map((tip) => (
-                  <li key={tip} className="flex items-start gap-3 text-zinc-400 text-sm">
-                    <Zap className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
+                  <li key={tip} className="flex items-start gap-3 text-muted-foreground text-sm">
+                    <Zap className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
                     {tip}
                   </li>
                 ))}
@@ -243,14 +245,14 @@ export default function DeviceSharingPage() {
 
             {/* FAQ */}
             <section id="faq" className="mb-10 scroll-mt-24">
-              <h2 className="text-2xl font-bold text-zinc-100 mb-6">
+              <h2 className="text-2xl font-bold text-foreground mb-6">
                 Frequently Asked Questions
               </h2>
               <div className="space-y-4">
                 {faqs.map((faq) => (
-                  <div key={faq.question} className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-5">
-                    <h3 className="font-semibold text-zinc-200 mb-2">{faq.question}</h3>
-                    <p className="text-sm text-zinc-400 leading-relaxed">{faq.answer}</p>
+                  <div key={faq.question} className="rounded-xl border border-border bg-card/70 p-5">
+                    <h3 className="font-semibold text-foreground/90 mb-2">{faq.question}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{faq.answer}</p>
                   </div>
                 ))}
               </div>
@@ -259,12 +261,12 @@ export default function DeviceSharingPage() {
             <ReviewTrust />
             <InternalLinks links={relatedLinks} />
 
-            <div className="mt-12 rounded-2xl bg-gradient-to-br from-violet-600/20 to-purple-900/20 border border-violet-500/20 p-8 text-center">
-              <h2 className="text-2xl font-bold text-zinc-100 mb-2">
+            <div className="mt-12 rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20 p-8 text-center">
+              <h2 className="text-2xl font-bold text-foreground mb-2">
                 Transfer files from {device1.name} to {device2.name} right now
               </h2>
-              <p className="text-zinc-400 mb-6">Open DefyShare in your browser — it's free and instant.</p>
-              <Link to="/" className="inline-flex items-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold px-8 py-3 transition-colors">
+              <p className="text-muted-foreground mb-6">Open DefyShare in your browser — it's free and instant.</p>
+              <Link to="/" className="inline-flex items-center gap-2 rounded-xl bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-3 transition-colors">
                 Open DefyShare <ArrowRight className="w-4 h-4" />
               </Link>
             </div>

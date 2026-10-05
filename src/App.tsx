@@ -4,14 +4,17 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { lazy, Suspense } from "react";
 import Index from "./pages/Index";
-import Admin from "./pages/Admin";
-import NotFound from "./pages/NotFound";
-import BrandPage from "./pages/BrandPage";
-import PressPage from "./pages/PressPage";
-import VsPage from "./pages/VsPage";
-import SeoDynamicPage from "./pages/SeoDynamicPage";
-import InfoPage from "./pages/InfoPage";
+
+// The share tool loads eagerly; everything else is split into its own chunk.
+const Admin = lazy(() => import("./pages/Admin"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const BrandPage = lazy(() => import("./pages/BrandPage"));
+const PressPage = lazy(() => import("./pages/PressPage"));
+const VsPage = lazy(() => import("./pages/VsPage"));
+const SeoDynamicPage = lazy(() => import("./pages/SeoDynamicPage"));
+const InfoPage = lazy(() => import("./pages/InfoPage"));
 import { PoweredByBadge } from "./components/PoweredByBadge";
 import { InstallPrompt } from "./components/InstallPrompt";
 
@@ -25,6 +28,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <Suspense fallback={<div className="min-h-screen bg-background" />}>
           <Routes>
             {/* Core app routes */}
             <Route path="/" element={<Index />} />
@@ -53,6 +57,7 @@ const App = () => (
             {/* 404 fallback */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </Suspense>
           <PoweredByBadge />
           <InstallPrompt />
 

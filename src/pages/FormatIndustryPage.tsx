@@ -2,6 +2,7 @@ import { useLocation, Link } from 'react-router-dom';
 import { CheckCircle2, ArrowRight, Shield, Users } from 'lucide-react';
 import { FORMATS, INDUSTRIES } from '@/data/seoData';
 import { SeoHead } from '@/components/SeoHead';
+import { getSeoMeta } from '@/data/seoMeta';
 import { JsonLd, buildBreadcrumbSchema, buildFaqSchema, buildWebAppSchema } from '@/components/JsonLd';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { ReviewTrust } from '@/components/ReviewTrust';
@@ -28,17 +29,18 @@ export default function FormatIndustryPage() {
 
   if (!format || !industry) {
     return (
-      <div className="min-h-screen bg-[#0B0B0F] flex items-center justify-center text-zinc-400">
+      <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
         <div className="text-center">
-          <p className="text-2xl font-bold text-zinc-200 mb-2">Page not found</p>
-          <Link to="/" className="text-violet-400 hover:underline">Go to DefyShare →</Link>
+          <p className="text-2xl font-bold text-foreground/90 mb-2">Page not found</p>
+          <Link to="/" className="text-primary hover:underline">Go to DefyShare →</Link>
         </div>
       </div>
     );
   }
 
-  const title = `Share ${format.name} Files for ${industry.name} — Free, Instant, Private | DefyShare`;
-  const description = `The best way for ${industry.role} to share ${format.description}. DefyShare transfers files P2P over your local network — no cloud, no size limit, no account. Free forever.`;
+  const defaultTitle = `Share ${format.name} Files for ${industry.name} — Free, Instant, Private | DefyShare`;
+  const defaultDescription = `The best way for ${industry.role} to share ${format.description}. DefyShare transfers files P2P over your local network — no cloud, no size limit, no account. Free forever.`;
+  const { title, description } = getSeoMeta(pathname) ?? { title: defaultTitle, description: defaultDescription };
   const canonical = `https://defyshare.app/share-${format.slug}-for-${industry.slug}`;
 
   const faqs = [
@@ -80,7 +82,7 @@ export default function FormatIndustryPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0B0B0F] text-zinc-100">
+    <div className="min-h-screen bg-background text-foreground">
       <SeoHead title={title} description={description} canonical={canonical} ogTitle={title} ogDescription={description} />
       <JsonLd schema={[
         buildWebAppSchema(),
@@ -101,35 +103,35 @@ export default function FormatIndustryPage() {
         <div className="mb-10">
           <div className="flex items-center gap-3 mb-4">
             <span className="text-4xl">{format.icon}</span>
-            <div className="inline-flex items-center gap-2 rounded-full bg-violet-500/10 border border-violet-500/20 px-3 py-1 text-xs text-violet-400 font-medium">
+            <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-xs text-primary font-medium">
               <Users className="w-3 h-3" />
               For {industry.name}
             </div>
           </div>
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-zinc-100 mb-4">
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
             Share {format.name} Files for {industry.name}
           </h1>
-          <p className="text-lg text-zinc-400 max-w-2xl leading-relaxed">
+          <p className="text-lg text-muted-foreground max-w-2xl leading-relaxed">
             {industry.role.charAt(0).toUpperCase() + industry.role.slice(1)} regularly share {format.description}
             {' '}used for {format.useCases}. These files are typically {format.avgSize}.{' '}
-            <strong className="text-zinc-200">DefyShare</strong> transfers them directly P2P at full local
+            <strong className="text-foreground/90">DefyShare</strong> transfers them directly P2P at full local
             network speed — private, instant, and completely free.
           </p>
-          <Link to="/" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold px-6 py-3 transition-colors">
+          <Link to="/" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary hover:bg-primary/90 text-white font-semibold px-6 py-3 transition-colors">
             Start Sharing {format.name} Files <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
         <section className="mb-10">
-          <h2 className="text-2xl font-bold text-zinc-100 mb-4">
+          <h2 className="text-2xl font-bold text-foreground mb-4">
             Why {industry.name} Need a Better Way to Share {format.name} Files
           </h2>
-          <p className="text-zinc-400 leading-relaxed mb-4">
+          <p className="text-muted-foreground leading-relaxed mb-4">
             {industry.role.charAt(0).toUpperCase() + industry.role.slice(1)} {industry.painPoint}.
             For {format.name} files specifically — used for {format.useCases} — the problem is compounded
             because these files can be {format.avgSize}, making cloud uploads slow and email attachments impossible.
           </p>
-          <p className="text-zinc-400 leading-relaxed">
+          <p className="text-muted-foreground leading-relaxed">
             DefyShare solves this by using WebRTC peer-to-peer technology to transfer {format.name} files
             directly between devices on the same local network. There is no server intermediary, no upload
             wait, and no file size restriction. The entire transfer happens at your local network's maximum speed.
@@ -137,7 +139,7 @@ export default function FormatIndustryPage() {
         </section>
 
         <section className="mb-10">
-          <h2 className="text-2xl font-bold text-zinc-100 mb-4">
+          <h2 className="text-2xl font-bold text-foreground mb-4">
             DefyShare for {industry.name}: {format.name} File Workflow
           </h2>
           <ol className="space-y-4">
@@ -148,12 +150,12 @@ export default function FormatIndustryPage() {
               { step: '4', title: 'Transfer completes at full LAN speed', desc: `${format.name} files arrive on the receiving device instantly. For ${industry.name}, this means no more waiting for cloud uploads during critical workflows.` },
             ].map((item) => (
               <li key={item.step} className="flex gap-4">
-                <div className="w-8 h-8 rounded-full bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-400 font-bold text-sm shrink-0">
+                <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center text-primary font-bold text-sm shrink-0">
                   {item.step}
                 </div>
                 <div>
-                  <p className="font-semibold text-zinc-200 mb-1">{item.title}</p>
-                  <p className="text-sm text-zinc-400 leading-relaxed">{item.desc}</p>
+                  <p className="font-semibold text-foreground/90 mb-1">{item.title}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
                 </div>
               </li>
             ))}
@@ -161,7 +163,7 @@ export default function FormatIndustryPage() {
         </section>
 
         <section className="mb-10">
-          <h2 className="text-2xl font-bold text-zinc-100 mb-4">Key Benefits for {industry.name}</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-4">Key Benefits for {industry.name}</h2>
           <ul className="space-y-3">
             {[
               `No file size limit — transfer ${format.name} files of ${format.avgSize} or larger without restrictions`,
@@ -171,8 +173,8 @@ export default function FormatIndustryPage() {
               `Free forever — no subscription, no per-GB fees, no premium tier`,
               `TLS 1.3 encrypted — enterprise-grade security for ${format.name} transfers`,
             ].map((item) => (
-              <li key={item} className="flex items-start gap-3 text-zinc-400 text-sm">
-                <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0 mt-0.5" />
+              <li key={item} className="flex items-start gap-3 text-muted-foreground text-sm">
+                <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
                 {item}
               </li>
             ))}
@@ -180,12 +182,12 @@ export default function FormatIndustryPage() {
         </section>
 
         <section className="mb-10">
-          <h2 className="text-2xl font-bold text-zinc-100 mb-6">FAQ</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-6">FAQ</h2>
           <div className="space-y-4">
             {faqs.map((faq) => (
-              <div key={faq.question} className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-5">
-                <h3 className="font-semibold text-zinc-200 mb-2">{faq.question}</h3>
-                <p className="text-sm text-zinc-400 leading-relaxed">{faq.answer}</p>
+              <div key={faq.question} className="rounded-xl border border-border bg-card/70 p-5">
+                <h3 className="font-semibold text-foreground/90 mb-2">{faq.question}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{faq.answer}</p>
               </div>
             ))}
           </div>
@@ -194,12 +196,12 @@ export default function FormatIndustryPage() {
         <ReviewTrust />
         <InternalLinks links={relatedLinks} />
 
-        <div className="mt-12 rounded-2xl bg-gradient-to-br from-violet-600/20 to-purple-900/20 border border-violet-500/20 p-8 text-center">
-          <h2 className="text-2xl font-bold text-zinc-100 mb-2">
+        <div className="mt-12 rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20 p-8 text-center">
+          <h2 className="text-2xl font-bold text-foreground mb-2">
             Start sharing {format.name} files in your {industry.name} workflow
           </h2>
-          <p className="text-zinc-400 mb-6">Free forever. No account. No size limit.</p>
-          <Link to="/" className="inline-flex items-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold px-8 py-3 transition-colors">
+          <p className="text-muted-foreground mb-6">Free forever. No account. No size limit.</p>
+          <Link to="/" className="inline-flex items-center gap-2 rounded-xl bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-3 transition-colors">
             Open DefyShare Free <ArrowRight className="w-4 h-4" />
           </Link>
         </div>

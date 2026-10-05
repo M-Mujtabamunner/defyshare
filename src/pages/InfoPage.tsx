@@ -23,7 +23,7 @@ const DOCS: Record<string, Doc> = {
     sections: [
       { h: 'Summary', p: [`Last updated: ${UPDATED}. DefyShare does not require an account. Files you share are stored temporarily so other devices on your network can download them, then deleted automatically.`] },
       { h: 'Information we process', p: ['Files and text you choose to share; a network-derived room identifier used to group devices; basic technical data such as browser type. If you optionally sign in with Google, we receive your name and email address.'] },
-      { h: 'Retention', p: ['Shared files and text expire automatically (typically within about 30 hours) and are permanently deleted from storage. You can delete items earlier at any time using the delete buttons.'] },
+      { h: 'Retention', p: ['Shared files and text are permanently deleted from storage 3 hours after they are shared. You can delete items earlier at any time using the delete buttons.'] },
       { h: 'Advertising and cookies', p: ['We use Google AdSense to show ads. Google and its partners may use cookies to serve ads based on your prior visits to this and other websites. You can opt out of personalised advertising at Google Ads Settings (adssettings.google.com) or www.aboutads.info.', 'We may use analytics cookies to understand how the service is used so we can improve it.'] },
       { h: 'Your choices', p: ['You can clear shared items, sign out, clear your browser storage, or contact us to ask about data associated with your email address.'] },
       { h: 'Contact', p: ['Questions about privacy: mujtaba.muneer@defyscale.com'] },

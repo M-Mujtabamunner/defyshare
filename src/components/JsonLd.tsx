@@ -31,17 +31,17 @@ export const buildWebAppSchema = () => ({
   name: 'DefyShare',
   url: 'https://defyshare.app',
   description:
-    'DefyShare is a free, browser-based peer-to-peer file sharing app. Transfer files of any size instantly over your local network — no accounts, no upload limits, no cloud servers.',
+    'Free browser app for sending files, folders and text between phones, tablets and computers on the same Wi-Fi network. No account or install needed; shared items are deleted after 3 hours.',
   applicationCategory: 'UtilitiesApplication',
   operatingSystem: 'Windows, macOS, Linux, Android, iOS',
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
   featureList: [
-    'No file size limit',
     'No account required',
-    'Peer-to-peer — files never touch our servers',
-    'Works on all devices and browsers',
-    'Real-time text sharing',
-    'Drag and drop interface',
+    'Works in any modern browser',
+    'Any file type, including folders, ZIP and RAR',
+    'Real-time text and link sharing',
+    'Drag and drop or paste to upload',
+    'Files auto-delete after 3 hours',
   ],
   creator: {
     '@type': 'Organization',

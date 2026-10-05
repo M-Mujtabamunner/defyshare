@@ -103,15 +103,15 @@ export const INDUSTRIES = [
 
 export const DEFYSHARE_FEATURES = [
   { feature: 'No app install required', defyshare: true, description: 'Works in any modern browser' },
-  { feature: 'No file size limit', defyshare: true, description: 'Transfer files of any size' },
+  { feature: 'Any file type', defyshare: true, description: 'Photos, videos, ZIP, RAR, APK, folders and more' },
   { feature: 'No account required', defyshare: true, description: 'Zero sign-up friction' },
   { feature: 'Completely free', defyshare: true, description: 'No paid tiers or limits' },
-  { feature: 'Files stay on local network', defyshare: true, description: 'P2P — files never touch servers' },
+  { feature: 'Private to your network', defyshare: true, description: 'Only devices on the same Wi-Fi can see your files' },
   { feature: 'Works across all platforms', defyshare: true, description: 'Windows, Mac, Linux, Android, iOS' },
   { feature: 'Real-time text sharing', defyshare: true, description: 'Share clipboard text instantly' },
-  { feature: 'Dark mode UI', defyshare: true, description: 'Premium Vercel-inspired dark theme' },
-  { feature: 'Transfer history', defyshare: true, description: 'Local ledger of all transfers' },
-  { feature: 'Drag and drop', defyshare: true, description: 'Glassmorphism drop zone' },
+  { feature: 'Auto-delete', defyshare: true, description: 'Every file is removed after 3 hours' },
+  { feature: 'Instant previews', defyshare: true, description: 'Open images, video, audio and PDFs in the browser' },
+  { feature: 'Drag and drop', defyshare: true, description: 'Drop anywhere on the page, or paste with Ctrl+V' },
 ];
 
 export interface KeywordPage {
@@ -399,7 +399,7 @@ export const KEYWORD_PAGES: KeywordPage[] = [
   {
     slug: 'fastest-file-sharing-tool',
     h1: 'Fastest File Sharing Tool — Full LAN Speed, No Upload Wait',
-    title: 'Fastest File Sharing Tool 2025 — LAN Speed P2P Transfer | DefyShare',
+    title: 'Fastest File Sharing Tool 2026 — LAN Speed P2P Transfer | DefyShare',
     description: 'DefyShare is the fastest file sharing tool available. By transferring files P2P over your local network, it eliminates the upload bottleneck — achieving up to 1 Gbps.',
     intro: 'Cloud-based file sharing is slow because every file must be uploaded to a server and then downloaded again. Even on a 500 Mbps internet connection, server-side bottlenecks limit real-world speeds. DefyShare bypasses this entirely by staying on your local network.',
     keywords: ['fastest file sharing tool', 'fast file transfer app', 'fastest way to share files', 'high speed file transfer', 'fast local file sharing'],
