@@ -1,6 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { Upload, FolderUp, FilePlus2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useT } from '@/lib/i18n';
 
 interface DropZoneProps {
   onFilesDrop: (files: File[]) => Promise<void> | void;
@@ -52,6 +53,7 @@ export const collectFilesFromDataTransfer = async (dt: DataTransfer): Promise<Fi
 };
 
 const DropZone: React.FC<DropZoneProps> = ({ onFilesDrop, isUploading }) => {
+  const { t } = useT();
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
@@ -94,7 +96,7 @@ const DropZone: React.FC<DropZoneProps> = ({ onFilesDrop, isUploading }) => {
       onDragLeave={() => setIsDragOver(false)}
       onDrop={handleDrop}
       className={cn(
-        'group flex items-center gap-3 rounded-xl border-2 border-dashed px-3 py-2.5 cursor-pointer transition-colors',
+        'group flex items-center gap-2.5 sm:gap-3 rounded-xl border-2 border-dashed px-2.5 sm:px-3 py-2.5 cursor-pointer transition-colors',
         isDragOver ? 'border-primary bg-primary/10' : 'border-border bg-card/60 hover:border-primary/60 hover:bg-primary/5',
         isUploading && 'pointer-events-none opacity-70',
       )}
@@ -103,10 +105,10 @@ const DropZone: React.FC<DropZoneProps> = ({ onFilesDrop, isUploading }) => {
         {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
       </div>
       <p className="flex-1 min-w-0 text-sm font-medium truncate">
-        {isUploading ? 'Uploading…' : isDragOver ? 'Release to upload' : (
+        {isUploading ? t('uploading') : isDragOver ? t('releaseToUpload') : (
           <>
-            <span className="sm:hidden">Add files</span>
-            <span className="hidden sm:inline">Drop files or folders here</span>
+            <span className="sm:hidden">{t('addFiles')}</span>
+            <span className="hidden sm:inline">{t('dropHere')}</span>
           </>
         )}
       </p>
@@ -115,19 +117,19 @@ const DropZone: React.FC<DropZoneProps> = ({ onFilesDrop, isUploading }) => {
           type="button"
           onClick={pick(fileInputRef)}
           disabled={isUploading}
-          className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md border border-border bg-background hover:border-primary/50 hover:text-primary transition-colors"
+          className="inline-flex items-center justify-center gap-1.5 h-9 min-w-9 text-xs font-medium px-2.5 rounded-lg border border-border bg-background hover:border-primary/50 hover:text-primary transition-colors"
         >
-          <FilePlus2 className="w-3.5 h-3.5" />
-          Files
+          <FilePlus2 className="w-4 h-4 shrink-0" />
+          <span className="hidden min-[400px]:inline">{t('filesBtn')}</span>
         </button>
         <button
           type="button"
           onClick={pick(folderInputRef)}
           disabled={isUploading}
-          className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md border border-border bg-background hover:border-primary/50 hover:text-primary transition-colors"
+          className="inline-flex items-center justify-center gap-1.5 h-9 min-w-9 text-xs font-medium px-2.5 rounded-lg border border-border bg-background hover:border-primary/50 hover:text-primary transition-colors"
         >
-          <FolderUp className="w-3.5 h-3.5" />
-          Folder
+          <FolderUp className="w-4 h-4 shrink-0" />
+          <span className="hidden min-[400px]:inline">{t('folderBtn')}</span>
         </button>
       </div>
       <input
@@ -138,7 +140,7 @@ const DropZone: React.FC<DropZoneProps> = ({ onFilesDrop, isUploading }) => {
         onClick={(e) => e.stopPropagation()}
         className="hidden"
         disabled={isUploading}
-        aria-label="Choose files"
+        aria-label={t('filesBtn')}
       />
       <input
         ref={folderInputRef}
@@ -151,7 +153,7 @@ const DropZone: React.FC<DropZoneProps> = ({ onFilesDrop, isUploading }) => {
         onClick={(e) => e.stopPropagation()}
         className="hidden"
         disabled={isUploading}
-        aria-label="Choose a folder"
+        aria-label={t('folderBtn')}
       />
     </div>
   );

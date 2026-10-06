@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { I18nProvider } from "@/lib/i18n";
 import { lazy, Suspense } from "react";
 import Index from "./pages/Index";
 
@@ -16,7 +17,6 @@ const VsPage = lazy(() => import("./pages/VsPage"));
 const SeoDynamicPage = lazy(() => import("./pages/SeoDynamicPage"));
 const InfoPage = lazy(() => import("./pages/InfoPage"));
 import { PoweredByBadge } from "./components/PoweredByBadge";
-import { InstallPrompt } from "./components/InstallPrompt";
 
 
 const queryClient = new QueryClient();
@@ -24,6 +24,7 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
+    <I18nProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -59,10 +60,10 @@ const App = () => (
           </Routes>
           </Suspense>
           <PoweredByBadge />
-          <InstallPrompt />
 
         </BrowserRouter>
       </TooltipProvider>
+    </I18nProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );

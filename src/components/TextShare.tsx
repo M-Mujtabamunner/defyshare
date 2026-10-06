@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { SharedText } from '@/hooks/useTextSharing';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { useT } from '@/lib/i18n';
 
 interface TextShareProps {
   texts: SharedText[];
@@ -55,6 +56,7 @@ const TextItem: React.FC<{ text: SharedText; onRemove: (id: string) => void }> =
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
+  const { t } = useT();
   const parts = tokenize(text.content);
   const links = [...new Set(parts.filter((p) => p.url).map((p) => p.url as string))];
   const long = isLong(text.content);
@@ -62,7 +64,7 @@ const TextItem: React.FC<{ text: SharedText; onRemove: (id: string) => void }> =
   const copy = async () => {
     await navigator.clipboard.writeText(text.content);
     setCopied(true);
-    toast({ title: 'Copied' });
+    toast({ title: t('copied') });
     setTimeout(() => setCopied(false), 1500);
   };
 
@@ -97,7 +99,7 @@ const TextItem: React.FC<{ text: SharedText; onRemove: (id: string) => void }> =
               variant="ghost"
               size="icon"
               onClick={() => setExpanded((v) => !v)}
-              aria-label={expanded ? 'Collapse' : 'Expand'}
+              aria-label={expanded ? t('collapse') : t('expand')}
               aria-expanded={expanded}
               className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
             >
@@ -108,7 +110,7 @@ const TextItem: React.FC<{ text: SharedText; onRemove: (id: string) => void }> =
             variant="ghost"
             size="icon"
             onClick={copy}
-            aria-label="Copy"
+            aria-label={t('copy')}
             className="h-7 w-7 text-primary hover:text-primary hover:bg-primary/10"
           >
             {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
@@ -117,7 +119,7 @@ const TextItem: React.FC<{ text: SharedText; onRemove: (id: string) => void }> =
             variant="ghost"
             size="icon"
             onClick={() => onRemove(text.id)}
-            aria-label="Delete"
+            aria-label={t('delete')}
             className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -152,6 +154,7 @@ const TextShare: React.FC<TextShareProps> = ({ texts, loading, onAdd, onRemove, 
   const [input, setInput] = useState('');
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
+  const { t } = useT();
 
   const submit = async () => {
     if (!input.trim() || saving) return;
@@ -161,7 +164,7 @@ const TextShare: React.FC<TextShareProps> = ({ texts, loading, onAdd, onRemove, 
       setInput('');
     } catch (error) {
       toast({
-        title: 'Could not share text',
+        title: t('textFailed'),
         description: error instanceof Error ? error.message : undefined,
         variant: 'destructive',
       });
@@ -188,7 +191,7 @@ const TextShare: React.FC<TextShareProps> = ({ texts, loading, onAdd, onRemove, 
               submit();
             }
           }}
-          placeholder="Type or paste text or links…"
+          placeholder={t('textPlaceholder')}
           className="min-h-[76px] bg-card border-border focus-visible:ring-primary/40 resize-y text-sm"
         />
         <div className="flex justify-end">
@@ -221,7 +224,7 @@ const TextShare: React.FC<TextShareProps> = ({ texts, loading, onAdd, onRemove, 
             Loading…
           </div>
         ) : texts.length === 0 ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">No text shared yet</p>
+          <p className="py-6 text-center text-sm text-muted-foreground">{t('noText')}</p>
         ) : (
           texts.map((text) => <TextItem key={text.id} text={text} onRemove={onRemove} />)
         )}

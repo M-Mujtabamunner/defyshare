@@ -4,11 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useTheme, type Design, type ResolvedTheme, type ThemeMode } from '@/components/ThemeProvider';
 import { cn } from '@/lib/utils';
+import { useT, type MessageKey } from '@/lib/i18n';
 
-const MODES: { value: ThemeMode; label: string; Icon: typeof Sun }[] = [
-  { value: 'light', label: 'Bright', Icon: Sun },
-  { value: 'dark', label: 'Dark', Icon: Moon },
-  { value: 'system', label: 'System', Icon: Monitor },
+const MODES: { value: ThemeMode; label: MessageKey; Icon: typeof Sun }[] = [
+  { value: 'light', label: 'bright', Icon: Sun },
+  { value: 'dark', label: 'dark', Icon: Moon },
+  { value: 'system', label: 'system', Icon: Monitor },
 ];
 
 interface Swatch {
@@ -18,10 +19,10 @@ interface Swatch {
   accent: string;
 }
 
-const DESIGNS: { value: Design; label: string; swatch: Record<ResolvedTheme, Swatch> }[] = [
+const DESIGNS: { value: Design; label: MessageKey; swatch: Record<ResolvedTheme, Swatch> }[] = [
   {
     value: 'warm',
-    label: 'Current',
+    label: 'current',
     swatch: {
       light: { bg: '#F4EFE6', card: '#FBF8F3', line: '#D9CFC0', accent: '#FD6F3B' },
       dark: { bg: '#24211E', card: '#2B2826', line: '#46403B', accent: '#F2683A' },
@@ -29,7 +30,7 @@ const DESIGNS: { value: Design; label: string; swatch: Record<ResolvedTheme, Swa
   },
   {
     value: 'classic',
-    label: 'Classic',
+    label: 'classic',
     swatch: {
       light: { bg: '#EBECF0', card: '#FFFFFF', line: '#DCDFE5', accent: '#14B8AA' },
       dark: { bg: '#0C0E12', card: '#15181E', line: '#2A2F38', accent: '#1AE6D4' },
@@ -38,7 +39,6 @@ const DESIGNS: { value: Design; label: string; swatch: Record<ResolvedTheme, Swa
 ];
 
 const HINT_KEY = 'defyshare:theme-hint-seen';
-const HINT_TEXT = 'Tap the pencil to change the theme';
 
 /** Mini page mock-up in a design's colours. */
 const Preview: React.FC<{ swatch: Swatch }> = ({ swatch }) => (
@@ -57,6 +57,8 @@ const Preview: React.FC<{ swatch: Swatch }> = ({ swatch }) => (
 
 /** Small chat-style bubble that types itself out next to the pencil on a first visit. */
 const ThemeHint: React.FC<{ onOpen: () => void; onDone: () => void }> = ({ onOpen, onDone }) => {
+  const { t } = useT();
+  const HINT_TEXT = t('themeHint');
   const [chars, setChars] = useState(0);
 
   useEffect(() => {
@@ -66,7 +68,7 @@ const ThemeHint: React.FC<{ onOpen: () => void; onDone: () => void }> = ({ onOpe
       clearInterval(typing);
       clearTimeout(hide);
     };
-  }, [onDone]);
+  }, [onDone, HINT_TEXT.length]);
 
   return (
     <button
@@ -87,6 +89,7 @@ const ThemeHint: React.FC<{ onOpen: () => void; onDone: () => void }> = ({ onOpe
 };
 
 const AppearanceMenu: React.FC = () => {
+  const { t } = useT();
   const { mode, setMode, design, setDesign, resolved } = useTheme();
   const [open, setOpen] = useState(false);
   const [hint, setHint] = useState(false);
@@ -115,19 +118,19 @@ const AppearanceMenu: React.FC = () => {
         }}
       >
         <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" aria-label="Change theme" title="Change theme">
+          <Button variant="ghost" size="icon" aria-label={t('changeTheme')} title={t('changeTheme')}>
             <Pencil className="w-4 h-4" />
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="w-[300px] sm:max-w-[300px]">
           <SheetHeader>
-            <SheetTitle>Appearance</SheetTitle>
+            <SheetTitle>{t('appearance')}</SheetTitle>
           </SheetHeader>
 
           <div className="mt-6 space-y-6">
             <section className="space-y-2">
-              <h3 className="text-xs font-medium text-muted-foreground">Theme</h3>
-              <div role="radiogroup" aria-label="Theme" className="grid grid-cols-3 gap-1 p-1 rounded-lg bg-secondary">
+              <h3 className="text-xs font-medium text-muted-foreground">{t('theme')}</h3>
+              <div role="radiogroup" aria-label={t('theme')} className="grid grid-cols-3 gap-1 p-1 rounded-lg bg-secondary">
                 {MODES.map(({ value, label, Icon }) => (
                   <button
                     key={value}
@@ -141,15 +144,15 @@ const AppearanceMenu: React.FC = () => {
                     )}
                   >
                     <Icon className="w-4 h-4" />
-                    {label}
+                    {t(label)}
                   </button>
                 ))}
               </div>
             </section>
 
             <section className="space-y-2">
-              <h3 className="text-xs font-medium text-muted-foreground">Design</h3>
-              <div role="radiogroup" aria-label="Design" className="grid grid-cols-2 gap-2">
+              <h3 className="text-xs font-medium text-muted-foreground">{t('design')}</h3>
+              <div role="radiogroup" aria-label={t('design')} className="grid grid-cols-2 gap-2">
                 {DESIGNS.map(({ value, label, swatch }) => {
                   const selected = design === value;
                   return (
@@ -166,7 +169,7 @@ const AppearanceMenu: React.FC = () => {
                     >
                       <Preview swatch={swatch[resolved]} />
                       <span className="flex items-center justify-between mt-1.5 px-0.5 text-xs font-medium">
-                        {label}
+                        {t(label)}
                         {selected && <Check className="w-3.5 h-3.5 text-primary" />}
                       </span>
                     </button>

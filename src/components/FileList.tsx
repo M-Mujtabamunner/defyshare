@@ -1,19 +1,81 @@
 import React, { useEffect, useState } from 'react';
-import { Download, Trash2, FileText, Image as ImageIcon, Film, Music, Archive, File, Loader2, Clock, Link2, Check, ExternalLink } from 'lucide-react';
+import { Download, Trash2, FileText, Image as ImageIcon, Film, Music, Archive, File, Loader2, Clock, Link2, Check, ExternalLink, ChevronDown, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { SharedFile } from '@/hooks/useFileSharing';
+import { SharedFile, senderOf, targetOf } from '@/hooks/useFileSharing';
+import type { Member } from '@/hooks/useOnlinePresence';
+import type { Group } from '@/hooks/useGroups';
+import MemberPicker, { MemberAvatar, TargetLabel } from '@/components/MemberPicker';
+import type { Peer, Target } from '@/lib/recipients';
 import { getSignedFileUrl } from '@/lib/storageUrls';
 import { isArchive } from '@/lib/fileTypes';
+import { useT } from '@/lib/i18n';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 interface FileListProps {
   files: SharedFile[];
   loading?: boolean;
+  deviceId: string;
+  members: Member[];
+  groups: Group[];
   onDownload: (file: SharedFile) => void;
   onRemove: (fileId: string) => void;
   onPreview?: (file: SharedFile) => void;
+  onChangeTarget: (file: SharedFile, target: Target) => void;
+  onCreateGroup: (name: string, people: Peer[]) => Promise<void>;
+  onManageGroups: () => void;
 }
+
+type PartyProps = Pick<FileListProps, 'deviceId' | 'members' | 'groups' | 'onChangeTarget' | 'onCreateGroup' | 'onManageGroups'> & {
+  file: SharedFile;
+};
+
+/** Who a file is to/from. The sender can change who it's for from here. */
+const FileParty: React.FC<PartyProps> = ({ file, deviceId, members, groups, onChangeTarget, onCreateGroup, onManageGroups }) => {
+  const { t } = useT();
+  const target = targetOf(file);
+  const from = senderOf(file);
+
+  if (from?.id === deviceId) {
+    return (
+      <span onClick={(e) => e.stopPropagation()}>
+        <MemberPicker
+          members={members}
+          groups={groups}
+          value={target}
+          onChange={(next) => onChangeTarget(file, next)}
+          onCreateGroup={onCreateGroup}
+          onManageGroups={onManageGroups}
+        >
+          <button
+            type="button"
+            title={t('changeWho')}
+            className="inline-flex items-center gap-1 max-w-full rounded-full border border-border px-1.5 py-0.5 text-[11px] text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
+          >
+            <Send className="w-3 h-3 shrink-0 rtl:-scale-x-100" />
+            <span className="shrink-0">{t('to')}</span>
+            <span className="inline-flex items-center gap-1 min-w-0 text-foreground">
+              <TargetLabel target={target} size="xs" />
+            </span>
+            <ChevronDown className="w-3 h-3 shrink-0" />
+          </button>
+        </MemberPicker>
+      </span>
+    );
+  }
+
+  if (!from) return null;
+  const forMe =
+    target.kind === 'devices' ? t('toYou') : target.kind === 'group' ? target.group.name : null;
+  return (
+    <span className="inline-flex items-center gap-1 max-w-full text-[11px] text-muted-foreground">
+      <span className="shrink-0">{t('from')}</span>
+      <MemberAvatar id={from.id} name={from.name} size="xs" />
+      <span className="truncate font-medium text-foreground">{from.name}</span>
+      {forMe && <span className="shrink-0 text-primary truncate">· {forMe}</span>}
+    </span>
+  );
+};
 
 const getFileIcon = (file: SharedFile) => {
   const type = file.type || '';
@@ -61,12 +123,12 @@ const useSignedUrl = (filePath: string) => {
   return url;
 };
 
-const FileRow: React.FC<{
-  file: SharedFile;
-  onDownload: (file: SharedFile) => void;
-  onRemove: (fileId: string) => void;
-  onPreview?: (file: SharedFile) => void;
-}> = ({ file, onDownload, onRemove, onPreview }) => {
+const FileRow: React.FC<
+  Omit<FileListProps, 'files' | 'loading'> & {
+    file: SharedFile;
+  }
+> = ({ file, onDownload, onRemove, onPreview, ...party }) => {
+  const { t } = useT();
   const { toast } = useToast();
   const url = useSignedUrl(file.file_path);
   const [copied, setCopied] = useState(false);
@@ -82,9 +144,9 @@ const FileRow: React.FC<{
       await navigator.clipboard.writeText(url);
       setCopied(true);
       setTimeout(() => setCopied(false), 1200);
-      toast({ title: 'Link copied' });
+      toast({ title: t('linkCopied') });
     } catch {
-      toast({ title: 'Copy failed', variant: 'destructive' });
+      toast({ title: t('copyFailed'), variant: 'destructive' });
     }
   };
 
@@ -124,6 +186,9 @@ const FileRow: React.FC<{
             <Clock className="w-3 h-3" /> {formatExpiry(file.expires_at)}
           </span>
         </div>
+        <div className="mt-1 min-w-0">
+          <FileParty file={file} {...party} />
+        </div>
       </div>
 
       <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -132,10 +197,11 @@ const FileRow: React.FC<{
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs font-medium text-link bg-link-bg hover:underline px-2 py-1 rounded-md mr-0.5"
+            aria-label={t('open')}
+            className="inline-flex items-center gap-1 h-8 text-xs font-medium text-link bg-link-bg hover:underline px-2 rounded-md me-0.5"
           >
-            <ExternalLink className="w-3 h-3" />
-            Open
+            <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+            <span className="hidden min-[400px]:inline">{t('open')}</span>
           </a>
         )}
         <Button
@@ -143,8 +209,9 @@ const FileRow: React.FC<{
           size="icon"
           onClick={copyLink}
           disabled={!url}
-          title="Copy link"
-          className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+          title={t('copyLink')}
+          aria-label={t('copyLink')}
+          className="hidden sm:inline-flex h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
         >
           {copied ? <Check className="w-4 h-4 text-primary" /> : <Link2 className="w-4 h-4" />}
         </Button>
@@ -152,7 +219,8 @@ const FileRow: React.FC<{
           variant="ghost"
           size="icon"
           onClick={() => onDownload(file)}
-          title="Download"
+          title={t('download')}
+          aria-label={t('download')}
           className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
         >
           <Download className="w-4 h-4" />
@@ -161,7 +229,8 @@ const FileRow: React.FC<{
           variant="ghost"
           size="icon"
           onClick={() => onRemove(file.id)}
-          title="Delete"
+          title={t('delete')}
+          aria-label={t('delete')}
           className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
         >
           <Trash2 className="w-4 h-4" />
@@ -171,24 +240,25 @@ const FileRow: React.FC<{
   );
 };
 
-const FileList: React.FC<FileListProps> = ({ files, loading, onDownload, onRemove, onPreview }) => {
+const FileList: React.FC<FileListProps> = ({ files, loading, ...rowProps }) => {
+  const { t } = useT();
   if (loading && files.length === 0) {
     return (
       <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
         <Loader2 className="w-4 h-4 animate-spin text-primary" />
-        Loading files…
+        {t('loadingFiles')}
       </div>
     );
   }
 
   if (files.length === 0) {
-    return <p className="py-8 text-center text-sm text-muted-foreground">No files shared yet</p>;
+    return <p className="py-8 text-center text-sm text-muted-foreground">{t('noFiles')}</p>;
   }
 
   return (
     <div className="space-y-1.5">
       {files.map((file) => (
-        <FileRow key={file.id} file={file} onDownload={onDownload} onRemove={onRemove} onPreview={onPreview} />
+        <FileRow key={file.id} file={file} {...rowProps} />
       ))}
     </div>
   );

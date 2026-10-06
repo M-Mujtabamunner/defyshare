@@ -136,24 +136,97 @@ export async function sweepExpired(cfg, now = Date.now()) {
   return { scanned, deleted, errors };
 }
 
+// --- S3 multipart upload: large files go up in parallel parts ---
+/** Server-side S3 call through a short-lived presigned URL. */
+async function s3Call(cfg, method, key, params, { body, headers } = {}) {
+  const res = await fetch(presign(cfg, method, key, 300, params), { method, body, headers });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`${method} ${key}: ${res.status} ${text.slice(0, 300)}`);
+  return text;
+}
+
+export async function createMultipart(cfg, key, contentType) {
+  const xml = await s3Call(cfg, 'POST', key, { uploads: '' }, { headers: { 'Content-Type': contentType || 'application/octet-stream' } });
+  const uploadId = xml.match(/<UploadId>([^<]+)<\/UploadId>/)?.[1];
+  if (!uploadId) throw new Error('no UploadId in response');
+  return uploadId;
+}
+
+export const presignPart = (cfg, key, uploadId, partNumber, expires) =>
+  presign(cfg, 'PUT', key, expires, { partNumber: String(partNumber), uploadId });
+
+const xmlEscape = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+export async function completeMultipart(cfg, key, uploadId, parts) {
+  const body =
+    '<CompleteMultipartUpload>' +
+    [...parts]
+      .sort((a, b) => a.partNumber - b.partNumber)
+      .map((p) => `<Part><PartNumber>${p.partNumber}</PartNumber><ETag>${xmlEscape(p.etag)}</ETag></Part>`)
+      .join('') +
+    '</CompleteMultipartUpload>';
+  const xml = await s3Call(cfg, 'POST', key, { uploadId }, { body, headers: { 'Content-Type': 'application/xml' } });
+  // S3 can report a failure inside a 200 response.
+  if (/<Error>/.test(xml)) throw new Error(`complete failed: ${xml.slice(0, 300)}`);
+}
+
+export const abortMultipart = (cfg, key, uploadId) => s3Call(cfg, 'DELETE', key, { uploadId });
+
 // --- Request handler shared by the Vercel function and the Vite dev server ---
 const validKey = (k) =>
   typeof k === 'string' && k.length > 0 && k.length <= 1024 && !k.startsWith('/') && !k.split('/').includes('..');
+
+const MAX_PARTS = 10000;
+const validUploadId = (id) => typeof id === 'string' && /^[\w.~=+/-]{1,512}$/.test(id);
+const validPart = (n) => Number.isInteger(n) && n >= 1 && n <= MAX_PARTS;
+
+const ACTIONS = ['put', 'get', 'delete', 'mp-create', 'mp-parts', 'mp-complete', 'mp-abort'];
 
 export async function handleSignRequest(body, cfg = b2Config()) {
   if (!cfg.keyId || !cfg.appKey) return { status: 500, json: { error: 'B2 credentials are not configured' } };
   const action = body?.action;
   const keys = Array.isArray(body?.keys) ? body.keys : body?.key ? [body.key] : [];
-  if (!['put', 'get', 'delete'].includes(action) || keys.length === 0 || keys.length > MAX_KEYS_PER_REQUEST || !keys.every(validKey)) {
+  if (!ACTIONS.includes(action) || keys.length === 0 || keys.length > MAX_KEYS_PER_REQUEST || !keys.every(validKey)) {
     return { status: 400, json: { error: 'invalid request' } };
   }
   const expires = Math.min(Math.max(Number(body.expires) || MAX_SIGN_SECONDS, 60), MAX_SIGN_SECONDS);
+  const key = keys[0];
 
   if (action === 'delete') {
     return { status: 200, json: { deleted: await hardDelete(cfg, keys) } };
   }
   if (action === 'put') {
-    return { status: 200, json: { url: presign(cfg, 'PUT', keys[0], expires) } };
+    if (Array.isArray(body.keys)) {
+      return { status: 200, json: { urls: Object.fromEntries(keys.map((k) => [k, presign(cfg, 'PUT', k, expires)])) } };
+    }
+    return { status: 200, json: { url: presign(cfg, 'PUT', key, expires) } };
+  }
+  if (action === 'mp-create') {
+    const contentType = typeof body.contentType === 'string' ? body.contentType.slice(0, 200) : undefined;
+    return { status: 200, json: { uploadId: await createMultipart(cfg, key, contentType) } };
+  }
+  if (action.startsWith('mp-') && !validUploadId(body.uploadId)) {
+    return { status: 400, json: { error: 'invalid uploadId' } };
+  }
+  if (action === 'mp-parts') {
+    const parts = Array.isArray(body.parts) ? body.parts : [];
+    if (parts.length === 0 || parts.length > MAX_KEYS_PER_REQUEST || !parts.every(validPart)) {
+      return { status: 400, json: { error: 'invalid parts' } };
+    }
+    const urls = Object.fromEntries(parts.map((n) => [n, presignPart(cfg, key, body.uploadId, n, expires)]));
+    return { status: 200, json: { urls } };
+  }
+  if (action === 'mp-complete') {
+    const parts = Array.isArray(body.parts) ? body.parts : [];
+    if (parts.length === 0 || parts.length > MAX_PARTS || !parts.every((p) => validPart(p?.partNumber) && typeof p?.etag === 'string')) {
+      return { status: 400, json: { error: 'invalid parts' } };
+    }
+    await completeMultipart(cfg, key, body.uploadId, parts);
+    return { status: 200, json: { ok: true } };
+  }
+  if (action === 'mp-abort') {
+    await abortMultipart(cfg, key, body.uploadId);
+    return { status: 200, json: { ok: true } };
   }
   // get: optional download filename makes the browser save instead of display
   const download = typeof body.download === 'string' ? body.download.replace(/["\r\n\\]/g, '_') : null;

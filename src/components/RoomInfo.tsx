@@ -4,14 +4,18 @@ import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useLocalNetwork } from '@/hooks/useLocalNetwork';
+import { useT } from '@/lib/i18n';
 
 interface RoomInfoProps {
   localIP: string;
   roomId: string;
   fileCount: number;
+  /** Rendered under the network details (this device's name). */
+  footer?: React.ReactNode;
 }
 
-const RoomInfo: React.FC<RoomInfoProps> = ({ localIP, roomId, fileCount }) => {
+const RoomInfo: React.FC<RoomInfoProps> = ({ localIP, roomId, fileCount, footer }) => {
+  const { t } = useT();
   const [copied, setCopied] = useState(false);
   const { networkName, connectionType } = useLocalNetwork();
 
@@ -24,7 +28,8 @@ const RoomInfo: React.FC<RoomInfoProps> = ({ localIP, roomId, fileCount }) => {
   const isDetecting = localIP === 'detecting...' || networkName === 'detecting...';
 
   return (
-    <div className="flex items-center justify-between gap-3 p-3 sm:p-4 rounded-lg bg-secondary/30 border border-border/50 w-full min-w-0">
+    <div className="rounded-lg bg-secondary/30 border border-border/50 w-full min-w-0">
+    <div className="flex items-center justify-between gap-3 p-3 sm:p-4 min-w-0">
       <div className="flex items-center gap-3 min-w-0 flex-1">
         <div className={cn(
           "p-2 rounded-lg shrink-0",
@@ -35,7 +40,7 @@ const RoomInfo: React.FC<RoomInfoProps> = ({ localIP, roomId, fileCount }) => {
         <div className="min-w-0 flex-1">
           {/* Show the actual detected network label instead of static "Your Network" */}
           <p className="text-xs sm:text-sm text-muted-foreground truncate">
-            {isDetecting ? 'Your Network' : networkName}
+            {isDetecting ? t('yourNetwork') : networkName}
           </p>
           <div className="flex items-center gap-1 min-w-0">
             <code className="font-mono text-xs sm:text-sm text-foreground truncate">{localIP}</code>
@@ -57,12 +62,14 @@ const RoomInfo: React.FC<RoomInfoProps> = ({ localIP, roomId, fileCount }) => {
         </div>
       </div>
 
-      <div className="text-right shrink-0">
+      <div className="text-end shrink-0">
         <p className="text-xl sm:text-2xl font-bold font-mono text-primary leading-tight">{fileCount}</p>
         <p className="text-xs text-muted-foreground">
-          {fileCount === 1 ? 'file' : 'files'} shared
+          {fileCount === 1 ? t('fileShared') : t('filesShared')}
         </p>
       </div>
+    </div>
+    {footer && <div className="border-t border-border/50 px-3 sm:px-4 py-2">{footer}</div>}
     </div>
   );
 };

@@ -2,6 +2,7 @@ import React from 'react';
 import { CheckCircle2, AlertCircle, Loader2, Clock, X, RotateCw, Ban } from 'lucide-react';
 import type { PerFileProgress } from '@/hooks/useFileSharing';
 import { cn } from '@/lib/utils';
+import { useT } from '@/lib/i18n';
 
 interface Props {
   items: PerFileProgress[];
@@ -38,22 +39,23 @@ const UploadProgressList: React.FC<Props> = ({
   onRetry,
   onDismiss,
 }) => {
+  const { t } = useT();
   if (items.length === 0) return null;
   return (
     <div className="rounded-xl border border-border/50 bg-card/40 backdrop-blur-sm p-3 sm:p-4 space-y-3 animate-fade-in">
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
           <p className="text-sm font-medium">
-            {completedFiles >= totalFiles ? 'Uploaded' : 'Uploading'}{' '}
+            {completedFiles >= totalFiles ? t('uploadedTitle') : t('uploadingTitle')}{' '}
             <span className="text-primary">{completedFiles}/{totalFiles}</span>
           </p>
-          <p className="text-xs text-muted-foreground">{Math.round(aggregate)}% complete</p>
+          <p className="text-xs text-muted-foreground">{t('percentComplete', { n: Math.round(aggregate) })}</p>
         </div>
         {onDismiss && (
           <button
             onClick={onDismiss}
             className="text-muted-foreground hover:text-foreground p-1 rounded"
-            aria-label="Dismiss"
+            aria-label={t('dismiss')}
           >
             <X className="w-4 h-4" />
           </button>
@@ -85,9 +87,9 @@ const UploadProgressList: React.FC<Props> = ({
                   <span className="truncate font-mono">{it.name}</span>
                   <span className="text-muted-foreground shrink-0">
                     {it.status === 'error'
-                      ? 'failed'
+                      ? t('failed')
                       : it.status === 'canceled'
-                        ? 'canceled'
+                        ? t('canceled')
                         : it.status === 'done'
                           ? formatBytes(it.size)
                           : `${formatBytes(it.loaded)} / ${formatBytes(it.size)}`}
@@ -113,8 +115,8 @@ const UploadProgressList: React.FC<Props> = ({
                   <button
                     onClick={() => onRetry(it.id)}
                     className="p-1.5 rounded-md hover:bg-primary/10 text-primary transition-colors"
-                    aria-label={`Retry ${it.name}`}
-                    title="Retry"
+                    aria-label={`${t('retry')} ${it.name}`}
+                    title={t('retry')}
                   >
                     <RotateCw className="w-3.5 h-3.5" />
                   </button>
@@ -123,8 +125,8 @@ const UploadProgressList: React.FC<Props> = ({
                   <button
                     onClick={() => onCancel(it.id)}
                     className="p-1.5 rounded-md hover:bg-destructive/10 text-destructive transition-colors"
-                    aria-label={`Cancel ${it.name}`}
-                    title="Cancel"
+                    aria-label={`${t('cancel')} ${it.name}`}
+                    title={t('cancel')}
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>

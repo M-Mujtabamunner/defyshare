@@ -21,10 +21,28 @@ async function signRequest<T>(body: Record<string, unknown>): Promise<T> {
   return json as T;
 }
 
-export const getB2UploadUrl = async (key: string) => {
-  const { url } = await signRequest<{ url: string }>({ action: 'put', key });
-  return url;
+/** Upload URLs for many small files in as few requests as possible. */
+export const getB2UploadUrls = async (keys: string[]) => {
+  const urls: Record<string, string> = {};
+  for (let i = 0; i < keys.length; i += MAX_BATCH) {
+    const res = await signRequest<{ urls: Record<string, string> }>({ action: 'put', keys: keys.slice(i, i + MAX_BATCH) });
+    Object.assign(urls, res.urls);
+  }
+  return urls;
 };
+
+// --- Multipart: large files upload as parallel parts ---
+export const startMultipart = async (key: string, contentType: string) =>
+  (await signRequest<{ uploadId: string }>({ action: 'mp-create', key, contentType })).uploadId;
+
+export const getPartUrls = async (key: string, uploadId: string, parts: number[]) =>
+  (await signRequest<{ urls: Record<string, string> }>({ action: 'mp-parts', key, uploadId, parts })).urls;
+
+export const completeMultipart = (key: string, uploadId: string, parts: { partNumber: number; etag: string }[]) =>
+  signRequest({ action: 'mp-complete', key, uploadId, parts });
+
+export const abortMultipart = (key: string, uploadId: string) =>
+  signRequest({ action: 'mp-abort', key, uploadId }).catch(() => undefined);
 
 export const deleteB2Objects = async (keys: string[]) => {
   if (keys.length === 0) return;

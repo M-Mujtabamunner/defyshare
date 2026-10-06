@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useT } from '@/lib/i18n';
 
 interface Props {
   /** Files picked via a background click. */
@@ -17,6 +18,7 @@ const isSurface = (t: EventTarget | null) => t instanceof Element && t.hasAttrib
 const hasFiles = (e: DragEvent) => !!e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
 
 const UploadAnywhere: React.FC<Props> = ({ onFiles, onDrop, disabled }) => {
+  const { t } = useT();
   const [mode, setMode] = useState<Mode>('hidden');
   const pillRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -146,7 +148,7 @@ const UploadAnywhere: React.FC<Props> = ({ onFiles, onDrop, disabled }) => {
           >
             <Plus className="w-3.5 h-3.5" strokeWidth={3} />
           </span>
-          {mode === 'drop' ? 'Drop to upload' : 'Click anywhere to upload'}
+          {mode === 'drop' ? t('dropToUpload') : t('clickAnywhere')}
         </div>
       </div>
     </>
