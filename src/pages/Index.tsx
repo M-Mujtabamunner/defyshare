@@ -10,6 +10,7 @@ import OnlineIndicator from '@/components/OnlineIndicator';
 import UploadProgress from '@/components/UploadProgress';
 import UploadProgressList from '@/components/UploadProgressList';
 import SettingsSheet from '@/components/SettingsSheet';
+import ThemeToggle from '@/components/ThemeToggle';
 import FilePreviewModal from '@/components/FilePreviewModal';
 import UploadAnywhere from '@/components/UploadAnywhere';
 import AdSlot from '@/components/AdSlot';
@@ -131,6 +132,7 @@ const Index = () => {
               </a>
               <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                 <OnlineIndicator count={onlineCount} />
+                <ThemeToggle />
                 <SettingsSheet />
                 {/* Google sign-in is hidden until it is set up directly in Supabase (it ran through Lovable). */}
               </div>
