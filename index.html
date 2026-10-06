@@ -3,15 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <!-- Apply a saved dark-mode choice before first paint (see ThemeProvider). -->
+    <!-- Apply the theme (Bright / Dark / System, default System) and design before
+         first paint. Keep in sync with src/components/ThemeProvider.tsx. -->
     <script>
-      try {
-        if (localStorage.getItem('defyshare:theme') === 'dark') {
-          var r = document.documentElement;
-          r.classList.replace('light', 'dark');
-          r.style.colorScheme = 'dark';
-        }
-      } catch (e) {}
+      (function () {
+        var mode = 'system', classic = false;
+        try {
+          var s = localStorage;
+          mode = s.getItem('defyshare:theme-mode') || (s.getItem('defyshare:theme') === 'dark' ? 'dark' : 'system');
+          classic = s.getItem('defyshare:design') === 'classic';
+        } catch (e) {}
+        var dark = mode === 'dark' || (mode !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        var r = document.documentElement;
+        r.classList.remove('light');
+        r.classList.add(dark ? 'dark' : 'light');
+        if (classic) r.classList.add('theme-classic');
+        r.style.colorScheme = dark ? 'dark' : 'light';
+      })();
     </script>
 
     <!-- Per-route title, description, canonical and og/twitter tags are written into

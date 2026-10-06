@@ -84,6 +84,61 @@
     --glow-secondary: 16 88% 58%;
     --surface-elevated: 24 7% 18%;
   }
+
+  /* Classic design: the original teal look (from the first version of the app). */
+  .theme-classic {
+    --background: 220 14% 93%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 175 80% 40%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 175 80% 40%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 175 80% 40%;
+    --link: 217 91% 48%;
+    --link-bg: 214 95% 93%;
+    --glow-primary: 175 80% 40%;
+    --glow-secondary: 260 70% 50%;
+    --surface-elevated: 0 0% 98%;
+  }
+
+  .theme-classic.dark {
+    --background: 220 20% 6%;
+    --foreground: 210 20% 92%;
+    --card: 220 18% 10%;
+    --card-foreground: 210 20% 92%;
+    --popover: 220 18% 10%;
+    --popover-foreground: 210 20% 92%;
+    --primary: 175 80% 50%;
+    --primary-foreground: 220 20% 6%;
+    --secondary: 220 16% 16%;
+    --secondary-foreground: 210 20% 92%;
+    --muted: 220 14% 14%;
+    --muted-foreground: 215 15% 55%;
+    --accent: 175 80% 50%;
+    --accent-foreground: 220 20% 6%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 220 14% 18%;
+    --input: 220 14% 18%;
+    --ring: 175 80% 50%;
+    --link: 213 94% 72%;
+    --link-bg: 217 45% 20%;
+    --glow-primary: 175 80% 50%;
+    --glow-secondary: 260 70% 60%;
+    --surface-elevated: 220 16% 12%;
+  }
 }
 
 @layer base {
@@ -127,7 +182,20 @@
   .text-glow {
     text-shadow: none;
   }
-  
+
+  /* Classic design keeps the original glow and background blobs. */
+  .theme-classic .text-glow {
+    text-shadow: 0 0 20px hsl(var(--glow-primary) / 0.5);
+  }
+
+  .classic-only {
+    display: none;
+  }
+
+  .theme-classic .classic-only {
+    display: block;
+  }
+
   .gradient-border {
     background: linear-gradient(var(--background), var(--background)) padding-box,
                 var(--gradient-glow) border-box;

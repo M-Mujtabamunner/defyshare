@@ -10,7 +10,8 @@ import OnlineIndicator from '@/components/OnlineIndicator';
 import UploadProgress from '@/components/UploadProgress';
 import UploadProgressList from '@/components/UploadProgressList';
 import SettingsSheet from '@/components/SettingsSheet';
-import ThemeToggle from '@/components/ThemeToggle';
+import AppearanceMenu from '@/components/AppearanceMenu';
+import { useTheme } from '@/components/ThemeProvider';
 import FilePreviewModal from '@/components/FilePreviewModal';
 import UploadAnywhere from '@/components/UploadAnywhere';
 import { usePublicIP } from '@/hooks/usePublicIP';
@@ -20,12 +21,16 @@ import { useOnlinePresence } from '@/hooks/useOnlinePresence';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import logoMark from '@/assets/logo-mark.png';
+import classicLogoLight from '@/assets/logo.png';
+import classicLogoDark from '@/assets/logo-dark.png';
 import { HOME_FAQ } from '@/data/homeFaq';
 
 const NOTIF_KEY = 'defyshare:notifications';
 
 
 const Index = () => {
+  const { design, resolved } = useTheme();
+  const logo = design === 'classic' ? (resolved === 'dark' ? classicLogoDark : classicLogoLight) : logoMark;
   const { publicIP, roomId, verified } = usePublicIP();
   const { files, loading: filesLoading, uploadState, addFiles, removeFile, downloadFile, clearAll, cancelUpload, retryUpload, dismissUploads } = useFileSharing(roomId);
   const { texts, loading: textsLoading, addText, removeText, clearAllTexts } = useTextSharing(roomId);
@@ -112,19 +117,28 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background" data-upload-surface>
-      <div className="mx-auto w-full px-3 sm:px-4" data-upload-surface>
+      {/* Classic design's background glow (hidden in the current design) */}
+      <div className="classic-only fixed inset-0 pointer-events-none" aria-hidden>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/5 via-background to-background" />
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl animate-pulse-slow" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-accent/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1.5s' }} />
+      </div>
+
+      <div className="relative mx-auto w-full px-3 sm:px-4" data-upload-surface>
         <main className="w-full max-w-2xl mx-auto py-5 sm:py-8" data-upload-surface>
           <header className="mb-5">
             <div className="flex items-center justify-between gap-2 w-full min-w-0">
-              <a href="/" className="flex items-center gap-2 sm:gap-2.5 shrink-0" aria-label="DefyShare home">
-                <img src={logoMark} alt="DefyShare logo" width={40} height={40} className="w-9 h-9 sm:w-10 sm:h-10 rounded-[10px] shrink-0" />
-                <span className="text-xl sm:text-2xl font-bold tracking-tight">
-                  Defy<span className="text-primary">Share</span>
-                </span>
-              </a>
+              <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
+                <AppearanceMenu />
+                <a href="/" className="flex items-center gap-2 sm:gap-2.5 shrink-0" aria-label="DefyShare home">
+                  <img src={logo} alt="DefyShare logo" width={40} height={40} className="w-9 h-9 sm:w-10 sm:h-10 rounded-[10px] shrink-0" />
+                  <span className="text-xl sm:text-2xl font-bold tracking-tight">
+                    Defy<span className="text-primary text-glow">Share</span>
+                  </span>
+                </a>
+              </div>
               <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                 <OnlineIndicator count={onlineCount} />
-                <ThemeToggle />
                 <SettingsSheet />
                 {/* Google sign-in is hidden until it is set up directly in Supabase (it ran through Lovable). */}
               </div>
