@@ -13,7 +13,6 @@ import SettingsSheet from '@/components/SettingsSheet';
 import ThemeToggle from '@/components/ThemeToggle';
 import FilePreviewModal from '@/components/FilePreviewModal';
 import UploadAnywhere from '@/components/UploadAnywhere';
-import AdSlot from '@/components/AdSlot';
 import { usePublicIP } from '@/hooks/usePublicIP';
 import { useFileSharing, SharedFile } from '@/hooks/useFileSharing';
 import { useTextSharing } from '@/hooks/useTextSharing';
@@ -113,14 +112,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background" data-upload-surface>
-      <div
-        className="mx-auto w-full max-w-[1120px] px-3 sm:px-4 xl:grid xl:grid-cols-[160px_minmax(0,672px)_160px] xl:justify-center xl:gap-8"
-        data-upload-surface
-      >
-        <div className="hidden xl:block pt-24" data-upload-surface>
-          <AdSlot placement="rail" className="sticky top-6" />
-        </div>
-
+      <div className="mx-auto w-full px-3 sm:px-4" data-upload-surface>
         <main className="w-full max-w-2xl mx-auto py-5 sm:py-8" data-upload-surface>
           <header className="mb-5">
             <div className="flex items-center justify-between gap-2 w-full min-w-0">
@@ -209,7 +201,6 @@ const Index = () => {
             </TabsContent>
           </Tabs>
 
-          <AdSlot placement="inContent" className="mt-8" />
 
           <section className="mt-10 space-y-7 text-sm leading-relaxed">
             <div>
@@ -240,7 +231,6 @@ const Index = () => {
             </div>
           </section>
 
-          <AdSlot placement="rectangle" className="mt-10" />
 
           <footer className="mt-8 pb-14 text-center text-xs text-muted-foreground space-y-2">
             <nav className="flex flex-wrap justify-center gap-x-4 gap-y-1">
@@ -253,10 +243,6 @@ const Index = () => {
             <p>© {new Date().getFullYear()} DefyShare</p>
           </footer>
         </main>
-
-        <div className="hidden xl:block pt-24" data-upload-surface>
-          <AdSlot placement="rail" className="sticky top-6" />
-        </div>
       </div>
 
       <FilePreviewModal file={previewFile} onClose={() => setPreviewFile(null)} />
