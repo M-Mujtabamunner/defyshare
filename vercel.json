@@ -4,6 +4,14 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "cleanUrls": true,
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.defyshare.app" }],
+      "destination": "https://defyshare.app/:path*",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/((?!api/|ads\\.txt|robots\\.txt|sitemap\\.xml).*)",
