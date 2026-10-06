@@ -10,7 +10,7 @@ interface ThemeContextType {
 // Light (cream) is the default; dark is opt-in. The inline script in index.html
 // applies the saved choice before first paint, so there's no flash.
 export const THEME_KEY = 'defyshare:theme';
-const THEME_COLOR: Record<Theme, string> = { light: '#F4EFE6', dark: '#171310' };
+const THEME_COLOR: Record<Theme, string> = { light: '#F4EFE6', dark: '#23201D' };
 
 const readTheme = (): Theme => {
   try {

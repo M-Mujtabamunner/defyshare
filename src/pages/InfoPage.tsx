@@ -26,7 +26,7 @@ const DOCS: Record<string, Doc> = {
       { h: 'Retention', p: ['Shared files and text are permanently deleted from storage 3 hours after they are shared. You can delete items earlier at any time using the delete buttons.'] },
       { h: 'Advertising and cookies', p: ['We use Google AdSense to show ads. Google and its partners may use cookies to serve ads based on your prior visits to this and other websites. You can opt out of personalised advertising at Google Ads Settings (adssettings.google.com) or www.aboutads.info.', 'We may use analytics cookies to understand how the service is used so we can improve it.'] },
       { h: 'Your choices', p: ['You can clear shared items, sign out, clear your browser storage, or contact us to ask about data associated with your email address.'] },
-      { h: 'Contact', p: ['Questions about privacy: mujtaba.muneer@defyscale.com'] },
+      { h: 'Contact', p: ['Questions about privacy: contact@toolsdocks.com'] },
     ],
   },
   '/terms': {
@@ -44,8 +44,8 @@ const DOCS: Record<string, Doc> = {
     title: 'Contact DefyShare',
     description: 'Get help, report a problem or send feedback to the DefyShare team.',
     sections: [
-      { h: 'Email', p: ['General support and feedback: mujtaba.muneer@defyscale.com. We usually reply within two business days.'] },
-      { h: 'Report abuse', p: ['To report content that violates our terms, email mujtaba.muneer@defyscale.com with the subject "Abuse report" and describe what you saw and when.'] },
+      { h: 'Email', p: ['General support and feedback: contact@toolsdocks.com. We usually reply within two business days.'] },
+      { h: 'Report abuse', p: ['To report content that violates our terms, email contact@toolsdocks.com with the subject "Abuse report" and describe what you saw and when.'] },
       { h: 'Press', p: ['Media enquiries are welcome — see our press page for logos and product details.'] },
     ],
   },

@@ -76,8 +76,9 @@ const AdSlot: React.FC<AdSlotProps> = ({ placement, className }) => {
         scrolling="no"
         // Clicks may open the advertiser in a new tab; the ad can't redirect this page by itself.
         sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
-        className="block max-w-full border-0 rounded-md bg-card/60"
-        style={{ width: banner.width, height: banner.height }}
+        className="ad-frame block max-w-full border-0 rounded-md bg-card/60"
+        // Match the ad document's (light) scheme, or browsers paint the frame white in dark mode.
+        style={{ width: banner.width, height: banner.height, colorScheme: 'light' }}
       />
     </aside>
   );

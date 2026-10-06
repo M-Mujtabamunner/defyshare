@@ -35,8 +35,8 @@ export default function PressPage() {
           <p className="text-muted-foreground text-lg leading-relaxed">
             Everything you need to write about DefyShare — logo assets, technical details, product
             screenshots, and our brand story. Questions? Contact us at{' '}
-            <a href="mailto:press@defyshare.app" className="text-primary hover:underline">
-              press@defyshare.app
+            <a href="mailto:contact@toolsdocks.com" className="text-primary hover:underline">
+              contact@toolsdocks.com
             </a>
           </p>
         </div>
@@ -169,10 +169,10 @@ export default function PressPage() {
           </p>
           <div className="flex flex-wrap gap-3">
             <a
-              href="mailto:press@defyshare.app"
+              href="mailto:contact@toolsdocks.com"
               className="inline-flex items-center gap-1.5 rounded-lg bg-primary hover:bg-primary/90 text-white text-sm font-semibold px-4 py-2.5 transition-colors"
             >
-              press@defyshare.app <ExternalLink className="w-3.5 h-3.5" />
+              contact@toolsdocks.com <ExternalLink className="w-3.5 h-3.5" />
             </a>
             <Link
               to="/brand"
