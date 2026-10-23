@@ -20,3 +20,9 @@ jobs:
           B2_APPLICATION_KEY: ${{ secrets.B2_APPLICATION_KEY }}
           B2_BUCKET: ${{ vars.B2_BUCKET }}
           B2_REGION: ${{ vars.B2_REGION }}
+      # Free Supabase projects pause after a week without requests; a tiny read
+      # every run keeps the database awake. Uses the public values from .env.
+      - name: Keep database awake
+        run: |
+          set -a; . ./.env; set +a
+          curl -fsS -o /dev/null "$VITE_SUPABASE_URL/rest/v1/shared_texts?select=id&limit=1" -H "apikey: $VITE_SUPABASE_PUBLISHABLE_KEY"
