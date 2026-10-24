@@ -6,6 +6,7 @@ import { SharedText } from '@/hooks/useTextSharing';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useT } from '@/lib/i18n';
+import { MemberAvatar, TargetLabel } from '@/components/MemberPicker';
 
 interface TextShareProps {
   texts: SharedText[];
@@ -13,6 +14,7 @@ interface TextShareProps {
   onAdd: (content: string) => Promise<void>;
   onRemove: (textId: string) => void;
   onClearAll: () => void;
+  deviceId: string;
 }
 
 const URL_RE = /(https?:\/\/[^\s<>"']+|www\.[^\s<>"']+)/gi;
@@ -52,7 +54,7 @@ const formatTime = (timestamp: string) =>
 
 const isLong = (content: string) => content.length > 220 || content.split('\n').length > 3;
 
-const TextItem: React.FC<{ text: SharedText; onRemove: (id: string) => void }> = ({ text, onRemove }) => {
+const TextItem: React.FC<{ text: SharedText; deviceId: string; onRemove: (id: string) => void }> = ({ text, deviceId, onRemove }) => {
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
@@ -145,12 +147,37 @@ const TextItem: React.FC<{ text: SharedText; onRemove: (id: string) => void }> =
         </div>
       )}
 
-      <p className="text-[11px] text-muted-foreground mt-1">{formatTime(text.created_at)}</p>
+      <div className="flex items-center gap-1.5 min-w-0 text-[11px] text-muted-foreground mt-1">
+        <span className="shrink-0">{formatTime(text.created_at)}</span>
+        {text.from?.id === deviceId ? (
+          <span className="inline-flex items-center gap-1 min-w-0">
+            <span className="opacity-40">·</span>
+            <span className="shrink-0">{t('to')}</span>
+            <span className="inline-flex items-center gap-1 min-w-0 text-foreground">
+              <TargetLabel target={text.target} size="xs" />
+            </span>
+          </span>
+        ) : (
+          text.from && (
+            <span className="inline-flex items-center gap-1 min-w-0">
+              <span className="opacity-40">·</span>
+              <span className="shrink-0">{t('from')}</span>
+              <MemberAvatar id={text.from.id} name={text.from.name} size="xs" />
+              <span className="truncate font-medium text-foreground">{text.from.name}</span>
+              {text.target.kind !== 'everyone' && (
+                <span className="shrink-0 text-primary truncate">
+                  · {text.target.kind === 'group' ? text.target.group.name : t('toYou')}
+                </span>
+              )}
+            </span>
+          )
+        )}
+      </div>
     </div>
   );
 };
 
-const TextShare: React.FC<TextShareProps> = ({ texts, loading, onAdd, onRemove, onClearAll }) => {
+const TextShare: React.FC<TextShareProps> = ({ texts, loading, onAdd, onRemove, onClearAll, deviceId }) => {
   const [input, setInput] = useState('');
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
@@ -226,7 +253,7 @@ const TextShare: React.FC<TextShareProps> = ({ texts, loading, onAdd, onRemove, 
         ) : texts.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">{t('noText')}</p>
         ) : (
-          texts.map((text) => <TextItem key={text.id} text={text} onRemove={onRemove} />)
+          texts.map((text) => <TextItem key={text.id} text={text} deviceId={deviceId} onRemove={onRemove} />)
         )}
       </div>
     </div>

@@ -23,7 +23,7 @@ import LanguageMenu from '@/components/LanguageMenu';
 import { NotificationsBell, NotificationStack } from '@/components/NotificationsBell';
 import { usePublicIP } from '@/hooks/usePublicIP';
 import { useFileSharing, SharedFile } from '@/hooks/useFileSharing';
-import { useTextSharing } from '@/hooks/useTextSharing';
+import { useTextSharing, type SharedText } from '@/hooks/useTextSharing';
 import { useRoomMembers } from '@/hooks/useOnlinePresence';
 import { useGroups, type GroupEvent, type Invite } from '@/hooks/useGroups';
 import { useNotifications } from '@/hooks/useNotifications';
@@ -107,7 +107,12 @@ const Index = () => {
     dismissUploads,
     changeTarget,
   } = useFileSharing(roomId, device.id, myGroupIds, onIncoming);
-  const { texts, loading: textsLoading, addText, removeText, clearAllTexts } = useTextSharing(roomId);
+  const onIncomingText = useCallback(
+    (text: SharedText) =>
+      push({ id: `text:${text.id}`, kind: 'file', title: t('nSentYouText', { name: text.from?.name ?? t('someone') }) }),
+    [push, t],
+  );
+  const { texts, loading: textsLoading, addText, removeText, clearAllTexts } = useTextSharing(roomId, device.id, myGroupIds, onIncomingText);
 
   const [previewFile, setPreviewFile] = useState<SharedFile | null>(null);
   const [tab, setTab] = useState('files');
@@ -307,6 +312,36 @@ const Index = () => {
             />
           </div>
 
+          {/* One audience for both tabs: files and text go to the same people. */}
+          <div className="flex items-center gap-2 min-w-0 mb-3">
+            <span className="text-xs font-medium text-muted-foreground shrink-0">{t('sendTo')}</span>
+            <MemberPicker
+              members={members}
+              groups={groups}
+              value={liveTarget}
+              onChange={setTarget}
+              onCreateGroup={onCreateGroup}
+              onManageGroups={() => setGroupsOpen(true)}
+            >
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 min-w-[7.5rem] max-w-full h-9 rounded-full border border-border bg-card ps-1.5 pe-2.5 text-sm hover:border-primary/50 transition-colors"
+              >
+                <TargetLabel target={liveTarget} />
+                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+              </button>
+            </MemberPicker>
+            <button
+              type="button"
+              onClick={() => setGroupsOpen(true)}
+              aria-label={t('groups')}
+              className="ms-auto inline-flex items-center justify-center gap-1.5 h-9 min-w-9 rounded-full px-2.5 sm:px-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors shrink-0"
+            >
+              <Users className="w-4 h-4" />
+              <span className="hidden sm:inline">{t('groups')}</span>
+            </button>
+          </div>
+
           <Tabs value={tab} onValueChange={setTab}>
             <TabsList className="grid w-full h-11 grid-cols-2 bg-secondary/70 border border-border/60">
               <TabsTrigger value="files" className="gap-2 h-9 data-[state=active]:bg-card data-[state=active]:text-primary">
@@ -322,35 +357,6 @@ const Index = () => {
             </TabsList>
 
             <TabsContent value="files" className="mt-3 space-y-3">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="text-xs font-medium text-muted-foreground shrink-0">{t('sendTo')}</span>
-                <MemberPicker
-                  members={members}
-                  groups={groups}
-                  value={liveTarget}
-                  onChange={setTarget}
-                  onCreateGroup={onCreateGroup}
-                  onManageGroups={() => setGroupsOpen(true)}
-                >
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-1.5 min-w-[7.5rem] max-w-full h-9 rounded-full border border-border bg-card ps-1.5 pe-2.5 text-sm hover:border-primary/50 transition-colors"
-                  >
-                    <TargetLabel target={liveTarget} />
-                    <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                  </button>
-                </MemberPicker>
-                <button
-                  type="button"
-                  onClick={() => setGroupsOpen(true)}
-                  aria-label={t('groups')}
-                  className="ms-auto inline-flex items-center justify-center gap-1.5 h-9 min-w-9 rounded-full px-2.5 sm:px-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors shrink-0"
-                >
-                  <Users className="w-4 h-4" />
-                  <span className="hidden sm:inline">{t('groups')}</span>
-                </button>
-              </div>
-
               <DropZone onFilesDrop={uploadBatch} isUploading={uploadState.isUploading} />
 
               {uploadState.items.length > 0 ? (
@@ -402,7 +408,14 @@ const Index = () => {
             </TabsContent>
 
             <TabsContent value="text" className="mt-3">
-              <TextShare texts={texts} loading={textsLoading} onAdd={addText} onRemove={removeText} onClearAll={clearAllTexts} />
+              <TextShare
+                texts={texts}
+                loading={textsLoading}
+                deviceId={device.id}
+                onAdd={(content) => addText(content, me, liveTarget)}
+                onRemove={removeText}
+                onClearAll={clearAllTexts}
+              />
             </TabsContent>
           </Tabs>
 
