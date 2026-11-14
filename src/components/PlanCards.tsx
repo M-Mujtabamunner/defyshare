@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, Loader2, Sparkles } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { usePlan } from '@/hooks/usePlan';
@@ -33,7 +33,7 @@ export const PlanCards: React.FC<{ highlight?: PlanId }> = ({ highlight = 'pro' 
   };
 
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-3">
       {PLANS.map((p) => {
         const isCurrent = p.id === current;
         const featured = p.id === highlight && !isCurrent;
@@ -42,43 +42,41 @@ export const PlanCards: React.FC<{ highlight?: PlanId }> = ({ highlight = 'pro' 
           <div
             key={p.id}
             className={cn(
-              'relative flex flex-col rounded-xl border bg-card p-4 transition-colors',
-              featured ? 'border-primary shadow-[0_0_0_1px_hsl(var(--primary))]' : 'border-border/70',
+              'relative flex flex-col rounded-2xl border bg-card p-5 transition-colors',
+              featured ? 'border-foreground' : 'border-border',
             )}
           >
             {featured && (
-              <span className="absolute -top-2.5 start-4 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
-                <Sparkles className="w-3 h-3" /> Best value
-              </span>
+              <span className="absolute -top-3 start-5 rounded-full bg-foreground px-2.5 py-1 text-xs font-medium text-background">Best value</span>
             )}
             <div className="flex items-baseline justify-between gap-2">
-              <h3 className="font-semibold">{p.name}</h3>
+              <h3 className="text-lg font-medium">{p.name}</h3>
               <div className="text-end">
-                <span className="text-xl font-bold">{p.price}</span>
+                <span className="text-2xl font-medium tracking-tight tabular-nums">{p.price}</span>
                 {p.id !== 'free' && <span className="text-xs text-muted-foreground">/mo</span>}
               </div>
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">{p.blurb}</p>
-            <ul className="mt-3 space-y-1.5 text-sm flex-1">
+            <p className="mt-1 text-sm text-muted-foreground">{p.blurb}</p>
+            <ul className="mt-4 space-y-2 text-sm flex-1">
               {p.features.map((f, i) => (
                 <li key={f} className="flex items-start gap-2">
-                  <Check className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
-                  <span className={cn(i === 0 && 'font-semibold')}>{f}</span>
+                  <Check className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
+                  <span className={cn(i === 0 && 'font-medium')}>{f}</span>
                 </li>
               ))}
             </ul>
-            <div className="mt-4">
+            <div className="mt-5">
               {isCurrent ? (
-                <Button variant="secondary" className="w-full" disabled>
+                <Button variant="secondary" className="w-full h-11 rounded-full" disabled>
                   Current plan
                 </Button>
               ) : p.id === 'free' || lower ? (
-                <Button variant="outline" className="w-full" disabled>
+                <Button variant="outline" className="w-full h-11 rounded-full" disabled>
                   {p.id === 'free' ? 'Free forever' : 'Included'}
                 </Button>
               ) : (
                 <Button
-                  className="w-full gap-2"
+                  className={cn('w-full h-11 gap-2 rounded-full', featured && 'bg-foreground text-background hover:bg-foreground/85')}
                   variant={featured ? 'default' : 'outline'}
                   disabled={busy !== null || !CHECKOUT_URLS[p.id]}
                   onClick={() => pick(p.id)}

@@ -4,85 +4,85 @@
 
 @layer base {
   :root {
-    /* Light theme: cream #F4EFE6 base, orange #FD6F3B accent */
-    --background: 39 39% 93%;
-    --foreground: 24 16% 11%;
+    /* Light theme: cool paper, ink text, orange kept as the one signal colour. */
+    --background: 210 14% 96%;
+    --foreground: 223 14% 10%;
 
-    --card: 40 50% 97%;
-    --card-foreground: 24 16% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 223 14% 10%;
 
-    --popover: 40 50% 98%;
-    --popover-foreground: 24 16% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 223 14% 10%;
 
-    --primary: 16 98% 61%;
+    --primary: 17 88% 48%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 37 32% 88%;
-    --secondary-foreground: 24 16% 11%;
+    --secondary: 216 14% 92%;
+    --secondary-foreground: 223 14% 10%;
 
-    --muted: 37 32% 88%;
-    --muted-foreground: 25 9% 38%;
+    --muted: 216 14% 92%;
+    --muted-foreground: 218 9% 40%;
 
-    --accent: 16 98% 61%;
+    --accent: 17 88% 48%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 50%;
+    --destructive: 0 72% 46%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 35 24% 82%;
-    --input: 35 24% 82%;
-    --ring: 16 98% 61%;
+    --border: 218 14% 88%;
+    --input: 218 14% 84%;
+    --ring: 17 88% 48%;
 
-    --link: 217 91% 48%;
-    --link-bg: 214 95% 93%;
+    --link: 217 91% 44%;
+    --link-bg: 214 95% 94%;
 
     --radius: 0.75rem;
 
-    --glow-primary: 16 98% 61%;
-    --glow-secondary: 16 98% 61%;
-    --surface-elevated: 40 50% 98%;
+    --glow-primary: 17 88% 48%;
+    --glow-secondary: 17 88% 48%;
+    --surface-elevated: 0 0% 100%;
 
-    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
-    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
+    --font-sans: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   }
 
-  /* Dark theme: soft warm charcoal with low-glare text (deliberately not
-     pure black/white, which is harsh on the eyes) and a calmer orange. */
+  /* Dark theme: soft neutral charcoal with low-glare text (deliberately not
+     pure black/white, which is harsh on the eyes). */
   .dark {
-    --background: 24 8% 13%;
-    --foreground: 34 14% 80%;
+    --background: 220 8% 12%;
+    --foreground: 220 12% 84%;
 
-    --card: 24 7% 16%;
-    --card-foreground: 34 14% 80%;
+    --card: 220 8% 15%;
+    --card-foreground: 220 12% 84%;
 
-    --popover: 24 7% 17%;
-    --popover-foreground: 34 14% 80%;
+    --popover: 220 8% 16%;
+    --popover-foreground: 220 12% 84%;
 
-    --primary: 16 88% 58%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 17 90% 60%;
+    --primary-foreground: 20 30% 8%;
 
-    --secondary: 24 6% 20%;
-    --secondary-foreground: 34 14% 80%;
+    --secondary: 220 7% 20%;
+    --secondary-foreground: 220 12% 84%;
 
-    --muted: 24 6% 20%;
-    --muted-foreground: 30 6% 57%;
+    --muted: 220 7% 20%;
+    --muted-foreground: 220 7% 60%;
 
-    --accent: 16 88% 58%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 17 90% 60%;
+    --accent-foreground: 20 30% 8%;
 
-    --destructive: 0 62% 55%;
+    --destructive: 0 66% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 24 6% 24%;
-    --input: 24 6% 24%;
-    --ring: 16 88% 58%;
+    --border: 220 7% 23%;
+    --input: 220 7% 28%;
+    --ring: 17 90% 60%;
 
-    --link: 213 70% 72%;
+    --link: 213 80% 74%;
     --link-bg: 217 28% 24%;
 
-    --glow-primary: 16 88% 58%;
-    --glow-secondary: 16 88% 58%;
-    --surface-elevated: 24 7% 18%;
+    --glow-primary: 17 90% 60%;
+    --glow-secondary: 17 90% 60%;
+    --surface-elevated: 220 8% 18%;
   }
 
   /* Classic design: the original teal look (from the first version of the app). */
@@ -162,6 +162,24 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-sans);
+    font-feature-settings: 'ss01', 'cv11';
+  }
+
+  h1, h2, h3 {
+    letter-spacing: -0.012em;
+  }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 
   code, .mono {

@@ -1,34 +1,30 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Trash2, FileIcon, MessageSquareText, Download, ChevronDown, Users } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import DropZone, { collectFilesFromDataTransfer } from '@/components/DropZone';
+import { ChevronDown, Download, Trash2 } from 'lucide-react';
+import { collectFilesFromDataTransfer } from '@/lib/dropFiles';
 import FileList from '@/components/FileList';
-import RoomInfo from '@/components/RoomInfo';
+import { RoomBar, RoomPanel } from '@/components/RoomPanel';
+import ShareStage, { type StageTab } from '@/components/ShareStage';
+import ShareLinkDialog from '@/components/ShareLinkDialog';
 import TextShare from '@/components/TextShare';
-import OnlineIndicator from '@/components/OnlineIndicator';
-import UploadProgress from '@/components/UploadProgress';
 import UploadProgressList from '@/components/UploadProgressList';
 import SettingsSheet from '@/components/SettingsSheet';
 import AuthButton from '@/components/AuthButton';
 import { PlanCards, PlansDialog } from '@/components/PlanCards';
 import { usePlan } from '@/hooks/usePlan';
 import { formatLimit, planFor } from '@/lib/plans';
-import AppearanceMenu from '@/components/AppearanceMenu';
+import { ThemeToggle } from '@/components/AppearanceMenu';
 import { useTheme } from '@/components/ThemeProvider';
 import FilePreviewModal from '@/components/FilePreviewModal';
 import UploadAnywhere from '@/components/UploadAnywhere';
 import MemberPicker, { TargetLabel } from '@/components/MemberPicker';
-import DeviceName from '@/components/DeviceName';
 import GroupsSheet from '@/components/GroupsSheet';
 import InvitesButton from '@/components/InvitesButton';
 import InstallButton from '@/components/InstallButton';
-import LanguageMenu from '@/components/LanguageMenu';
 import { NotificationsBell, NotificationStack } from '@/components/NotificationsBell';
 import { usePublicIP } from '@/hooks/usePublicIP';
 import { useFileSharing, SharedFile } from '@/hooks/useFileSharing';
 import { useTextSharing, type SharedText } from '@/hooks/useTextSharing';
-import { useRoomMembers } from '@/hooks/useOnlinePresence';
+import { useRoomMembers, type Member } from '@/hooks/useOnlinePresence';
 import { useGroups, type GroupEvent, type Invite } from '@/hooks/useGroups';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -41,6 +37,10 @@ import classicLogoLight from '@/assets/logo.png';
 import classicLogoDark from '@/assets/logo-dark.png';
 import { HOME_FAQ } from '@/data/homeFaq';
 import { PoweredByBadge } from '@/components/PoweredByBadge';
+import { mockFiles, mockMembers, mockTexts } from '@/dev/mockRoom';
+
+// `npm run dev` only: /?mock fills the room with sample items so the layout can be checked.
+const MOCK = import.meta.env.DEV && new URLSearchParams(window.location.search).has('mock');
 
 const CONFIRMATIONS_KEY = 'defyshare:notifications';
 
@@ -63,7 +63,10 @@ const Index = () => {
   const device = useDevice();
   const me = useMemo<Peer>(() => ({ id: device.id, name: device.name }), [device.id, device.name]);
   const { publicIP, roomId, verified } = usePublicIP();
-  const { members, onlineCount, otherNames, remember } = useRoomMembers(roomId, me);
+  const room = useRoomMembers(roomId, me);
+  const { otherNames, remember } = room;
+  const members = MOCK ? mockMembers : room.members;
+  const onlineCount = MOCK ? 3 : room.onlineCount;
   const notifications = useNotifications();
   const { plan, limit: planLimit, setPlansOpen } = usePlan();
   const { push } = notifications;
@@ -99,7 +102,7 @@ const Index = () => {
     [push, t],
   );
   const {
-    files,
+    files: roomFiles,
     allFiles,
     loading: filesLoading,
     uploadState,
@@ -117,12 +120,15 @@ const Index = () => {
       push({ id: `text:${text.id}`, kind: 'file', title: t('nSentYouText', { name: text.from?.name ?? t('someone') }) }),
     [push, t],
   );
-  const { texts, loading: textsLoading, addText, removeText, clearAllTexts } = useTextSharing(roomId, device.id, myGroupIds, onIncomingText);
+  const { texts: roomTexts, loading: textsLoading, addText, removeText, clearAllTexts } = useTextSharing(roomId, device.id, myGroupIds, onIncomingText);
+  const files = useMemo(() => (MOCK ? mockFiles(device.id, device.name) : roomFiles), [roomFiles, device.id, device.name]);
+  const texts = useMemo(() => (MOCK ? mockTexts(device.id, device.name) : roomTexts), [roomTexts, device.id, device.name]);
 
-  const [previewFile, setPreviewFile] = useState<SharedFile | null>(null);
-  const [tab, setTab] = useState('files');
+  const [preview, setPreview] = useState<{ file: SharedFile; list: SharedFile[] } | null>(null);
+  const [shareFile, setShareFile] = useState<SharedFile | null>(null);
+  const [tab, setTab] = useState<StageTab>('files');
   const [target, setTarget] = useState<Target>(EVERYONE);
-  const pendingRef = useRef<File[]>([]);
+  const pendingRef = useRef<{ files: File[]; to?: Target }[]>([]);
 
   // Keep the chosen audience current: live device names, and drop a group you've left.
   const liveTarget = useMemo<Target>(() => {
@@ -151,8 +157,9 @@ const Index = () => {
   }, [allFiles, remember]);
 
   const uploadBatch = useCallback(
-    async (picked: File[]) => {
+    async (picked: File[], to?: Target) => {
       if (picked.length === 0) return;
+      const audience = to ?? liveTarget;
       // Files over the plan's limit are skipped, with a way to upgrade.
       const tooBig = picked.filter((f) => f.size > planLimit);
       if (tooBig.length > 0) {
@@ -174,20 +181,20 @@ const Index = () => {
       setTab('files');
       // Wait for the network check so files never land in a stale room.
       if (!verified) {
-        pendingRef.current.push(...incoming);
+        pendingRef.current.push({ files: incoming, to });
         return;
       }
-      const result = await addFiles(incoming, { sender: me, target: liveTarget });
+      const result = await addFiles(incoming, { sender: me, target: audience });
       if (result.failed > 0) {
         toast({ title: t('nOfTotalFailed', { n: result.failed, total: incoming.length }), variant: 'destructive' });
       } else if (confirmationsEnabled()) {
         const name =
-          liveTarget.kind === 'devices'
-            ? liveTarget.devices.length > 1
-              ? t('peopleAndMore', { name: liveTarget.devices[0].name, n: liveTarget.devices.length - 1 })
-              : liveTarget.devices[0].name
-            : liveTarget.kind === 'group'
-              ? liveTarget.group.name
+          audience.kind === 'devices'
+            ? audience.devices.length > 1
+              ? t('peopleAndMore', { name: audience.devices[0].name, n: audience.devices.length - 1 })
+              : audience.devices[0].name
+            : audience.kind === 'group'
+              ? audience.group.name
               : null;
         toast({
           title: name
@@ -236,7 +243,7 @@ const Index = () => {
     if (verified && pendingRef.current.length > 0) {
       const queued = pendingRef.current;
       pendingRef.current = [];
-      uploadBatch(queued);
+      queued.forEach((q) => uploadBatch(q.files, q.to));
     }
   }, [verified, uploadBatch]);
 
@@ -269,8 +276,17 @@ const Index = () => {
     }
   };
 
-  const countBadge = (n: number) =>
-    n > 0 && <span className="px-1.5 py-px text-[11px] rounded-full bg-primary/15 text-primary tabular-nums">{n}</span>;
+  const download = useCallback(
+    (f: SharedFile) => downloadFile(f).catch(() => toast({ title: t('downloadFailed'), variant: 'destructive' })),
+    [downloadFile, toast, t],
+  );
+
+  /** Tapping a device in the room sends to just that device; tapping it again goes back to everyone. */
+  const pickDevice = useCallback((m: Member) => {
+    setTarget((cur) =>
+      cur.kind === 'devices' && cur.devices.length === 1 && cur.devices[0].id === m.id ? EVERYONE : { kind: 'devices', devices: [{ id: m.id, name: m.name }] },
+    );
+  }, []);
 
   const groupActions = useMemo(
     () => ({
@@ -285,6 +301,19 @@ const Index = () => {
     [groupsApi],
   );
 
+  const roomProps = {
+    publicIP,
+    me,
+    onRename: device.rename,
+    members,
+    target: liveTarget,
+    onPickDevice: pickDevice,
+    onOpenGroups: () => setGroupsOpen(true),
+    groupCount: groups.length,
+  };
+
+  const onlineDevices = members.filter((m) => m.online);
+
   return (
     <div className="min-h-screen bg-background" data-upload-surface>
       {/* Classic design's background glow (hidden in the current design) */}
@@ -294,22 +323,14 @@ const Index = () => {
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-accent/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1.5s' }} />
       </div>
 
-      {/* App-style header: stays at the top while you scroll */}
-      <header className="sticky top-0 z-40 bg-background/85 backdrop-blur-md border-b border-border/50" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-        <div className="max-w-2xl mx-auto px-3 sm:px-4 h-14 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-0.5 sm:gap-1.5 min-w-0">
-            <AppearanceMenu />
-            <a href="/" className="flex items-center gap-2 shrink-0" aria-label="DefyShare">
-              <img src={logo} alt="DefyShare logo" width={36} height={36} className="w-8 h-8 sm:w-9 sm:h-9 rounded-[9px] shrink-0" />
-              <span className="hidden min-[360px]:inline text-lg sm:text-xl font-bold tracking-tight">
-                Defy<span className="text-primary text-glow">Share</span>
-              </span>
-            </a>
-          </div>
+      <header className="sticky top-0 z-40 bg-background/85 backdrop-blur-md" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
+          <a href="/" className="flex items-center gap-2.5 shrink-0" aria-label="DefyShare">
+            <img src={logo} alt="DefyShare logo" width={36} height={36} className="w-8 h-8 rounded-[9px] shrink-0" />
+            <span className="hidden min-[360px]:inline text-[19px] font-semibold tracking-tight">DefyShare</span>
+          </a>
           <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
-            <InstallButton className="hidden md:inline-flex me-1" />
-            <OnlineIndicator count={onlineCount} />
-            <LanguageMenu className="hidden md:grid" />
+            <InstallButton className="hidden md:inline-flex me-1.5" />
             <InvitesButton invites={invites} onAccept={onAcceptInvite} onDecline={groupsApi.declineInvite} />
             <NotificationsBell
               items={notifications.items}
@@ -317,84 +338,66 @@ const Index = () => {
               onOpen={notifications.markAllRead}
               onClear={notifications.clear}
             />
+            <ThemeToggle className="hidden sm:grid" />
             <SettingsSheet />
             <AuthButton />
           </div>
         </div>
       </header>
 
-      <div className="relative mx-auto w-full px-3 sm:px-4" data-upload-surface>
-        <main className="w-full max-w-2xl mx-auto pt-4 pb-6 sm:pt-6" data-upload-surface>
-          <h1 className="mb-4 text-sm sm:text-[15px] text-muted-foreground">{t('tagline')}</h1>
+      <div className="relative mx-auto w-full max-w-5xl px-4 sm:px-6" data-upload-surface>
+        <main className="pt-2 sm:pt-4 pb-6" data-upload-surface>
+          <h1 className="max-w-xl text-[15px] leading-relaxed text-muted-foreground">{t('tagline')}</h1>
 
-          <div className="mb-4">
-            <RoomInfo
-              localIP={publicIP}
-              roomId={roomId}
-              fileCount={files.length + texts.length}
-              footer={<DeviceName id={device.id} name={device.name} onRename={device.rename} />}
-            />
-          </div>
+          <div className="mt-5 grid gap-6 lg:grid-cols-[minmax(0,1fr)_18.5rem] lg:items-start" data-upload-surface>
+            <div className="min-w-0 flex flex-col gap-4" data-upload-surface>
+              <div className="lg:hidden">
+                <RoomBar {...roomProps} onlineCount={onlineCount} />
+              </div>
 
-          {/* One audience for both tabs: files and text go to the same people. */}
-          <div className="flex items-center gap-2 min-w-0 mb-3">
-            <span className="text-xs font-medium text-muted-foreground shrink-0">{t('sendTo')}</span>
-            <MemberPicker
-              members={members}
-              groups={groups}
-              value={liveTarget}
-              onChange={setTarget}
-              onCreateGroup={onCreateGroup}
-              onManageGroups={() => setGroupsOpen(true)}
-            >
-              <button
-                type="button"
-                className="inline-flex items-center gap-1.5 min-w-[7.5rem] max-w-full h-9 rounded-full border border-border bg-card ps-1.5 pe-2.5 text-sm hover:border-primary/50 transition-colors"
-              >
-                <TargetLabel target={liveTarget} />
-                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-              </button>
-            </MemberPicker>
-            <button
-              type="button"
-              onClick={() => setGroupsOpen(true)}
-              aria-label={t('groups')}
-              className="ms-auto inline-flex items-center justify-center gap-1.5 h-9 min-w-9 rounded-full px-2.5 sm:px-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors shrink-0"
-            >
-              <Users className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('groups')}</span>
-            </button>
-          </div>
-
-          <Tabs value={tab} onValueChange={setTab}>
-            <TabsList className="grid w-full h-11 grid-cols-2 bg-secondary/70 border border-border/60">
-              <TabsTrigger value="files" className="gap-2 h-9 data-[state=active]:bg-card data-[state=active]:text-primary">
-                <FileIcon className="w-4 h-4" />
-                {t('files')}
-                {countBadge(files.length)}
-              </TabsTrigger>
-              <TabsTrigger value="text" className="gap-2 h-9 data-[state=active]:bg-card data-[state=active]:text-primary">
-                <MessageSquareText className="w-4 h-4" />
-                {t('text')}
-                {countBadge(texts.length)}
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="files" className="mt-3 space-y-3">
-              <DropZone onFilesDrop={uploadBatch} isUploading={uploadState.isUploading} />
-              <p className="-mt-1 text-xs text-muted-foreground">
-                Up to {formatLimit(planLimit)} per file
-                {plan !== 'pro' && (
-                  <>
-                    {' · '}
-                    <button type="button" onClick={() => setPlansOpen(true)} className="font-medium text-primary hover:underline">
-                      Send bigger files
+              <ShareStage
+                tab={tab}
+                onTabChange={setTab}
+                fileCount={files.length}
+                textCount={texts.length}
+                devices={onlineDevices}
+                onFiles={uploadBatch}
+                onText={(content) => addText(content, me, liveTarget)}
+                isUploading={uploadState.isUploading}
+                audience={
+                  <MemberPicker
+                    members={members}
+                    groups={groups}
+                    value={liveTarget}
+                    onChange={setTarget}
+                    onCreateGroup={onCreateGroup}
+                    onManageGroups={() => setGroupsOpen(true)}
+                  >
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1.5 min-w-0 max-w-full h-10 rounded-full border border-border bg-card ps-2 pe-3 text-sm hover:border-foreground/30 transition-colors"
+                    >
+                      <TargetLabel target={liveTarget} />
+                      <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
                     </button>
+                  </MemberPicker>
+                }
+                limitNote={
+                  <>
+                    {t('upToPerFile', { size: formatLimit(planLimit) })}
+                    {plan !== 'pro' && (
+                      <>
+                        {'. '}
+                        <button type="button" onClick={() => setPlansOpen(true)} className="font-medium text-foreground underline underline-offset-4 decoration-border hover:decoration-foreground">
+                          {t('sendBigger')}
+                        </button>
+                      </>
+                    )}
                   </>
-                )}
-              </p>
+                }
+              />
 
-              {uploadState.items.length > 0 ? (
+              {uploadState.items.length > 0 && (
                 <UploadProgressList
                   items={uploadState.items}
                   aggregate={uploadState.progress}
@@ -404,109 +407,142 @@ const Index = () => {
                   onRetry={retryUpload}
                   onDismiss={!uploadState.isUploading ? dismissUploads : undefined}
                 />
-              ) : uploadState.isUploading ? (
-                <UploadProgress progress={uploadState.progress} fileName={uploadState.fileName} />
-              ) : null}
-
-              {files.length > 0 && (
-                <div className="flex items-center justify-between gap-2">
-                  <h2 className="text-xs font-medium text-muted-foreground min-w-0 truncate">
-                    {t('nShared', { n: files.length })}
-                    <span className="hidden sm:inline"> · {t('autoDeleted')}</span>
-                  </h2>
-                  <div className="flex items-center shrink-0">
-                    <Button variant="ghost" size="sm" onClick={downloadAll} className="h-8 gap-1 text-xs text-muted-foreground hover:text-primary">
-                      <Download className="w-3.5 h-3.5" />
-                      {t('downloadAll')}
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={clearAll} className="h-8 gap-1 text-xs text-muted-foreground hover:text-destructive">
-                      <Trash2 className="w-3.5 h-3.5" />
-                      {t('clearAll')}
-                    </Button>
-                  </div>
-                </div>
               )}
 
-              <FileList
-                files={files}
-                loading={filesLoading}
-                deviceId={device.id}
-                members={members}
-                groups={groups}
-                onDownload={(f) => downloadFile(f).catch(() => toast({ title: t('downloadFailed'), variant: 'destructive' }))}
-                onRemove={removeFile}
-                onPreview={setPreviewFile}
-                onChangeTarget={onChangeTarget}
-                onCreateGroup={onCreateGroup}
-                onManageGroups={() => setGroupsOpen(true)}
-              />
-            </TabsContent>
+              {tab === 'files' ? (
+                <div className="space-y-3 pt-2">
+                  {files.length > 0 && (
+                    <div className="flex items-center justify-between gap-2 min-h-9">
+                      <h2 className="text-sm text-muted-foreground min-w-0 truncate">
+                        {t('nShared', { n: files.length })}
+                        <span className="hidden sm:inline">, {t('autoDeleted')}</span>
+                      </h2>
+                      <div className="flex items-center shrink-0">
+                        <button
+                          type="button"
+                          onClick={downloadAll}
+                          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                        >
+                          <Download className="w-4 h-4" />
+                          {t('downloadAll')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={clearAll}
+                          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          {t('clearAll')}
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
-            <TabsContent value="text" className="mt-3">
-              <TextShare
-                texts={texts}
-                loading={textsLoading}
-                deviceId={device.id}
-                onAdd={(content) => addText(content, me, liveTarget)}
-                onRemove={removeText}
-                onClearAll={clearAllTexts}
-              />
-            </TabsContent>
-          </Tabs>
+                  <FileList
+                    files={files}
+                    loading={filesLoading && !MOCK}
+                    deviceId={device.id}
+                    members={members}
+                    groups={groups}
+                    onDownload={download}
+                    onRemove={removeFile}
+                    onPreview={(file, list) => setPreview({ file, list })}
+                    onShare={setShareFile}
+                    onChangeTarget={onChangeTarget}
+                    onCreateGroup={onCreateGroup}
+                    onManageGroups={() => setGroupsOpen(true)}
+                  />
+                </div>
+              ) : (
+                <div className="pt-2">
+                  <TextShare texts={texts} loading={textsLoading && !MOCK} deviceId={device.id} onRemove={removeText} onClearAll={clearAllTexts} />
+                </div>
+              )}
+            </div>
 
-          <section id="plans" className="mt-10 scroll-mt-20">
-            <h2 className="text-lg font-semibold">Send bigger files</h2>
-            <p className="mb-4 text-sm text-muted-foreground">Pick a plan, sign in with Google and pay securely with Lemon Squeezy.</p>
+            <aside className="hidden lg:block lg:sticky lg:top-20">
+              <RoomPanel {...roomProps} />
+            </aside>
+          </div>
+
+          <section id="plans" className="mt-20 scroll-mt-24">
+            <h2 className="text-2xl font-medium tracking-tight">Send bigger files</h2>
+            <p className="mt-1.5 mb-6 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
+              Pick a plan, sign in with Google and pay securely with Lemon Squeezy.
+            </p>
             <PlanCards />
           </section>
           <PlansDialog />
 
-          <section className="mt-12 space-y-7 text-sm leading-relaxed" lang="en" dir="ltr">
-            <div>
-              <h2 className="text-lg font-semibold mb-1.5">Share files between your devices in seconds</h2>
-              <p className="text-muted-foreground">
-                DefyShare moves photos, videos, documents, archives, folders and text between your phone, laptop and tablet without
-                cables, email or sign-up. Open this page on every device connected to the same Wi-Fi and they join the same
-                private room automatically.
-              </p>
+          <section className="mt-20 grid gap-x-12 gap-y-14 lg:grid-cols-2 text-[15px] leading-relaxed" lang="en" dir="ltr">
+            <div className="space-y-12">
+              <div>
+                <h2 className="text-2xl font-medium tracking-tight mb-3">Share files between your devices in seconds</h2>
+                <p className="text-muted-foreground">
+                  DefyShare moves photos, videos, documents, archives, folders and text between your phone, laptop and tablet without
+                  cables, email or sign-up. Open this page on every device connected to the same Wi-Fi and they join the same
+                  private room automatically.
+                </p>
+              </div>
+              <div>
+                <h2 className="text-2xl font-medium tracking-tight mb-4">How to use DefyShare</h2>
+                <ol className="space-y-3.5">
+                  {[
+                    'Open defyshare.app on two or more devices on the same network.',
+                    'Drop files or a folder onto the page, click anywhere to pick files, or paste with Ctrl+V.',
+                    'Pick who gets them — everyone, one or more devices, or a group — and they arrive instantly.',
+                    'Everything is deleted automatically after 3 hours.',
+                  ].map((step, i) => (
+                    <li key={step} className="flex gap-3.5">
+                      <span className="grid place-items-center w-7 h-7 rounded-full border border-border bg-card text-sm font-medium tabular-nums shrink-0">
+                        {i + 1}
+                      </span>
+                      <span className="pt-0.5 text-muted-foreground">{step}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
             </div>
             <div>
-              <h2 className="text-lg font-semibold mb-1.5">How to use DefyShare</h2>
-              <ol className="list-decimal pl-5 space-y-1 text-muted-foreground">
-                <li>Open defyshare.app on two or more devices on the same network.</li>
-                <li>Drop files or a folder onto the page, click anywhere to pick files, or paste with Ctrl+V.</li>
-                <li>Pick who gets them — everyone, one or more devices, or a group — and they arrive instantly.</li>
-                <li>Everything is deleted automatically after 3 hours.</li>
-              </ol>
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold mb-1.5">Frequently asked questions</h2>
-              {HOME_FAQ.map(({ q, a }) => (
-                <div key={q} className="mt-3">
-                  <h3 className="font-medium">{q}</h3>
-                  <p className="text-muted-foreground">{a}</p>
-                </div>
-              ))}
+              <h2 className="text-2xl font-medium tracking-tight mb-2">Frequently asked questions</h2>
+              <div className="divide-y divide-border border-b border-border">
+                {HOME_FAQ.map(({ q, a }) => (
+                  <details key={q} className="group py-1">
+                    <summary className="flex items-center justify-between gap-4 py-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                      <h3 className="font-medium">{q}</h3>
+                      <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0 transition-transform group-open:rotate-180" />
+                    </summary>
+                    <p className="pb-4 pe-8 text-muted-foreground">{a}</p>
+                  </details>
+                ))}
+              </div>
             </div>
           </section>
 
-          <footer className="mt-8 pb-16 text-center text-xs text-muted-foreground space-y-2">
-            <nav className="flex flex-wrap justify-center gap-x-4 gap-y-1">
-              <a href="/about" className="hover:text-primary">About</a>
-              <a href="/privacy" className="hover:text-primary">Privacy</a>
-              <a href="/terms" className="hover:text-primary">Terms</a>
-              <a href="/contact" className="hover:text-primary">Contact</a>
-              <a href="/press" className="hover:text-primary">Press</a>
-            </nav>
+          <footer className="mt-20 pt-6 pb-16 border-t border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-sm text-muted-foreground">
             <p>© {new Date().getFullYear()} DefyShare</p>
-            <div className="md:hidden pt-2">
+            <nav className="flex flex-wrap gap-x-5 gap-y-1">
+              <a href="/about" className="hover:text-foreground">About</a>
+              <a href="/privacy" className="hover:text-foreground">Privacy</a>
+              <a href="/terms" className="hover:text-foreground">Terms</a>
+              <a href="/contact" className="hover:text-foreground">Contact</a>
+              <a href="/press" className="hover:text-foreground">Press</a>
+            </nav>
+            <div className="md:hidden">
               <PoweredByBadge inline />
             </div>
           </footer>
         </main>
       </div>
 
-      <FilePreviewModal file={previewFile} onClose={() => setPreviewFile(null)} />
+      <FilePreviewModal
+        file={preview?.file ?? null}
+        siblings={preview?.list}
+        onNavigate={(file) => setPreview((cur) => (cur ? { ...cur, file } : cur))}
+        onDownload={download}
+        onClose={() => setPreview(null)}
+      />
+      <ShareLinkDialog file={shareFile} onClose={() => setShareFile(null)} />
 
       <GroupsSheet
         open={groupsOpen}

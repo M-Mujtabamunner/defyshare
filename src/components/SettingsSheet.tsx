@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import HeaderButton from '@/components/HeaderButton';
 import InstallButton from '@/components/InstallButton';
 import LicenseSection from '@/components/LicenseSection';
+import { AppearanceControls } from '@/components/AppearanceMenu';
 import { useAuth } from '@/hooks/useAuth';
 import { setSoundEnabled, soundEnabled } from '@/hooks/useNotifications';
 import { checkIsAdmin } from '@/lib/admin';
@@ -77,8 +78,10 @@ const SettingsSheet: React.FC = () => {
 
           <InstallButton full />
 
+          <AppearanceControls />
+
           <section className="space-y-2">
-            <h3 className="text-xs font-medium text-muted-foreground">{t('language')}</h3>
+            <h3 className="text-sm font-medium">{t('language')}</h3>
             <div className="grid grid-cols-2 gap-1.5">
               {LANGUAGES.map((l) => (
                 <button
@@ -86,8 +89,8 @@ const SettingsSheet: React.FC = () => {
                   type="button"
                   onClick={() => setLang(l.code)}
                   className={cn(
-                    'h-10 rounded-lg border text-sm font-medium transition-colors',
-                    l.code === lang ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/40',
+                    'h-10 rounded-full border text-sm font-medium transition-colors',
+                    l.code === lang ? 'border-foreground bg-foreground text-background' : 'border-border hover:border-foreground/30',
                   )}
                 >
                   {l.label}
