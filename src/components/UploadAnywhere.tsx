@@ -122,8 +122,7 @@ const UploadAnywhere: React.FC<Props> = ({ onFiles, onDrop, disabled }) => {
           mode === 'drop' ? 'opacity-100' : 'opacity-0',
         )}
       >
-        <div className="absolute inset-0 bg-primary/[0.06]" />
-        <div className="absolute inset-3 rounded-3xl border-2 border-dashed border-primary/70" />
+        <div className="absolute inset-3 rounded-3xl border-2 border-dashed border-foreground/25" />
       </div>
 
       <div

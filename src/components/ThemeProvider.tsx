@@ -20,7 +20,7 @@ const DESIGN_KEY = 'defyshare:design';
 const LEGACY_KEY = 'defyshare:theme'; // earlier light/dark-only setting
 
 const THEME_COLOR: Record<Design, Record<ResolvedTheme, string>> = {
-  warm: { light: '#F4EFE6', dark: '#24211E' },
+  warm: { light: '#F3F5F6', dark: '#1C1D21' },
   classic: { light: '#EBECF0', dark: '#0C0E12' },
 };
 

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Send, Copy, Check, Trash2, Loader2, ChevronDown, ExternalLink } from 'lucide-react';
+import { Copy, Check, Trash2, Loader2, ChevronDown, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { SharedText } from '@/hooks/useTextSharing';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -11,7 +10,6 @@ import { MemberAvatar, TargetLabel } from '@/components/MemberPicker';
 interface TextShareProps {
   texts: SharedText[];
   loading?: boolean;
-  onAdd: (content: string) => Promise<void>;
   onRemove: (textId: string) => void;
   onClearAll: () => void;
   deviceId: string;
@@ -71,11 +69,11 @@ const TextItem: React.FC<{ text: SharedText; deviceId: string; onRemove: (id: st
   };
 
   return (
-    <div className="group rounded-lg bg-card border border-border/70 hover:border-primary/40 transition-colors px-3 py-2">
+    <li className="group ps-4 pe-2.5 py-3">
       <div className="flex items-start gap-2">
         <p
           className={cn(
-            'flex-1 min-w-0 text-sm whitespace-pre-wrap break-words',
+            'flex-1 min-w-0 pt-1 text-[15px] leading-relaxed whitespace-pre-wrap break-words',
             long && !expanded && 'line-clamp-3',
           )}
         >
@@ -95,7 +93,7 @@ const TextItem: React.FC<{ text: SharedText; deviceId: string; onRemove: (id: st
             ),
           )}
         </p>
-        <div className="flex items-center gap-0.5 shrink-0 -mr-1">
+        <div className="flex items-center shrink-0">
           {long && (
             <Button
               variant="ghost"
@@ -103,7 +101,7 @@ const TextItem: React.FC<{ text: SharedText; deviceId: string; onRemove: (id: st
               onClick={() => setExpanded((v) => !v)}
               aria-label={expanded ? t('collapse') : t('expand')}
               aria-expanded={expanded}
-              className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
+              className="h-9 w-9 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary"
             >
               <ChevronDown className={cn('w-4 h-4 transition-transform', expanded && 'rotate-180')} />
             </Button>
@@ -113,18 +111,18 @@ const TextItem: React.FC<{ text: SharedText; deviceId: string; onRemove: (id: st
             size="icon"
             onClick={copy}
             aria-label={t('copy')}
-            className="h-7 w-7 text-primary hover:text-primary hover:bg-primary/10"
+            className="h-9 w-9 rounded-full text-foreground hover:bg-foreground hover:text-background"
           >
-            {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
           </Button>
           <Button
             variant="ghost"
             size="icon"
             onClick={() => onRemove(text.id)}
             aria-label={t('delete')}
-            className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+            className="h-9 w-9 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <Trash2 className="w-4 h-4" />
           </Button>
         </div>
       </div>
@@ -147,11 +145,10 @@ const TextItem: React.FC<{ text: SharedText; deviceId: string; onRemove: (id: st
         </div>
       )}
 
-      <div className="flex items-center gap-1.5 min-w-0 text-[11px] text-muted-foreground mt-1">
+      <div className="flex items-center gap-2 min-w-0 text-xs text-muted-foreground mt-1.5">
         <span className="shrink-0">{formatTime(text.created_at)}</span>
         {text.from?.id === deviceId ? (
           <span className="inline-flex items-center gap-1 min-w-0">
-            <span className="opacity-40">·</span>
             <span className="shrink-0">{t('to')}</span>
             <span className="inline-flex items-center gap-1 min-w-0 text-foreground">
               <TargetLabel target={text.target} size="xs" />
@@ -160,102 +157,56 @@ const TextItem: React.FC<{ text: SharedText; deviceId: string; onRemove: (id: st
         ) : (
           text.from && (
             <span className="inline-flex items-center gap-1 min-w-0">
-              <span className="opacity-40">·</span>
               <span className="shrink-0">{t('from')}</span>
               <MemberAvatar id={text.from.id} name={text.from.name} size="xs" />
               <span className="truncate font-medium text-foreground">{text.from.name}</span>
               {text.target.kind !== 'everyone' && (
                 <span className="shrink-0 text-primary truncate">
-                  · {text.target.kind === 'group' ? text.target.group.name : t('toYou')}
+                  ({text.target.kind === 'group' ? text.target.group.name : t('toYou')})
                 </span>
               )}
             </span>
           )
         )}
       </div>
-    </div>
+    </li>
   );
 };
 
-const TextShare: React.FC<TextShareProps> = ({ texts, loading, onAdd, onRemove, onClearAll, deviceId }) => {
-  const [input, setInput] = useState('');
-  const [saving, setSaving] = useState(false);
-  const { toast } = useToast();
+const TextShare: React.FC<TextShareProps> = ({ texts, loading, onRemove, onClearAll, deviceId }) => {
   const { t } = useT();
 
-  const submit = async () => {
-    if (!input.trim() || saving) return;
-    setSaving(true);
-    try {
-      await onAdd(input);
-      setInput('');
-    } catch (error) {
-      toast({
-        title: t('textFailed'),
-        description: error instanceof Error ? error.message : undefined,
-        variant: 'destructive',
-      });
-    } finally {
-      setSaving(false);
-    }
-  };
+  if (loading && texts.length === 0) {
+    return (
+      <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
+        <Loader2 className="w-4 h-4 animate-spin" />
+        {t('loading')}
+      </div>
+    );
+  }
+
+  if (texts.length === 0) {
+    return <p className="py-12 text-center text-[15px] font-medium">{t('noText')}</p>;
+  }
 
   return (
     <div className="space-y-3">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          submit();
-        }}
-        className="space-y-2"
-      >
-        <Textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-              e.preventDefault();
-              submit();
-            }
-          }}
-          placeholder={t('textPlaceholder')}
-          className="min-h-[76px] bg-card border-border focus-visible:ring-primary/40 resize-y text-sm"
-        />
-        <div className="flex justify-end">
-          <Button type="submit" size="sm" disabled={!input.trim() || saving} className="gap-2">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-            Share
-          </Button>
-        </div>
-      </form>
-
-      <div className="space-y-1.5">
-        {texts.length > 0 && (
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs font-medium text-muted-foreground">{texts.length} shared</h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClearAll}
-              className="text-muted-foreground hover:text-destructive h-7 text-xs"
-            >
-              <Trash2 className="w-3 h-3 mr-1" />
-              Clear all
-            </Button>
-          </div>
-        )}
-
-        {loading && texts.length === 0 ? (
-          <div className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
-            <Loader2 className="w-4 h-4 animate-spin text-primary" />
-            Loading…
-          </div>
-        ) : texts.length === 0 ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">{t('noText')}</p>
-        ) : (
-          texts.map((text) => <TextItem key={text.id} text={text} deviceId={deviceId} onRemove={onRemove} />)
-        )}
+      <div className="flex items-center justify-between gap-2 min-h-9">
+        <h2 className="text-sm text-muted-foreground">{t('nShared', { n: texts.length })}</h2>
+        <button
+          type="button"
+          onClick={onClearAll}
+          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+        >
+          <Trash2 className="w-4 h-4" />
+          {t('clearAll')}
+        </button>
       </div>
+      <ul className="rounded-2xl border border-border bg-card divide-y divide-border overflow-hidden">
+        {texts.map((text) => (
+          <TextItem key={text.id} text={text} deviceId={deviceId} onRemove={onRemove} />
+        ))}
+      </ul>
     </div>
   );
 };
