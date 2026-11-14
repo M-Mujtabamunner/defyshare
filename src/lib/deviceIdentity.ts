@@ -74,7 +74,7 @@ const getDeviceName = () => {
   return name;
 };
 
-const isCustomName = () => read(CUSTOM_KEY) === '1';
+export const isCustomName = () => read(CUSTOM_KEY) === '1';
 
 const setStoredName = (name: string, custom: boolean) => {
   write(NAME_KEY, name);

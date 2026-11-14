@@ -110,9 +110,9 @@ const TextComposer: React.FC<{ onText: (content: string) => Promise<void> }> = (
         }}
         placeholder={t('textPlaceholder')}
         aria-label={t('textPlaceholder')}
-        className="flex-1 min-h-[7.5rem] w-full resize-none bg-transparent px-5 sm:px-7 pt-1 pb-3 text-lg leading-relaxed placeholder:text-muted-foreground focus:outline-none"
+        className="flex-1 min-h-[6rem] w-full resize-none bg-transparent px-5 sm:px-6 pt-1 pb-3 text-base leading-relaxed placeholder:text-muted-foreground focus:outline-none"
       />
-      <div className="flex items-center justify-between gap-2 px-4 sm:px-6 pb-4 sm:pb-5">
+      <div className="flex items-center justify-between gap-2 px-4 sm:px-5 pb-3 sm:pb-4">
         {canPaste ? (
           <button
             type="button"
@@ -202,7 +202,7 @@ const ShareStage: React.FC<ShareStageProps> = ({ tab, onTabChange, fileCount, te
         live ? 'bg-foreground border-foreground text-background' : 'bg-card border-border',
       )}
     >
-      <div className="flex items-center justify-between gap-2 p-3 sm:p-4">
+      <div className="flex items-center justify-between gap-2 p-2.5 sm:p-3">
         <div className={cn('flex items-center gap-2 min-w-0', live && 'opacity-0 pointer-events-none')}>
           <span className="hidden min-[400px]:inline text-sm text-muted-foreground shrink-0 ps-1.5">{t('sendTo')}</span>
           {audience}
@@ -216,18 +216,18 @@ const ShareStage: React.FC<ShareStageProps> = ({ tab, onTabChange, fileCount, te
       {tab === 'text' && !live ? (
         <TextComposer onText={onText} />
       ) : (
-        <div className="flex flex-col flex-1 px-5 sm:px-7 pb-5 sm:pb-7 pt-3 sm:pt-6">
-          <h2 className="text-[1.75rem] sm:text-[2.25rem] leading-[1.1] font-medium tracking-tight text-balance">
+        <div className="flex flex-col flex-1 px-5 sm:px-6 pb-4 sm:pb-5 pt-1 sm:pt-2">
+          <h2 className="text-2xl sm:text-[1.75rem] leading-[1.15] font-medium tracking-tight text-balance">
             {isUploading ? t('uploading') : live ? t('releaseToUpload') : t('dropHere')}
           </h2>
-          <p className={cn('mt-2 text-[15px] leading-relaxed', live ? 'text-background/70' : 'text-muted-foreground')}>{t('dropHint')}</p>
+          <p className={cn('mt-1 text-sm leading-relaxed', live ? 'text-background/70' : 'text-muted-foreground')}>{t('dropHint')}</p>
 
-          <div className={cn('mt-5 sm:mt-7 flex flex-wrap items-center gap-2', live && 'hidden')}>
+          <div className={cn('mt-4 flex flex-wrap items-center gap-2', live && 'hidden')}>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="inline-flex items-center gap-2 h-12 px-6 rounded-full bg-foreground text-background text-[15px] font-medium hover:bg-foreground/85 disabled:opacity-50 transition-colors"
+              className="inline-flex items-center gap-2 h-10 px-5 rounded-full bg-foreground text-background text-sm font-medium hover:bg-foreground/85 disabled:opacity-50 transition-colors"
             >
               {isUploading ? <Loader2 className="w-[18px] h-[18px] animate-spin" /> : <Plus className="w-[18px] h-[18px]" />}
               {t('chooseFiles')}
@@ -236,7 +236,7 @@ const ShareStage: React.FC<ShareStageProps> = ({ tab, onTabChange, fileCount, te
               type="button"
               onClick={() => folderInputRef.current?.click()}
               disabled={isUploading}
-              className="inline-flex items-center gap-2 h-12 px-5 rounded-full border border-border text-[15px] font-medium hover:bg-secondary disabled:opacity-50 transition-colors"
+              className="inline-flex items-center gap-2 h-10 px-4 rounded-full border border-border text-sm font-medium hover:bg-secondary disabled:opacity-50 transition-colors"
             >
               <FolderUp className="w-[18px] h-[18px]" />
               {t('folderBtn')}

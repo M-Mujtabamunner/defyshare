@@ -18,7 +18,7 @@ export const GoogleG = () => (
 
 /** Free / Plus / Pro cards. Picking a paid plan signs in with Google first, then opens checkout. */
 export const PlanCards: React.FC<{ highlight?: PlanId }> = ({ highlight = 'pro' }) => {
-  const { plan: current, signedIn, choosePlan } = usePlan();
+  const { plan: current, choosePlan } = usePlan();
   const { toast } = useToast();
   const [busy, setBusy] = useState<PlanId | null>(null);
 
@@ -83,10 +83,8 @@ export const PlanCards: React.FC<{ highlight?: PlanId }> = ({ highlight = 'pro' 
                 >
                   {busy === p.id ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : signedIn ? null : (
-                    <GoogleG />
-                  )}
-                  {signedIn ? `Get ${p.name}` : `Sign in & get ${p.name}`}
+                  ) : null}
+                  Get {p.name}
                 </Button>
               )}
             </div>

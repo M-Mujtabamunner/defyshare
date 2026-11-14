@@ -16,7 +16,7 @@ interface Me {
 
 type History = Record<string, { name: string; lastSeen: number }>;
 
-const HISTORY_DAYS = 30;
+const HISTORY_DAYS = 3; // devices not seen for 3 days drop off the list
 const MAX_HISTORY = 50;
 const historyKey = (room: string) => `defyshare:members:${room}`;
 
@@ -120,13 +120,24 @@ export const useRoomMembers = (roomKey: string, me: Me) => {
     for (const [id, name] of Object.entries(online)) {
       if (id !== me.id) list.push({ id, name, online: true, lastSeen: Date.now() });
     }
-    for (const [id, m] of Object.entries(history)) {
-      if (id !== me.id && !(id in online)) list.push({ id, name: m.name, online: false, lastSeen: m.lastSeen });
+    // Offline devices: hide ones gone for 3+ days, and keep one entry per name
+    // (the same person on another browser shows up with a new id).
+    const cutoff = Date.now() - HISTORY_DAYS * 86_400_000;
+    const names = new Set(list.map((m) => m.name.toLowerCase()));
+    names.add(me.name.toLowerCase());
+    const offline = Object.entries(history)
+      .filter(([id, m]) => id !== me.id && !(id in online) && m.lastSeen >= cutoff)
+      .sort((a, b) => b[1].lastSeen - a[1].lastSeen);
+    for (const [id, m] of offline) {
+      const key = m.name.toLowerCase();
+      if (names.has(key)) continue;
+      names.add(key);
+      list.push({ id, name: m.name, online: false, lastSeen: m.lastSeen });
     }
     return list.sort((a, b) =>
       a.online !== b.online ? (a.online ? -1 : 1) : a.online ? a.name.localeCompare(b.name) : b.lastSeen - a.lastSeen,
     );
-  }, [online, history, me.id]);
+  }, [online, history, me.id, me.name]);
 
   // Count this device even before presence connects.
   const onlineCount = Math.max(1, Object.keys(online).length + (me.id in online ? 0 : 1));

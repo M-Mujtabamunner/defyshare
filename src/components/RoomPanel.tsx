@@ -49,7 +49,7 @@ const RoomBody: React.FC<RoomPanelProps & { showQr?: boolean }> = ({ publicIP, m
   const sorted = [...members].sort((a, b) => Number(b.online) - Number(a.online) || b.lastSeen - a.lastSeen);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div>
         <p className="text-sm text-muted-foreground">{networkName === 'detecting...' ? t('yourNetwork') : networkName}</p>
         <button
@@ -67,12 +67,22 @@ const RoomBody: React.FC<RoomPanelProps & { showQr?: boolean }> = ({ publicIP, m
 
       <DeviceName id={me.id} name={me.name} onRename={onRename} />
 
+      {showQr && (
+        <div className="flex items-center gap-3 py-3 border-y border-border">
+          <QrTile value={joinUrl()} size={64} className="border border-border shrink-0" />
+          <div className="min-w-0">
+            <p className="text-sm font-medium">{t('addDevice')}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground leading-snug">{t('addDeviceHint')}</p>
+          </div>
+        </div>
+      )}
+
       <div>
         <h3 className="text-sm font-medium mb-1.5">{t('devicesHere')}</h3>
         {sorted.length === 0 ? (
           <p className="text-sm text-muted-foreground leading-relaxed">{t('noOtherDevices')}</p>
         ) : (
-          <ul className="-mx-2">
+          <ul className="-mx-2 max-h-[16rem] overflow-y-auto">
             {sorted.map((m) => {
               const active = picked.has(m.id);
               return (
@@ -116,15 +126,6 @@ const RoomBody: React.FC<RoomPanelProps & { showQr?: boolean }> = ({ publicIP, m
         <ChevronRight className="w-4 h-4 text-muted-foreground rtl:-scale-x-100" />
       </button>
 
-      {showQr && (
-        <div className="flex items-center gap-3.5 pt-5 border-t border-border">
-          <QrTile value={joinUrl()} size={76} className="border border-border shrink-0" />
-          <div className="min-w-0">
-            <p className="text-sm font-medium">{t('addDevice')}</p>
-            <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">{t('addDeviceHint')}</p>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
@@ -133,7 +134,7 @@ const RoomBody: React.FC<RoomPanelProps & { showQr?: boolean }> = ({ publicIP, m
 export const RoomPanel: React.FC<RoomPanelProps> = (props) => {
   const { t } = useT();
   return (
-    <section aria-label={t('room')} className="rounded-2xl border border-border bg-card p-5">
+    <section aria-label={t('room')} className="rounded-2xl border border-border bg-card p-4">
       <RoomBody {...props} />
     </section>
   );

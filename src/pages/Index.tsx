@@ -9,6 +9,8 @@ import TextShare from '@/components/TextShare';
 import UploadProgressList from '@/components/UploadProgressList';
 import SettingsSheet from '@/components/SettingsSheet';
 import AuthButton from '@/components/AuthButton';
+import SignInDialog from '@/components/SignInDialog';
+import NamePrompt from '@/components/NamePrompt';
 import { PlanCards, PlansDialog } from '@/components/PlanCards';
 import { usePlan } from '@/hooks/usePlan';
 import { formatLimit, planFor } from '@/lib/plans';
@@ -349,8 +351,8 @@ const Index = () => {
         <main className="pt-2 sm:pt-4 pb-6" data-upload-surface>
           <h1 className="max-w-xl text-[15px] leading-relaxed text-muted-foreground">{t('tagline')}</h1>
 
-          <div className="mt-5 grid gap-6 lg:grid-cols-[minmax(0,1fr)_18.5rem] lg:items-start" data-upload-surface>
-            <div className="min-w-0 flex flex-col gap-4" data-upload-surface>
+          <div className="mt-3 grid gap-5 lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start" data-upload-surface>
+            <div className="min-w-0 flex flex-col gap-3" data-upload-surface>
               <div className="lg:hidden">
                 <RoomBar {...roomProps} onlineCount={onlineCount} />
               </div>
@@ -465,16 +467,18 @@ const Index = () => {
             </aside>
           </div>
 
-          <section id="plans" className="mt-20 scroll-mt-24">
+          <section id="plans" className="mt-12 scroll-mt-24">
             <h2 className="text-2xl font-medium tracking-tight">Send bigger files</h2>
-            <p className="mt-1.5 mb-6 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
-              Pick a plan, sign in with Google and pay securely with Lemon Squeezy.
+            <p className="mt-1 mb-4 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
+              Pick a plan, sign in with Google or email, and pay securely with Lemon Squeezy.
             </p>
             <PlanCards />
           </section>
           <PlansDialog />
+          <SignInDialog />
+          {!MOCK && <NamePrompt id={device.id} name={device.name} onRename={device.rename} />}
 
-          <section className="mt-20 grid gap-x-12 gap-y-14 lg:grid-cols-2 text-[15px] leading-relaxed" lang="en" dir="ltr">
+          <section className="mt-14 grid gap-x-12 gap-y-12 lg:grid-cols-2 text-[15px] leading-relaxed" lang="en" dir="ltr">
             <div className="space-y-12">
               <div>
                 <h2 className="text-2xl font-medium tracking-tight mb-3">Share files between your devices in seconds</h2>

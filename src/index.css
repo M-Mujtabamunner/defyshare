@@ -159,6 +159,14 @@
     -webkit-overflow-scrolling: touch;
   }
 
+  /* Computers: everything at 90% size (like browser zoom 90%), so more fits on screen.
+     Phones keep 100% so text stays readable. */
+  @media (min-width: 768px) {
+    html {
+      font-size: 90%;
+    }
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-sans);

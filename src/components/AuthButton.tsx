@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { CreditCard, Loader2, LogOut, Sparkles } from 'lucide-react';
+import React from 'react';
+import { CreditCard, LogOut, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { signInWithGoogle, usePlan } from '@/hooks/usePlan';
+import { usePlan } from '@/hooks/usePlan';
 import { useToast } from '@/hooks/use-toast';
 import { GoogleG } from '@/components/PlanCards';
 import { formatLimit, planById } from '@/lib/plans';
@@ -19,32 +19,19 @@ import {
 /** Header "Sign in with Google" button; once signed in, an avatar menu with the plan. */
 const AuthButton: React.FC = () => {
   const { user } = useAuth();
-  const { plan, limit, portalUrl, setPlansOpen } = usePlan();
+  const { plan, limit, portalUrl, setPlansOpen, setSignInOpen } = usePlan();
   const { toast } = useToast();
-  const [signingIn, setSigningIn] = useState(false);
-
-  const signIn = async () => {
-    if (signingIn) return;
-    setSigningIn(true);
-    const { error } = await signInWithGoogle();
-    if (error) {
-      toast({ title: 'Sign-in failed', description: error.message, variant: 'destructive' });
-      setSigningIn(false);
-    }
-    // On success the browser goes to Google, so keep the spinner.
-  };
 
   if (!user) {
     return (
       <button
         type="button"
-        onClick={signIn}
-        disabled={signingIn}
-        aria-label="Sign in with Google"
-        title="Sign in with Google"
-        className="inline-flex items-center justify-center gap-2 h-8 sm:h-9 w-8 sm:w-auto sm:px-3 rounded-full border border-border/70 bg-card hover:bg-secondary text-sm font-medium transition-colors disabled:opacity-70"
+        onClick={() => setSignInOpen(true)}
+        aria-label="Sign in"
+        title="Sign in"
+        className="inline-flex items-center justify-center gap-2 h-8 sm:h-9 w-8 sm:w-auto sm:px-3 rounded-full border border-border/70 bg-card hover:bg-secondary text-sm font-medium transition-colors"
       >
-        {signingIn ? <Loader2 className="w-4 h-4 animate-spin" /> : <GoogleG />}
+        <GoogleG />
         <span className="hidden sm:inline">Sign in</span>
       </button>
     );
@@ -79,7 +66,7 @@ const AuthButton: React.FC = () => {
       <DropdownMenuContent align="end" className="w-60">
         <DropdownMenuLabel>
           <div className="font-medium truncate">{name}</div>
-          <div className="text-xs font-normal text-muted-foreground truncate">{user.email}</div>
+          {user.email !== name && <div className="text-xs font-normal text-muted-foreground truncate">{user.email}</div>}
           <div className={cn('mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs', paid ? 'bg-primary/15 text-primary' : 'bg-secondary text-muted-foreground')}>
             {planById(plan).name} · up to {formatLimit(limit)}
           </div>

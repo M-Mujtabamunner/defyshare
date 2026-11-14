@@ -73,6 +73,8 @@ interface PlanContextValue extends PlanStatus {
   signedIn: boolean;
   plansOpen: boolean;
   setPlansOpen: (open: boolean) => void;
+  signInOpen: boolean;
+  setSignInOpen: (open: boolean) => void;
   /** Sign in first if needed, then open the Lemon Squeezy checkout. */
   choosePlan: (plan: PlanId) => Promise<'checkout' | 'signin' | 'unavailable'>;
   activateLicense: (key: string) => Promise<ActivateResult>;
@@ -88,6 +90,7 @@ export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [license, setLicense] = useState<string | null>(() => read(LICENSE_KEY));
   const [checking, setChecking] = useState(false);
   const [plansOpen, setPlansOpen] = useState(false);
+  const [signInOpen, setSignInOpen] = useState(false);
   const tokenRef = useRef<string | undefined>();
   tokenRef.current = session?.access_token;
   const licenseRef = useRef(license);
@@ -152,8 +155,10 @@ export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({ children
     async (plan: PlanId) => {
       if (!CHECKOUT_URLS[plan]) return 'unavailable' as const;
       if (!user) {
+        // Checkout continues automatically once they're signed in.
         write(PENDING_KEY, plan);
-        await signInWithGoogle();
+        setPlansOpen(false);
+        setSignInOpen(true);
         return 'signin' as const;
       }
       setPlansOpen(false);
@@ -165,6 +170,7 @@ export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Back from Google sign-in with a plan picked: continue to checkout.
   useEffect(() => {
     if (!user) return;
+    setSignInOpen(false);
     const pending = read(PENDING_KEY) as PlanId | null;
     if (!pending) return;
     write(PENDING_KEY, null);
@@ -207,12 +213,14 @@ export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({ children
       signedIn: Boolean(user),
       plansOpen,
       setPlansOpen,
+      signInOpen,
+      setSignInOpen,
       choosePlan,
       activateLicense,
       removeLicense,
       refresh,
     }),
-    [status, checking, license, user, plansOpen, choosePlan, activateLicense, removeLicense, refresh],
+    [status, checking, license, user, plansOpen, signInOpen, choosePlan, activateLicense, removeLicense, refresh],
   );
 
   return <PlanContext.Provider value={value}>{children}</PlanContext.Provider>;
