@@ -12,6 +12,7 @@ import {
   deleteB2Objects,
   getDownloadUrl,
   triggerDownload,
+  PlanLimitError,
 } from '@/lib/storageUrls';
 import { mimeTypeFor } from '@/lib/fileTypes';
 import { decodeTarget, encodeTarget, targetIncludes, type Peer, type Target } from '@/lib/recipients';
@@ -137,7 +138,7 @@ const withRetry = async <T,>(task: () => Promise<T>, onRetry?: () => void): Prom
     try {
       return await task();
     } catch (e) {
-      const retryable = !(e instanceof UploadCanceledError) && (!(e instanceof HttpError) || e.status >= 500 || e.status === 429);
+      const retryable = !(e instanceof UploadCanceledError) && !(e instanceof PlanLimitError) && (!(e instanceof HttpError) || e.status >= 500 || e.status === 429);
       if (!retryable || attempt >= MAX_ATTEMPTS) throw e;
       onRetry?.();
       await sleep(600 * attempt);
@@ -344,7 +345,7 @@ export const useFileSharing = (
       await withRetry(
         async () => {
           assertActive(id);
-          const target = url ?? (await getB2UploadUrls([key]))[key];
+          const target = url ?? (await getB2UploadUrls([key], { [key]: file.size }))[key];
           await limit(() =>
             xhrPut(target, file, contentType, (loaded) => {
               loadedRef.current.set(id, loaded);
@@ -361,7 +362,7 @@ export const useFileSharing = (
   const uploadMultipart = useCallback(
     async (id: string, file: File, key: string, contentType: string) => {
       const limit = limiterRef.current;
-      const uploadId = await startMultipart(key, contentType);
+      const uploadId = await startMultipart(key, contentType, file.size);
       multipartRef.current.set(id, { key, uploadId });
       const partSize = partSizeFor(file.size);
       const count = Math.ceil(file.size / partSize);
@@ -515,7 +516,8 @@ export const useFileSharing = (
       // One request signs every small file's upload URL.
       const keys = incoming.map((f) => newKey(roomKey, f));
       const smallKeys = keys.filter((_, i) => incoming[i].size < MULTIPART_MIN);
-      const urls = smallKeys.length > 0 ? await getB2UploadUrls(smallKeys).catch(() => ({} as Record<string, string>)) : {};
+      const sizes = Object.fromEntries(keys.map((k, i) => [k, incoming[i].size]));
+      const urls = smallKeys.length > 0 ? await getB2UploadUrls(smallKeys, sizes).catch(() => ({} as Record<string, string>)) : {};
 
       let ok = 0;
       let failed = 0;

@@ -7,6 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import HeaderButton from '@/components/HeaderButton';
 import InstallButton from '@/components/InstallButton';
+import LicenseSection from '@/components/LicenseSection';
 import { useAuth } from '@/hooks/useAuth';
 import { setSoundEnabled, soundEnabled } from '@/hooks/useNotifications';
 import { checkIsAdmin } from '@/lib/admin';
@@ -72,6 +73,8 @@ const SettingsSheet: React.FC = () => {
         </SheetHeader>
 
         <div className="mt-6 space-y-6">
+          <LicenseSection />
+
           <InstallButton full />
 
           <section className="space-y-2">

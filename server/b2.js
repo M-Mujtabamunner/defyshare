@@ -2,6 +2,7 @@
 // expiry sweep. Used by the Vercel function (api/b2-sign.js), the Vite dev
 // server and the scheduled sweep (scripts/b2-sweep.mjs). Never import from src/.
 import { createHash, createHmac } from 'node:crypto';
+import { PLAN_LIMITS, resolvePlan } from './plans.js';
 
 export const FILE_TTL_MS = 3 * 60 * 60 * 1000; // every upload is deleted after 3 hours
 const MAX_SIGN_SECONDS = 60 * 60;
@@ -182,7 +183,16 @@ const validPart = (n) => Number.isInteger(n) && n >= 1 && n <= MAX_PARTS;
 
 const ACTIONS = ['put', 'get', 'delete', 'mp-create', 'mp-parts', 'mp-complete', 'mp-abort'];
 
-export async function handleSignRequest(body, cfg = b2Config()) {
+/** Rejects uploads bigger than the plan the request can prove (see server/plans.js). */
+async function checkSize(body, sizes, env) {
+  const biggest = Math.max(0, ...sizes.filter((n) => Number.isFinite(n)));
+  if (biggest <= PLAN_LIMITS.free) return null;
+  const { plan, limit } = await resolvePlan(body?.auth || {}, env);
+  if (biggest <= limit) return null;
+  return { status: 403, json: { error: 'plan_limit', plan, limit } };
+}
+
+export async function handleSignRequest(body, cfg = b2Config(), env = process.env) {
   if (!cfg.keyId || !cfg.appKey) return { status: 500, json: { error: 'B2 credentials are not configured' } };
   const action = body?.action;
   const keys = Array.isArray(body?.keys) ? body.keys : body?.key ? [body.key] : [];
@@ -196,12 +206,19 @@ export async function handleSignRequest(body, cfg = b2Config()) {
     return { status: 200, json: { deleted: await hardDelete(cfg, keys) } };
   }
   if (action === 'put') {
+    const sizes = body.sizes && typeof body.sizes === 'object' ? Object.values(body.sizes).map(Number) : [];
+    const denied = await checkSize(body, sizes, env);
+    if (denied) return denied;
     if (Array.isArray(body.keys)) {
       return { status: 200, json: { urls: Object.fromEntries(keys.map((k) => [k, presign(cfg, 'PUT', k, expires)])) } };
     }
     return { status: 200, json: { url: presign(cfg, 'PUT', key, expires) } };
   }
   if (action === 'mp-create') {
+    const size = Number(body.size);
+    if (!Number.isFinite(size) || size <= 0) return { status: 400, json: { error: 'size required' } };
+    const denied = await checkSize(body, [size], env);
+    if (denied) return denied;
     const contentType = typeof body.contentType === 'string' ? body.contentType.slice(0, 200) : undefined;
     return { status: 200, json: { uploadId: await createMultipart(cfg, key, contentType) } };
   }

@@ -2,18 +2,34 @@ import { defineConfig, loadEnv, type Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { b2Config, handleSignRequest } from "./server/b2.js";
+import { handlePlanRequest } from "./server/plans.js";
 
 // Serves /api/b2-sign during `npm run dev` (on Vercel it is api/b2-sign.js).
 // Credentials come from .env.local (B2_KEY_ID, B2_APPLICATION_KEY, ...).
 const b2DevApi = (env: Record<string, string>): Plugin => ({
   name: "b2-dev-api",
   configureServer(server) {
+    server.middlewares.use("/api/plan", (req, res) => {
+      let raw = "";
+      req.on("data", (chunk) => (raw += chunk));
+      req.on("end", async () => {
+        try {
+          const { status, json } = await handlePlanRequest(JSON.parse(raw || "{}"), env);
+          res.statusCode = status;
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify(json));
+        } catch (e) {
+          res.statusCode = 500;
+          res.end(JSON.stringify({ error: String(e) }));
+        }
+      });
+    });
     server.middlewares.use("/api/b2-sign", (req, res) => {
       let raw = "";
       req.on("data", (chunk) => (raw += chunk));
       req.on("end", async () => {
         try {
-          const { status, json } = await handleSignRequest(JSON.parse(raw || "{}"), b2Config(env));
+          const { status, json } = await handleSignRequest(JSON.parse(raw || "{}"), b2Config(env), env);
           res.statusCode = status;
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify(json));

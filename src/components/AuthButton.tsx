@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { LogOut, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { lovable } from '@/integrations/lovable';
+import { CreditCard, Loader2, LogOut, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { signInWithGoogle, usePlan } from '@/hooks/usePlan';
 import { useToast } from '@/hooks/use-toast';
+import { GoogleG } from '@/components/PlanCards';
+import { formatLimit, planById } from '@/lib/plans';
+import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,93 +16,96 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+/** Header "Sign in with Google" button; once signed in, an avatar menu with the plan. */
 const AuthButton: React.FC = () => {
   const { user } = useAuth();
+  const { plan, limit, portalUrl, setPlansOpen } = usePlan();
   const { toast } = useToast();
   const [signingIn, setSigningIn] = useState(false);
 
-  const handleSignIn = async () => {
+  const signIn = async () => {
     if (signingIn) return;
     setSigningIn(true);
-    try {
-      const result = await lovable.auth.signInWithOAuth('google', {
-        redirect_uri: window.location.origin,
-      });
-
-      if (result.error) {
-        toast({
-          title: 'Sign-in failed',
-          description: String(result.error.message ?? result.error),
-          variant: 'destructive',
-        });
-        setSigningIn(false);
-      }
-      // If redirected, the browser will navigate away — keep loading state.
-    } catch (e) {
-      toast({
-        title: 'Sign-in failed',
-        description: String((e as Error)?.message ?? e),
-        variant: 'destructive',
-      });
+    const { error } = await signInWithGoogle();
+    if (error) {
+      toast({ title: 'Sign-in failed', description: error.message, variant: 'destructive' });
       setSigningIn(false);
     }
-  };
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    toast({ title: 'Signed out' });
+    // On success the browser goes to Google, so keep the spinner.
   };
 
   if (!user) {
     return (
-      <Button
-        onClick={handleSignIn}
-        size="sm"
-        variant="outline"
+      <button
+        type="button"
+        onClick={signIn}
         disabled={signingIn}
-        className="gap-1.5 sm:gap-2 px-2.5 sm:px-3 bg-background hover:bg-secondary/60 border-border/70 font-medium"
+        aria-label="Sign in with Google"
+        title="Sign in with Google"
+        className="inline-flex items-center justify-center gap-2 h-8 sm:h-9 w-8 sm:w-auto sm:px-3 rounded-full border border-border/70 bg-card hover:bg-secondary text-sm font-medium transition-colors disabled:opacity-70"
       >
-        {signingIn ? (
-          <>
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span>Connecting…</span>
-          </>
-        ) : (
-          <>
-            <svg className="w-4 h-4" viewBox="0 0 48 48" aria-hidden="true">
-              <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.4 29.3 35.5 24 35.5c-6.4 0-11.5-5.1-11.5-11.5S17.6 12.5 24 12.5c2.9 0 5.6 1.1 7.6 2.9l5.7-5.7C33.6 6.4 29 4.5 24 4.5 13.2 4.5 4.5 13.2 4.5 24S13.2 43.5 24 43.5c10.8 0 19.5-8.7 19.5-19.5 0-1.3-.1-2.3-.4-3.5z"/>
-              <path fill="#FF3D00" d="M6.3 14.1l6.6 4.8C14.7 15.3 19 12.5 24 12.5c2.9 0 5.6 1.1 7.6 2.9l5.7-5.7C33.6 6.4 29 4.5 24 4.5 16.3 4.5 9.7 8.9 6.3 14.1z"/>
-              <path fill="#4CAF50" d="M24 43.5c5 0 9.5-1.9 12.9-5l-6-5c-1.9 1.4-4.3 2.2-6.9 2.2-5.3 0-9.7-3.1-11.3-7.5l-6.5 5C9.5 39 16.2 43.5 24 43.5z"/>
-              <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.5l6 5c-.4.4 6.7-4.9 6.7-14.5 0-1.3-.1-2.3-.4-3.5z"/>
-            </svg>
-            <span className="sm:hidden">Sign in</span>
-            <span className="hidden sm:inline">Sign in with Google</span>
-          </>
-        )}
-      </Button>
+        {signingIn ? <Loader2 className="w-4 h-4 animate-spin" /> : <GoogleG />}
+        <span className="hidden sm:inline">Sign in</span>
+      </button>
     );
   }
 
   const name = (user.user_metadata?.full_name as string) || user.email || 'Account';
-  const initial = name.charAt(0).toUpperCase();
+  const avatar = user.user_metadata?.avatar_url as string | undefined;
+  const paid = plan !== 'free';
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button size="sm" variant="outline" className="gap-2">
-          <div className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-semibold">
-            {initial}
-          </div>
-          <span className="hidden sm:inline max-w-[120px] truncate">{name}</span>
-        </Button>
+        <button
+          type="button"
+          aria-label="Account"
+          className="relative grid place-items-center w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {avatar ? (
+            <img src={avatar} alt="" referrerPolicy="no-referrer" className="w-6 h-6 sm:w-7 sm:h-7 rounded-full" />
+          ) : (
+            <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-primary text-primary-foreground text-xs font-semibold grid place-items-center">
+              {name.charAt(0).toUpperCase()}
+            </span>
+          )}
+          {paid && (
+            <span className="absolute -bottom-0.5 -end-0.5 rounded-full bg-primary px-1 text-[8px] font-bold leading-[13px] text-primary-foreground ring-2 ring-background uppercase">
+              {plan}
+            </span>
+          )}
+        </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-60">
         <DropdownMenuLabel>
           <div className="font-medium truncate">{name}</div>
-          <div className="text-xs text-muted-foreground truncate">{user.email}</div>
+          <div className="text-xs font-normal text-muted-foreground truncate">{user.email}</div>
+          <div className={cn('mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs', paid ? 'bg-primary/15 text-primary' : 'bg-secondary text-muted-foreground')}>
+            {planById(plan).name} · up to {formatLimit(limit)}
+          </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleSignOut} className="gap-2">
+        {plan !== 'pro' && (
+          <DropdownMenuItem onClick={() => setPlansOpen(true)} className="gap-2">
+            <Sparkles className="w-4 h-4 text-primary" />
+            {paid ? 'Upgrade to Pro' : 'Upgrade'}
+          </DropdownMenuItem>
+        )}
+        {portalUrl && (
+          <DropdownMenuItem asChild className="gap-2">
+            <a href={portalUrl} target="_blank" rel="noopener noreferrer">
+              <CreditCard className="w-4 h-4" />
+              Manage subscription
+            </a>
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem
+          onClick={async () => {
+            await supabase.auth.signOut();
+            toast({ title: 'Signed out' });
+          }}
+          className="gap-2"
+        >
           <LogOut className="w-4 h-4" />
           Sign out
         </DropdownMenuItem>

@@ -10,6 +10,10 @@ import OnlineIndicator from '@/components/OnlineIndicator';
 import UploadProgress from '@/components/UploadProgress';
 import UploadProgressList from '@/components/UploadProgressList';
 import SettingsSheet from '@/components/SettingsSheet';
+import AuthButton from '@/components/AuthButton';
+import { PlanCards, PlansDialog } from '@/components/PlanCards';
+import { usePlan } from '@/hooks/usePlan';
+import { formatLimit, planFor } from '@/lib/plans';
 import AppearanceMenu from '@/components/AppearanceMenu';
 import { useTheme } from '@/components/ThemeProvider';
 import FilePreviewModal from '@/components/FilePreviewModal';
@@ -61,6 +65,7 @@ const Index = () => {
   const { publicIP, roomId, verified } = usePublicIP();
   const { members, onlineCount, otherNames, remember } = useRoomMembers(roomId, me);
   const notifications = useNotifications();
+  const { plan, limit: planLimit, setPlansOpen } = usePlan();
   const { push } = notifications;
 
   // --- Groups & invitations ---
@@ -146,7 +151,25 @@ const Index = () => {
   }, [allFiles, remember]);
 
   const uploadBatch = useCallback(
-    async (incoming: File[]) => {
+    async (picked: File[]) => {
+      if (picked.length === 0) return;
+      // Files over the plan's limit are skipped, with a way to upgrade.
+      const tooBig = picked.filter((f) => f.size > planLimit);
+      if (tooBig.length > 0) {
+        const need = planFor(Math.max(...tooBig.map((f) => f.size)));
+        toast({
+          title:
+            tooBig.length === 1
+              ? `"${tooBig[0].name}" is over ${formatLimit(planLimit)}`
+              : `${tooBig.length} files are over ${formatLimit(planLimit)}`,
+          description: need
+            ? `Upgrade to ${need.name} to send files up to ${formatLimit(need.limit)}.`
+            : "Files over 3 GB can't be sent yet.",
+          variant: 'destructive',
+        });
+        if (need) setPlansOpen(true);
+      }
+      const incoming = picked.filter((f) => f.size <= planLimit);
       if (incoming.length === 0) return;
       setTab('files');
       // Wait for the network check so files never land in a stale room.
@@ -177,7 +200,7 @@ const Index = () => {
         });
       }
     },
-    [verified, addFiles, me, liveTarget, toast, t],
+    [verified, addFiles, me, liveTarget, toast, t, planLimit, setPlansOpen],
   );
 
   const onChangeTarget = useCallback(
@@ -295,6 +318,7 @@ const Index = () => {
               onClear={notifications.clear}
             />
             <SettingsSheet />
+            <AuthButton />
           </div>
         </div>
       </header>
@@ -358,6 +382,17 @@ const Index = () => {
 
             <TabsContent value="files" className="mt-3 space-y-3">
               <DropZone onFilesDrop={uploadBatch} isUploading={uploadState.isUploading} />
+              <p className="-mt-1 text-xs text-muted-foreground">
+                Up to {formatLimit(planLimit)} per file
+                {plan !== 'pro' && (
+                  <>
+                    {' · '}
+                    <button type="button" onClick={() => setPlansOpen(true)} className="font-medium text-primary hover:underline">
+                      Send bigger files
+                    </button>
+                  </>
+                )}
+              </p>
 
               {uploadState.items.length > 0 ? (
                 <UploadProgressList
@@ -418,6 +453,13 @@ const Index = () => {
               />
             </TabsContent>
           </Tabs>
+
+          <section id="plans" className="mt-10 scroll-mt-20">
+            <h2 className="text-lg font-semibold">Send bigger files</h2>
+            <p className="mb-4 text-sm text-muted-foreground">Pick a plan, sign in with Google and pay securely with Lemon Squeezy.</p>
+            <PlanCards />
+          </section>
+          <PlansDialog />
 
           <section className="mt-12 space-y-7 text-sm leading-relaxed" lang="en" dir="ltr">
             <div>

@@ -10,6 +10,21 @@ export const isB2Path = (p: string) => p.startsWith(B2_PREFIX);
 export const toB2Path = (key: string) => B2_PREFIX + key;
 export const b2Key = (p: string) => p.slice(B2_PREFIX.length);
 
+/** Proof of plan sent with upload requests so the server allows bigger files. */
+export type PlanAuth = { token?: string; license?: string };
+let planAuth: () => Promise<PlanAuth> = async () => ({});
+export const setPlanAuthProvider = (fn: () => Promise<PlanAuth>) => {
+  planAuth = fn;
+};
+
+/** Thrown when a file is bigger than the current plan allows. */
+export class PlanLimitError extends Error {
+  constructor(readonly limit: number) {
+    super('File is too big for your plan');
+    this.name = 'PlanLimitError';
+  }
+}
+
 async function signRequest<T>(body: Record<string, unknown>): Promise<T> {
   const res = await fetch(SIGN_ENDPOINT, {
     method: 'POST',
@@ -17,23 +32,27 @@ async function signRequest<T>(body: Record<string, unknown>): Promise<T> {
     body: JSON.stringify(body),
   });
   const json = await res.json().catch(() => ({}));
+  if (res.status === 403 && json?.error === 'plan_limit') throw new PlanLimitError(Number(json.limit) || 0);
   if (!res.ok) throw new Error(json?.error || `Signing failed (${res.status})`);
   return json as T;
 }
 
 /** Upload URLs for many small files in as few requests as possible. */
-export const getB2UploadUrls = async (keys: string[]) => {
+export const getB2UploadUrls = async (keys: string[], sizes: Record<string, number> = {}) => {
   const urls: Record<string, string> = {};
+  const auth = await planAuth();
   for (let i = 0; i < keys.length; i += MAX_BATCH) {
-    const res = await signRequest<{ urls: Record<string, string> }>({ action: 'put', keys: keys.slice(i, i + MAX_BATCH) });
+    const batch = keys.slice(i, i + MAX_BATCH);
+    const batchSizes = Object.fromEntries(batch.map((k) => [k, sizes[k] ?? 0]));
+    const res = await signRequest<{ urls: Record<string, string> }>({ action: 'put', keys: batch, sizes: batchSizes, auth });
     Object.assign(urls, res.urls);
   }
   return urls;
 };
 
 // --- Multipart: large files upload as parallel parts ---
-export const startMultipart = async (key: string, contentType: string) =>
-  (await signRequest<{ uploadId: string }>({ action: 'mp-create', key, contentType })).uploadId;
+export const startMultipart = async (key: string, contentType: string, size: number) =>
+  (await signRequest<{ uploadId: string }>({ action: 'mp-create', key, contentType, size, auth: await planAuth() })).uploadId;
 
 export const getPartUrls = async (key: string, uploadId: string, parts: number[]) =>
   (await signRequest<{ urls: Record<string, string> }>({ action: 'mp-parts', key, uploadId, parts })).urls;
