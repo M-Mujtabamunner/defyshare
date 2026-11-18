@@ -11,6 +11,9 @@ import SettingsSheet from '@/components/SettingsSheet';
 import AuthButton from '@/components/AuthButton';
 import SignInDialog from '@/components/SignInDialog';
 import NamePrompt from '@/components/NamePrompt';
+import IntentGuide from '@/components/IntentGuide';
+import type { IntentPage } from '@/data/intentPages';
+import { PLANS_ENABLED } from '@/data/features';
 import { PlanCards, PlansDialog } from '@/components/PlanCards';
 import { usePlan } from '@/hooks/usePlan';
 import { formatLimit, planFor } from '@/lib/plans';
@@ -56,7 +59,7 @@ const confirmationsEnabled = () => {
 
 const fileLabel = (file: SharedFile) => file.name.split('/').pop() || file.name;
 
-const Index = () => {
+const Index = ({ intent }: { intent?: IntentPage }) => {
   const { t } = useT();
   const { design, resolved } = useTheme();
   const logo = design === 'classic' ? (resolved === 'dark' ? classicLogoDark : classicLogoLight) : logoMark;
@@ -128,7 +131,7 @@ const Index = () => {
 
   const [preview, setPreview] = useState<{ file: SharedFile; list: SharedFile[] } | null>(null);
   const [shareFile, setShareFile] = useState<SharedFile | null>(null);
-  const [tab, setTab] = useState<StageTab>('files');
+  const [tab, setTab] = useState<StageTab>('text');
   const [target, setTarget] = useState<Target>(EVERYONE);
   const pendingRef = useRef<{ files: File[]; to?: Target }[]>([]);
 
@@ -171,12 +174,14 @@ const Index = () => {
             tooBig.length === 1
               ? `"${tooBig[0].name}" is over ${formatLimit(planLimit)}`
               : `${tooBig.length} files are over ${formatLimit(planLimit)}`,
-          description: need
-            ? `Upgrade to ${need.name} to send files up to ${formatLimit(need.limit)}.`
-            : "Files over 3 GB can't be sent yet.",
+          description: !PLANS_ENABLED
+            ? `Files can be up to ${formatLimit(planLimit)} each.`
+            : need
+              ? `Upgrade to ${need.name} to send files up to ${formatLimit(need.limit)}.`
+              : "Files over 3 GB can't be sent yet.",
           variant: 'destructive',
         });
-        if (need) setPlansOpen(true);
+        if (need && PLANS_ENABLED) setPlansOpen(true);
       }
       const incoming = picked.filter((f) => f.size <= planLimit);
       if (incoming.length === 0) return;
@@ -342,14 +347,21 @@ const Index = () => {
             />
             <ThemeToggle className="hidden sm:grid" />
             <SettingsSheet />
-            <AuthButton />
+            {PLANS_ENABLED && <AuthButton />}
           </div>
         </div>
       </header>
 
       <div className="relative mx-auto w-full max-w-5xl px-4 sm:px-6" data-upload-surface>
         <main className="pt-2 sm:pt-4 pb-6" data-upload-surface>
-          <h1 className="max-w-xl text-[15px] leading-relaxed text-muted-foreground">{t('tagline')}</h1>
+          {intent ? (
+            <div className="max-w-2xl" lang="en" dir="ltr">
+              <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">{intent.h1}</h1>
+              <p className="mt-1 text-[15px] leading-relaxed text-muted-foreground">{intent.intro}</p>
+            </div>
+          ) : (
+            <h1 className="max-w-xl text-[15px] leading-relaxed text-muted-foreground">{t('tagline')}</h1>
+          )}
 
           <div className="mt-3 grid gap-5 lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start" data-upload-surface>
             <div className="min-w-0 flex flex-col gap-3" data-upload-surface>
@@ -387,7 +399,7 @@ const Index = () => {
                 limitNote={
                   <>
                     {t('upToPerFile', { size: formatLimit(planLimit) })}
-                    {plan !== 'pro' && (
+                    {PLANS_ENABLED && plan !== 'pro' && (
                       <>
                         {'. '}
                         <button type="button" onClick={() => setPlansOpen(true)} className="font-medium text-foreground underline underline-offset-4 decoration-border hover:decoration-foreground">
@@ -467,6 +479,9 @@ const Index = () => {
             </aside>
           </div>
 
+          {intent && <IntentGuide page={intent} />}
+
+          {PLANS_ENABLED && (
           <section id="plans" className="mt-12 scroll-mt-24">
             <h2 className="text-2xl font-medium tracking-tight">Send bigger files</h2>
             <p className="mt-1 mb-4 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
@@ -474,10 +489,12 @@ const Index = () => {
             </p>
             <PlanCards />
           </section>
-          <PlansDialog />
-          <SignInDialog />
+          )}
+          {PLANS_ENABLED && <PlansDialog />}
+          {PLANS_ENABLED && <SignInDialog />}
           {!MOCK && <NamePrompt id={device.id} name={device.name} onRename={device.rename} />}
 
+          {!intent && (
           <section className="mt-14 grid gap-x-12 gap-y-12 lg:grid-cols-2 text-[15px] leading-relaxed" lang="en" dir="ltr">
             <div className="space-y-12">
               <div>
@@ -522,6 +539,7 @@ const Index = () => {
               </div>
             </div>
           </section>
+          )}
 
           <footer className="mt-20 pt-6 pb-16 border-t border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-sm text-muted-foreground">
             <p>© {new Date().getFullYear()} DefyShare</p>

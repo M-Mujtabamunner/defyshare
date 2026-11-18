@@ -8,10 +8,16 @@ import FormatDevicePage from './FormatDevicePage';
 import FormatIndustryPage from './FormatIndustryPage';
 import KeywordLandingPage from './KeywordLandingPage';
 import NotFound from './NotFound';
+import Index from './Index';
+import { getIntentPage } from '@/data/intentPages';
 
 export default function SeoDynamicPage() {
   const { pathname } = useLocation();
   const slug = pathname.replace(/^\//, '').replace(/\/$/, '');
+
+  // "Send X from A to B" pages: the app itself with a guide for that case
+  const intent = getIntentPage(`/${slug}`);
+  if (intent) return <Index intent={intent} />;
 
   // Static keyword landing pages (checked first for exact matches)
   if (KEYWORD_PAGES.some((p) => p.slug === slug)) return <KeywordLandingPage />;

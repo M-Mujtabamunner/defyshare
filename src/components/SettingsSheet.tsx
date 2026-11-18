@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import HeaderButton from '@/components/HeaderButton';
 import InstallButton from '@/components/InstallButton';
 import LicenseSection from '@/components/LicenseSection';
+import { PLANS_ENABLED } from '@/data/features';
 import { AppearanceControls } from '@/components/AppearanceMenu';
 import { useAuth } from '@/hooks/useAuth';
 import { setSoundEnabled, soundEnabled } from '@/hooks/useNotifications';
@@ -74,7 +75,7 @@ const SettingsSheet: React.FC = () => {
         </SheetHeader>
 
         <div className="mt-6 space-y-6">
-          <LicenseSection />
+          {PLANS_ENABLED && <LicenseSection />}
 
           <InstallButton full />
 

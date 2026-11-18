@@ -23,3 +23,4 @@ Disallow: /_supabase/
 Disallow: /admin
 
 Sitemap: https://defyshare.app/sitemap.xml
+Sitemap: https://defyshare.app/sitemap-1-2k.xml
