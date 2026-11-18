@@ -1,6 +1,6 @@
 import { useLocation, Link } from 'react-router-dom';
 import { CheckCircle2, ArrowRight, Zap, Shield, Globe, Wifi } from 'lucide-react';
-import { KEYWORD_PAGES } from '@/data/seoData';
+import { KEYWORD_PAGES, FILE_LIMIT, RETENTION, HOW_IT_WORKS } from '@/data/seoData';
 import { SeoHead } from '@/components/SeoHead';
 import { getSeoMeta } from '@/data/seoMeta';
 import { JsonLd, buildBreadcrumbSchema, buildFaqSchema, buildWebAppSchema } from '@/components/JsonLd';
@@ -30,7 +30,7 @@ export default function KeywordLandingPage() {
   const faqs = [
     {
       question: `What makes DefyShare better than other tools for ${page.h1.split('—')[0].trim()}?`,
-      answer: `DefyShare combines the speed of local network transfers (up to 1 Gbps), the privacy of peer-to-peer connections (zero server storage), and the convenience of a browser app (no download, no account) — a combination no other tool offers for free.`,
+      answer: `DefyShare removes the setup: no account, no app, no pairing code. Devices on the same Wi-Fi join the same room automatically, so a file you drop appears on your other devices within seconds. Files can be up to ${FILE_LIMIT} each and are deleted after ${RETENTION}.`,
     },
     {
       question: 'Does DefyShare work on all devices and operating systems?',
@@ -38,7 +38,7 @@ export default function KeywordLandingPage() {
     },
     {
       question: 'Is DefyShare completely free with no hidden fees?',
-      answer: 'DefyShare is 100% free with no premium tier, no storage subscription, no per-transfer fee, and no file size limit. It is funded independently and does not monetize your data.',
+      answer: `Yes. DefyShare is free to use with no account and no subscription. Each file can be up to ${FILE_LIMIT}. The site is supported by ads.`,
     },
   ];
 
@@ -94,11 +94,12 @@ export default function KeywordLandingPage() {
           <h2 className="text-2xl font-bold text-foreground mb-6">
             Why DefyShare is the Answer
           </h2>
+          <p className="text-muted-foreground leading-relaxed mb-6">{HOW_IT_WORKS}</p>
           <div className="grid sm:grid-cols-3 gap-4 mb-6">
             {[
-              { icon: <Zap className="w-5 h-5 text-amber-500" />, title: 'Full LAN Speed', desc: 'Up to 1 Gbps — no server upload bottleneck' },
-              { icon: <Shield className="w-5 h-5 text-green-600" />, title: 'Zero Cloud Storage', desc: 'Files never touch any server — fully private' },
-              { icon: <CheckCircle2 className="w-5 h-5 text-primary" />, title: 'No Size Limit', desc: 'Transfer any file, any size, completely free' },
+              { icon: <Zap className="w-5 h-5 text-amber-500" />, title: 'No Setup', desc: 'Devices on the same Wi-Fi join one room automatically' },
+              { icon: <Shield className="w-5 h-5 text-green-600" />, title: 'Auto-Delete', desc: `Everything is deleted after ${RETENTION}` },
+              { icon: <CheckCircle2 className="w-5 h-5 text-primary" />, title: 'Any File Type', desc: `Files up to ${FILE_LIMIT} each, plus folders, text and links` },
             ].map((card) => (
               <div key={card.title} className="rounded-xl border border-border bg-card/80 p-4">
                 <div className="mb-2">{card.icon}</div>
@@ -111,11 +112,11 @@ export default function KeywordLandingPage() {
             {[
               'Open in any browser — Chrome, Safari, Firefox, or Edge — on any device',
               'No account creation, no email verification, no app download',
-              'Files transfer directly P2P using WebRTC over your local network',
-              'TLS 1.3 encryption protects every transfer',
-              'Works without internet — only needs local WiFi',
-              'Real-time text sharing alongside file transfers',
-              'Transfer history stored locally in your browser',
+              'Files are uploaded over HTTPS and listed for every device in your room',
+              `Shared files and text are deleted automatically after ${RETENTION}`,
+              'The other device does not need to be open when you send — files wait for it',
+              'Text and link sharing alongside files',
+              'Previews for images, video, audio and PDFs in the browser',
             ].map((item) => (
               <li key={item} className="flex items-center gap-3 text-muted-foreground text-sm">
                 <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
@@ -131,8 +132,8 @@ export default function KeywordLandingPage() {
             {[
               { step: '1', title: 'Open DefyShare on the sending device', desc: 'Go to defyshare.app in any browser. No download, no account, no permission dialogs.' },
               { step: '2', title: 'Open DefyShare on the receiving device', desc: 'Open the same URL on any other device on the same Wi-Fi or local network. Devices connect automatically.' },
-              { step: '3', title: 'Drag and drop your files', desc: 'Drop files onto the DefyShare interface. Multiple files, folders, and files of any size are all supported.' },
-              { step: '4', title: 'Files arrive instantly', desc: 'The receiving device gets the files at full local network speed — up to 1 Gbps. No upload delay, no compression.' },
+              { step: '3', title: 'Drag and drop your files', desc: `Drop files onto the DefyShare page. Multiple files and folders are supported; each file can be up to ${FILE_LIMIT}.` },
+              { step: '4', title: 'Download on the other device', desc: 'The file appears in the list on the other device, ready to preview or download at original quality. Speed depends on your internet connection.' },
             ].map((item) => (
               <li key={item.step} className="flex gap-4">
                 <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center text-primary font-bold text-sm shrink-0">
@@ -165,7 +166,7 @@ export default function KeywordLandingPage() {
 
         <div className="mt-12 rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20 p-8 text-center">
           <h2 className="text-2xl font-bold text-foreground mb-2">{page.h1.split('—')[0].trim()}</h2>
-          <p className="text-muted-foreground mb-6">Open DefyShare and start in seconds — no account, no download, no limits.</p>
+          <p className="text-muted-foreground mb-6">Open DefyShare and start in seconds — no account, no download.</p>
           <Link to="/" className="inline-flex items-center gap-2 rounded-xl bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-3 transition-colors">
             Open DefyShare Free <ArrowRight className="w-4 h-4" />
           </Link>

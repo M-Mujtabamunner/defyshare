@@ -1,6 +1,6 @@
 import { useLocation, Link } from 'react-router-dom';
 import { CheckCircle2, ArrowRight, Zap, Shield } from 'lucide-react';
-import { FORMATS, DEVICES } from '@/data/seoData';
+import { FORMATS, DEVICES, FILE_LIMIT, RETENTION } from '@/data/seoData';
 import { SeoHead } from '@/components/SeoHead';
 import { getSeoMeta } from '@/data/seoMeta';
 import { JsonLd, buildBreadcrumbSchema, buildFaqSchema, buildWebAppSchema } from '@/components/JsonLd';
@@ -41,25 +41,25 @@ export default function FormatDevicePage() {
   const isHowTo = !!howToMatch;
   const defaultTitle = isHowTo
     ? `How to Send ${format.name} Files on ${device.name} — Free & Wireless | DefyShare`
-    : `Share ${format.name} Files from ${device.name} — Free, No Size Limit | DefyShare`;
+    : `Share ${format.name} Files from ${device.name} — Free | DefyShare`;
   const defaultDescription = isHowTo
-    ? `Learn how to send ${format.description} from your ${device.name} wirelessly. Use DefyShare — no cloud upload, no size limit, no account. Works in ${device.browser}.`
-    : `Transfer ${format.description} directly from your ${device.name} over your local network. No cloud, no size limit, no account. Free forever. Works in ${device.browser}.`;
+    ? `Learn how to send ${format.description} from your ${device.name} wirelessly with DefyShare — no account, no install. Works in ${device.browser}.`
+    : `Send ${format.description} from your ${device.name} to any device on the same Wi-Fi. No account, files up to ${FILE_LIMIT}. Works in ${device.browser}.`;
   const { title, description } = getSeoMeta(pathname) ?? { title: defaultTitle, description: defaultDescription };
   const canonical = `https://defyshare.app/${slug}`;
 
   const faqs = [
     {
       question: `How do I share ${format.name} files from my ${device.name} without a USB cable?`,
-      answer: `Open DefyShare in ${device.browser} on your ${device.name}. Open DefyShare on the receiving device as well. Both must be on the same Wi-Fi network. Drag your ${format.name} file onto the DefyShare drop zone — it transfers instantly peer-to-peer.`,
+      answer: `Open DefyShare in ${device.browser} on your ${device.name}. Open DefyShare on the receiving device as well. Both must be on the same Wi-Fi network. Drag your ${format.name} file onto the DefyShare page; it uploads over HTTPS and appears on the other device.`,
     },
     {
       question: `Is there a size limit for sending ${format.name} files from a ${device.name}?`,
-      answer: `No. DefyShare has no file size limit. ${format.name} files — which are typically ${format.avgSize} — transfer at full local network speed regardless of size.`,
+      answer: `Each file can be up to ${FILE_LIMIT}. ${format.sizeNote}`,
     },
     {
-      question: `What is the fastest way to send ${format.name} files from a ${device.name}?`,
-      answer: `DefyShare over a local Wi-Fi or Ethernet connection is the fastest method. Transfers happen at LAN speed (50–1000 Mbps) with no cloud upload delay. A 1GB ${format.name} file transfers in under 10 seconds on a modern network.`,
+      question: `How long does the ${format.name} file stay available?`,
+      answer: `It stays in your room's list for ${RETENTION}, then it is deleted automatically. Download it on the other device before then, or delete it sooner yourself.`,
     },
   ];
 
@@ -114,8 +114,8 @@ export default function FormatDevicePage() {
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl leading-relaxed">
             Transfer {format.description} directly from your <strong className="text-foreground/90">{device.name}</strong> to any other
-            device on your local network. Files are typically {format.avgSize} — DefyShare handles them at full network
-            speed with <strong className="text-foreground/90">no size limit, no cloud upload, and no account</strong>.
+            device on the same Wi-Fi. Files are typically {format.avgSize}; DefyShare takes files up to {FILE_LIMIT} each
+            with <strong className="text-foreground/90">no account and nothing to install</strong>.
           </p>
           <Link to="/" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary hover:bg-primary/90 text-white font-semibold px-6 py-3 transition-colors">
             Share {format.name} Files Now <ArrowRight className="w-4 h-4" />
@@ -128,13 +128,13 @@ export default function FormatDevicePage() {
           </h2>
           <p className="text-muted-foreground leading-relaxed mb-4">
             {format.name} files used for {format.useCases} can be {format.avgSize}. On a {device.name},
-            the usual options are frustrating: email has a 25MB limit, cloud services require uploading to a
-            server and waiting, and USB transfers require the right cables and adapters.
+            the usual options are frustrating: emailing yourself clutters your inbox, cloud drives need an account,
+            and USB transfers need the right cables and adapters.
           </p>
           <p className="text-muted-foreground leading-relaxed">
-            DefyShare uses WebRTC to create a direct peer-to-peer connection between your {device.name} and
-            the receiving device. {format.name} files transfer at full local network speed — no upload, no wait,
-            no server ever touches your files.
+            With DefyShare, your {device.name} and the receiving device join the same room when they are on the same
+            Wi-Fi. Your {format.name} file is uploaded over HTTPS to temporary storage, shows up on the other device,
+            and is deleted after {RETENTION}. {format.sizeNote}
           </p>
         </section>
 
@@ -147,7 +147,7 @@ export default function FormatDevicePage() {
               { step: '1', title: `Open DefyShare on your ${device.name}`, desc: `Open ${device.browser} and navigate to defyshare.app. No download or installation needed.` },
               { step: '2', title: 'Open DefyShare on the receiving device', desc: 'Open any modern browser on the receiving device and go to defyshare.app. Both must be on the same Wi-Fi network.' },
               { step: '3', title: `Drag your ${format.name} file onto DefyShare`, desc: `From your ${device.name}'s file manager, drag your ${format.name} file onto the DefyShare drop zone. Or tap the upload button on mobile.` },
-              { step: '4', title: 'File arrives instantly', desc: `The ${format.name} file transfers directly from your ${device.name} to the receiving device at full local network speed. No cloud involved.` },
+              { step: '4', title: 'Download on the other device', desc: `The ${format.name} file appears in the list on the receiving device, ready to preview or download.` },
             ].map((item) => (
               <li key={item.step} className="flex gap-4">
                 <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center text-primary font-bold text-sm shrink-0">
@@ -166,9 +166,9 @@ export default function FormatDevicePage() {
           <h2 className="text-2xl font-bold text-foreground mb-4">Key Advantages on {device.name}</h2>
           <div className="grid sm:grid-cols-2 gap-4">
             {[
-              { icon: <Zap className="w-5 h-5 text-amber-500" />, title: `Full speed on ${device.name}`, desc: `${device.browser} supports WebRTC natively — DefyShare runs at full capability on your ${device.name} with no plugins.` },
-              { icon: <Shield className="w-5 h-5 text-green-600" />, title: 'TLS 1.3 encrypted', desc: `All ${format.name} files transferred from your ${device.name} are encrypted end-to-end. No file ever touches a server.` },
-              { icon: <CheckCircle2 className="w-5 h-5 text-primary" />, title: 'No size limit on any format', desc: `Whether your ${format.name} file is 1MB or 100GB, DefyShare handles it on your ${device.name} without restrictions.` },
+              { icon: <Zap className="w-5 h-5 text-amber-500" />, title: `Works in ${device.browser}`, desc: `DefyShare runs fully in the browser on your ${device.name} — no plugins or extensions.` },
+              { icon: <Shield className="w-5 h-5 text-green-600" />, title: 'HTTPS and auto-delete', desc: `${format.name} files from your ${device.name} travel over HTTPS and are deleted after ${RETENTION}.` },
+              { icon: <CheckCircle2 className="w-5 h-5 text-primary" />, title: 'Original quality', desc: `${format.name} files up to ${FILE_LIMIT} are delivered byte for byte, with no compression.` },
               { icon: <CheckCircle2 className="w-5 h-5 text-blue-600" />, title: `No extra apps for ${device.name}`, desc: `DefyShare runs entirely in ${device.browser} — no APK, no extension, no desktop client needed on your ${device.name}.` },
             ].map((card) => (
               <div key={card.title} className="rounded-xl border border-border bg-card/80 p-4">
@@ -199,7 +199,7 @@ export default function FormatDevicePage() {
           <h2 className="text-2xl font-bold text-foreground mb-2">
             Share your {format.name} files from {device.name} right now
           </h2>
-          <p className="text-muted-foreground mb-6">Free. No account. No size limit. Instant.</p>
+          <p className="text-muted-foreground mb-6">Free. No account. Nothing to install.</p>
           <Link to="/" className="inline-flex items-center gap-2 rounded-xl bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-3 transition-colors">
             Open DefyShare <ArrowRight className="w-4 h-4" />
           </Link>

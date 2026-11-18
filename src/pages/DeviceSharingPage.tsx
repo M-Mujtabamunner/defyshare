@@ -1,6 +1,6 @@
 import { useLocation, Link } from 'react-router-dom';
 import { CheckCircle2, ArrowRight, Zap, Shield, Wifi } from 'lucide-react';
-import { DEVICES } from '@/data/seoData';
+import { DEVICES, FILE_LIMIT, RETENTION, HOW_IT_WORKS } from '@/data/seoData';
 import { SeoHead } from '@/components/SeoHead';
 import { getSeoMeta } from '@/data/seoMeta';
 import { JsonLd, buildBreadcrumbSchema, buildFaqSchema, buildWebAppSchema } from '@/components/JsonLd';
@@ -33,22 +33,22 @@ export default function DeviceSharingPage() {
   }
 
   const defaultTitle = `How to Share Files Between ${device1.name} and ${device2.name} for Free (2026)`;
-  const defaultDescription = `The fastest way to transfer files between a ${device1.name} and a ${device2.name} — no cables, no accounts, no cloud uploads. Use DefyShare for instant local P2P file transfer.`;
+  const defaultDescription = `An easy way to move files between a ${device1.name} and a ${device2.name} on the same Wi-Fi — no cables, no accounts, no app. Free with DefyShare.`;
   const { title, description } = getSeoMeta(pathname) ?? { title: defaultTitle, description: defaultDescription };
   const canonical = `https://defyshare.app/share-files-between-${d1Slug || device1.slug}-and-${d2Slug || device2.slug}`;
 
   const faqs = [
     {
       question: `How do I send files from ${device1.name} to ${device2.name} without a USB cable?`,
-      answer: `Open defyshare.app in ${device1.browser} on your ${device1.name} and in ${device2.browser} on your ${device2.name}. Both devices must be on the same Wi-Fi. They will detect each other automatically and you can drag and drop files to transfer instantly.`,
+      answer: `Open defyshare.app in ${device1.browser} on your ${device1.name} and in ${device2.browser} on your ${device2.name}. When both are on the same Wi-Fi they join the same room automatically. Drop a file on one and download it on the other.`,
     },
     {
-      question: `What is the fastest way to transfer files between ${device1.name} and ${device2.name}?`,
-      answer: `DefyShare is the fastest method because it transfers files directly peer-to-peer over your local network at full LAN speed. On a standard Wi-Fi 5 network, you can achieve 50–100 Mbps. On Wi-Fi 6 or Ethernet, speeds can exceed 500 Mbps.`,
+      question: `How big can the files be?`,
+      answer: `Each file can be up to ${FILE_LIMIT}, and you can send many files or a whole folder at once. Files are uploaded over HTTPS, so transfer speed depends on your internet connection. For much larger files, use a cable or a large-file service.`,
     },
     {
       question: `Is it safe to share files between ${device1.name} and ${device2.name} using DefyShare?`,
-      answer: `Yes. DefyShare uses WebRTC with TLS 1.3 encryption. Files are transferred directly between your ${device1.name} and ${device2.name} and never pass through any server. Your data stays on your local network.`,
+      answer: `For everyday files, yes. Every upload and download uses HTTPS, files are listed only to devices in your room, and everything is deleted after ${RETENTION}. Files are stored temporarily on cloud servers and are not end-to-end encrypted, so do not use DefyShare for highly sensitive documents.`,
     },
   ];
 
@@ -59,9 +59,9 @@ export default function DeviceSharingPage() {
       description: `Reverse direction transfer guide`,
     },
     {
-      label: 'Share large video files (MP4, MKV)',
+      label: 'Share video clips (MP4)',
       href: '/share-mp4-files',
-      description: 'Transfer multi-gigabyte video files instantly',
+      description: `Send short clips up to ${FILE_LIMIT} each`,
     },
     {
       label: 'Best AirDrop alternative',
@@ -71,7 +71,7 @@ export default function DeviceSharingPage() {
     {
       label: 'Best Snapdrop alternative',
       href: '/snapdrop-alternative',
-      description: 'A faster, more featured Snapdrop replacement',
+      description: 'A shared file list instead of live transfers',
     },
   ];
 
@@ -112,10 +112,10 @@ export default function DeviceSharingPage() {
                 Share Files Between {device1.name} and {device2.name}
               </h1>
               <p className="text-lg text-muted-foreground max-w-2xl leading-relaxed">
-                The fastest, easiest, and most private way to transfer any file — no matter how
-                large — from your <strong className="text-foreground/90">{device1.name}</strong> to your{' '}
-                <strong className="text-foreground/90">{device2.name}</strong>. No USB cables, no cloud
-                uploads, no accounts required.
+                A quick, simple way to move photos, documents, and links from your{' '}
+                <strong className="text-foreground/90">{device1.name}</strong> to your{' '}
+                <strong className="text-foreground/90">{device2.name}</strong>. No USB cables, no app,
+                no account required.
               </p>
               <Link
                 to="/"
@@ -132,22 +132,19 @@ export default function DeviceSharingPage() {
               </h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
                 Most people struggle to share files between a {device1.name} and a {device2.name}{' '}
-                because they rely on email (which has size limits), USB drives (which require
-                physical connectors), or cloud services (which upload everything to a server and are
-                slow).
+                because they rely on email (which has attachment limits and clutters the inbox), USB
+                cables (which need the right connectors), or cloud drives (which need an account and
+                keep files until you clean them up).
               </p>
               <p className="text-muted-foreground leading-relaxed">
-                <strong className="text-foreground/90">DefyShare</strong> solves this by using WebRTC — the
-                same technology that powers video calls in Chrome — to create a direct peer-to-peer
-                connection between your {device1.name} and {device2.name} over your local Wi-Fi.
-                Files transfer at your network's maximum speed: commonly 50–500 Mbps depending on
-                your router.
+                <strong className="text-foreground/90">DefyShare</strong> runs in the browser on both
+                your {device1.name} and your {device2.name}. {HOW_IT_WORKS}
               </p>
               <div className="mt-6 grid sm:grid-cols-3 gap-4">
                 {[
-                  { icon: <Zap className="w-5 h-5 text-amber-500" />, label: 'Full LAN Speed', desc: 'Up to 1 Gbps — not limited by internet upload' },
-                  { icon: <Shield className="w-5 h-5 text-green-600" />, label: 'Zero Cloud Upload', desc: 'Files never leave your local network' },
-                  { icon: <CheckCircle2 className="w-5 h-5 text-primary" />, label: 'No Size Limit', desc: 'Transfer files of any size — GB, TB, no cap' },
+                  { icon: <Zap className="w-5 h-5 text-amber-500" />, label: 'No Pairing', desc: 'Same Wi-Fi means same room — no codes' },
+                  { icon: <Shield className="w-5 h-5 text-green-600" />, label: 'Auto-Delete', desc: `Files are removed after ${RETENTION}` },
+                  { icon: <CheckCircle2 className="w-5 h-5 text-primary" />, label: 'Original Quality', desc: `Files up to ${FILE_LIMIT}, sent without compression` },
                 ].map((card) => (
                   <div key={card.label} className="rounded-xl border border-border bg-card/80 p-4">
                     <div className="mb-2">{card.icon}</div>
@@ -165,7 +162,7 @@ export default function DeviceSharingPage() {
                 {[
                   `Your ${device1.name} with ${device1.browser}`,
                   `Your ${device2.name} with ${device2.browser}`,
-                  'Both devices connected to the same Wi-Fi network (or same Ethernet switch)',
+                  'Both devices on the same Wi-Fi network, with an internet connection',
                   'No app installation, no account, no payment required',
                 ].map((item) => (
                   <li key={item} className="flex items-center gap-3 text-muted-foreground text-sm">
@@ -191,22 +188,22 @@ export default function DeviceSharingPage() {
                   {
                     step: '2',
                     title: `On your ${device2.name}: Open DefyShare`,
-                    desc: `Open ${device2.browser} on your ${device2.name} and navigate to defyshare.app. Make sure both devices are on the same Wi-Fi network or network segment.`,
+                    desc: `Open ${device2.browser} on your ${device2.name} and navigate to defyshare.app. Make sure both devices are on the same Wi-Fi network.`,
                   },
                   {
                     step: '3',
-                    title: 'Devices discover each other automatically',
-                    desc: `Within a few seconds, your ${device1.name} and ${device2.name} will appear as connected peers in each other's DefyShare interface. No pairing code required.`,
+                    title: 'Both devices join the same room',
+                    desc: `Devices on the same Wi-Fi share a public IP address, so DefyShare puts your ${device1.name} and ${device2.name} in the same room automatically. No pairing code required.`,
                   },
                   {
                     step: '4',
                     title: 'Drag your files to the drop zone',
-                    desc: `On your ${device1.name}, drag any file — a video, folder, document, or archive — onto the DefyShare drop zone. The transfer begins immediately.`,
+                    desc: `On your ${device1.name}, drag files or a folder onto the page, or tap to pick them. Each file can be up to ${FILE_LIMIT}; the upload starts immediately.`,
                   },
                   {
                     step: '5',
                     title: `Files arrive on your ${device2.name}`,
-                    desc: `Your ${device2.name} receives a transfer notification. Accept and the file downloads instantly to your device at full local network speed.`,
+                    desc: `The file appears in the list on your ${device2.name}. Preview it or download it — any time in the next ${RETENTION}.`,
                   },
                 ].map((item) => (
                   <li key={item.step} className="flex gap-4">
@@ -225,15 +222,15 @@ export default function DeviceSharingPage() {
             {/* Speed tips */}
             <section id="tips" className="mb-10 scroll-mt-24">
               <h2 className="text-2xl font-bold text-foreground mb-4">
-                Tips for Maximum Transfer Speed
+                Tips for Quick, Smooth Transfers
               </h2>
               <ul className="space-y-3">
                 {[
-                  'Connect both devices to a 5 GHz Wi-Fi band instead of 2.4 GHz for 3–5× faster speeds',
-                  `If your ${device1.name} or ${device2.name} has an Ethernet port, use a wired connection for 10× faster transfers`,
-                  'Close other browser tabs during transfer to maximize WebRTC bandwidth allocation',
-                  'Use Chrome or Edge for the fastest WebRTC implementation on both devices',
-                  'Transfer in the same room to minimize Wi-Fi signal loss and improve throughput',
+                  'Transfer speed depends mostly on your internet upload speed — a strong Wi-Fi signal helps',
+                  `If a device does not appear, check that both are on the same Wi-Fi and not on mobile data or a VPN`,
+                  `Compress or trim files bigger than ${FILE_LIMIT} before sending, or split archives into parts`,
+                  'Drop a whole folder at once — each file uploads with its own progress bar',
+                  'Install DefyShare to your home screen or desktop for one-tap access',
                 ].map((tip) => (
                   <li key={tip} className="flex items-start gap-3 text-muted-foreground text-sm">
                     <Zap className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />

@@ -138,7 +138,7 @@ const CONTENTS: Content[] = [
   {
     slug: '4k-videos', hook: 'up to 3 GB per file', hookFree: 'in original quality', name: '4K videos', title: '4K Videos', plan: 'pro',
     size: 'A minute of 4K video is roughly 170–400 MB, so Pro (up to 3 GB per file) is the plan for long 4K clips.', sizeFree: 'Each file can be up to 30 MB, which is a few seconds of 4K. Export longer clips at 1080p or split them first.',
-    tips: ['4K files upload in parallel 8 MB parts, so they move at the full speed of your Wi-Fi.', 'Plug the phone in for long 4K uploads so it doesn’t sleep halfway.'],
+    tips: ['4K files upload in parallel 8 MB parts, so they upload as fast as your internet connection allows.', 'Plug the phone in for long 4K uploads so it doesn’t sleep halfway.'],
   },
   {
     slug: 'screenshots', hook: 'pixel-perfect', name: 'screenshots', title: 'Screenshots', plan: 'free',

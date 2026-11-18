@@ -9,7 +9,7 @@ export default function PressPage() {
     <div className="min-h-screen bg-background text-foreground">
       <SeoHead
         title="DefyShare Press Kit — Media Assets, Technical Documentation & Brand Story"
-        description="Official DefyShare press kit for journalists and bloggers. Download logos, screenshots, and get technical information about our WebRTC P2P architecture."
+        description="Official DefyShare press kit for journalists and bloggers. Download logos and get accurate facts about how DefyShare works."
         canonical="https://defyshare.app/press"
       />
       <JsonLd
@@ -45,9 +45,8 @@ export default function PressPage() {
         <section className="mb-12 rounded-xl border border-primary/20 bg-primary/5 p-6">
           <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold mb-3">Official One-Liner</p>
           <p className="text-xl font-semibold text-foreground leading-relaxed">
-            "DefyShare is a free, browser-based peer-to-peer file sharing app that lets you transfer
-            files of any size between any devices on the same local network — instantly, privately,
-            and with zero cloud uploads."
+            "DefyShare is a free browser tool that lets devices on the same Wi-Fi share files, text
+            and links instantly — no app, no account, and everything deleted after 3 hours."
           </p>
         </section>
 
@@ -58,14 +57,14 @@ export default function PressPage() {
             {[
               { label: 'Product Name', value: 'DefyShare' },
               { label: 'Website', value: 'defyshare.app' },
-              { label: 'Category', value: 'File Sharing / P2P Transfer / WebRTC App' },
-              { label: 'Pricing', value: 'Free forever — no premium tier' },
-              { label: 'File Size Limit', value: 'None — limited only by device storage' },
+              { label: 'Category', value: 'File and text sharing web app' },
+              { label: 'Pricing', value: 'Free to use, supported by ads' },
+              { label: 'File Size Limit', value: '30 MB per file' },
               { label: 'Account Required', value: 'No — open and use instantly' },
               { label: 'Platform Support', value: 'Windows, macOS, Linux, Android, iOS, ChromeOS' },
-              { label: 'Technology', value: 'WebRTC P2P, TLS 1.3, Supabase Realtime' },
-              { label: 'Transfer Protocol', value: 'Peer-to-peer — files never touch servers' },
-              { label: 'Open Source', value: 'Architecture is public — see Technical section below' },
+              { label: 'Technology', value: 'React web app, Supabase, Backblaze B2, Vercel' },
+              { label: 'How files move', value: 'Uploaded over HTTPS to temporary cloud storage, then downloaded' },
+              { label: 'Retention', value: 'Everything is deleted automatically after 3 hours' },
             ].map((fact) => (
               <div key={fact.label} className="rounded-lg border border-border bg-card/70 px-4 py-3">
                 <p className="text-xs text-muted-foreground mb-0.5">{fact.label}</p>
@@ -85,23 +84,23 @@ export default function PressPage() {
             {[
               {
                 icon: <Cpu className="w-5 h-5 text-blue-600" />,
-                title: 'WebRTC Peer-to-Peer Engine',
-                desc: 'DefyShare uses the WebRTC Data Channel API (available natively in Chrome, Safari, Firefox, and Edge) to establish a direct UDP/TCP connection between two browsers on the same local network. File chunks are streamed directly between browsers without passing through any DefyShare server.',
+                title: 'Rooms by network',
+                desc: 'When DefyShare opens, the browser looks up its public IP address and joins a room for it. Devices on the same Wi-Fi or office network usually share one public IP, so they see the same room without any pairing code.',
               },
               {
                 icon: <Shield className="w-5 h-5 text-green-600" />,
-                title: 'TLS 1.3 Encryption',
-                desc: 'All WebRTC connections are secured with DTLS (Datagram Transport Layer Security) 1.3. This means file transfers are encrypted end-to-end even within the local network. No plain-text transmission occurs at any point.',
+                title: 'Temporary cloud storage',
+                desc: 'Files are uploaded over HTTPS directly from the browser to Backblaze B2 using short-lived signed URLs created by a small Vercel function. Other devices download them the same way. Files are not end-to-end encrypted, and every file is deleted 3 hours after upload.',
               },
               {
                 icon: <Zap className="w-5 h-5 text-amber-500" />,
-                title: 'Supabase Realtime Signaling',
-                desc: 'DefyShare uses Supabase Realtime (WebSocket-based) exclusively for peer discovery and WebRTC handshaking (SDP offer/answer exchange). No file data passes through Supabase — it is used only to help two peers find each other and negotiate a direct connection.',
+                title: 'Supabase for the shared list',
+                desc: 'Supabase stores the list of shared items for each room and pushes live updates over WebSockets, so a file dropped on one device appears on the others within seconds. Shared text and links are stored there too, and also expire after 3 hours.',
               },
               {
                 icon: <Globe className="w-5 h-5 text-primary" />,
                 title: 'Frontend Stack',
-                desc: 'Built with React 18, TypeScript, Vite 5, Tailwind CSS, and Radix UI. Deployed on Vercel with global CDN. The app achieves a Lighthouse performance score of 95+ through code splitting, lazy loading, and optimal asset compression.',
+                desc: 'Built with React 18, TypeScript, Vite 5, Tailwind CSS, and Radix UI, and deployed on Vercel. It can be installed as an app on desktop and mobile.',
               },
             ].map((item) => (
               <div key={item.title} className="rounded-xl border border-border bg-card/70 p-5">
@@ -120,11 +119,11 @@ export default function PressPage() {
           <h2 className="text-xl font-bold text-foreground mb-4">Suggested Talking Points</h2>
           <ul className="space-y-3">
             {[
-              'DefyShare is the only fully browser-based P2P file transfer tool with no file size limits and no account requirement.',
-              'Unlike Snapdrop or PairDrop, DefyShare includes real-time text sharing, a transfer history ledger, and a polished dark-mode UI built for professional use.',
-              'DefyShare is safer for sensitive files than cloud services because files never leave the local network — there is no server-side data to breach.',
-              'The tool works across every major platform (Windows, Mac, Linux, Android, iOS) without installing any software — making it the first truly universal local network file sharing tool.',
-              'DefyShare is completely free with no paid tier, no storage limits, and no ads embedded in the file transfer flow.',
+              'DefyShare needs no account and no install: devices on the same Wi-Fi join the same room automatically.',
+              'Unlike live peer-to-peer tools such as Snapdrop or PairDrop, the receiving device does not need to be open when you send — files wait in the room for up to 3 hours.',
+              'Everything shared is deleted automatically after 3 hours, so nothing piles up in a cloud drive.',
+              'It works across every major platform (Windows, Mac, Linux, Android, iOS, ChromeOS) in the browser.',
+              'DefyShare is free to use, with files up to 30 MB each, and is supported by ads.',
             ].map((point) => (
               <li key={point} className="flex items-start gap-3 text-muted-foreground text-sm">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary shrink-0 mt-2" />

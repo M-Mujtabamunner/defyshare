@@ -73,8 +73,13 @@ const keywordMeta = (p: (typeof KEYWORD_PAGES)[number]) => {
   const benefits = (KEYWORD_BENEFIT[p.category] ?? ['Free']).filter(
     (b) => !b.toLowerCase().split(/[^a-z0-9]+/).some((w) => w.length > 2 && core.toLowerCase().includes(w)),
   );
-  const title = pickTitle(...benefits.map((b) => `${core} — ${b} | DefyShare`), `${core} | DefyShare`, core);
-  const description = [`${core}: ${KEYWORD_LINE[p.category] ?? KEYWORD_LINE.general}`, CLOSER, 'Free, no sign-up.'];
+  const title = p.explainer
+    ? pickTitle(`${core} | DefyShare`, core)
+    : pickTitle(...benefits.map((b) => `${core} — ${b} | DefyShare`), `${core} | DefyShare`, core);
+  // Explainer pages describe limits honestly; a generic benefit line would contradict them.
+  const description = p.explainer
+    ? p.description.split(/(?<=\.) /)
+    : [`${core}: ${KEYWORD_LINE[p.category] ?? KEYWORD_LINE.general}`, CLOSER, 'Free, no sign-up.'];
   return meta(`/${p.slug}`, title, description, p.category === 'general' ? 0.9 : 0.8, 'weekly');
 };
 

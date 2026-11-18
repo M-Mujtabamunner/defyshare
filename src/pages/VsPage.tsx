@@ -1,6 +1,6 @@
 import { useParams, useLocation, Link } from 'react-router-dom';
 import { CheckCircle2, XCircle, ArrowRight, Zap, Shield, Globe } from 'lucide-react';
-import { COMPETITORS, DEFYSHARE_FEATURES } from '@/data/seoData';
+import { COMPETITORS, DEFYSHARE_FEATURES, FILE_LIMIT, RETENTION, HOW_IT_WORKS } from '@/data/seoData';
 import { SeoHead } from '@/components/SeoHead';
 import { getSeoMeta } from '@/data/seoMeta';
 import { JsonLd, buildBreadcrumbSchema, buildFaqSchema, buildWebAppSchema } from '@/components/JsonLd';
@@ -34,22 +34,22 @@ export default function VsPage() {
   }
 
   const defaultTitle = `DefyShare vs ${competitor.name} (2026) — Full Comparison`;
-  const defaultDescription = `DefyShare vs ${competitor.name}: an honest, technical comparison of speed, privacy, file size limits, platform support, and cost. See which is better for your use case.`;
+  const defaultDescription = `DefyShare vs ${competitor.name}: an honest comparison of setup, privacy, file size limits, platform support, and cost. See which fits your use case.`;
   const { title, description } = getSeoMeta(window.location.pathname) ?? { title: defaultTitle, description: defaultDescription };
   const canonical = `https://defyshare.app/vs/${competitor.slug}`;
 
   const faqs = [
     {
-      question: `Which is faster — DefyShare or ${competitor.name}?`,
-      answer: `DefyShare is faster for local network transfers because it uses WebRTC P2P technology that operates at your full LAN speed (up to 1 Gbps). ${competitor.name} may route files through servers, adding upload and download latency.`,
+      question: `Which is quicker to use — DefyShare or ${competitor.name}?`,
+      answer: `For small files between your own devices on the same Wi-Fi, DefyShare usually takes fewer steps: no account, no app, no pairing. Transfer speed depends on your internet connection. For large files, ${competitor.name} may be the better choice — it ${competitor.strength}.`,
     },
     {
-      question: `Is DefyShare safer than ${competitor.name}?`,
-      answer: `For sensitive files, DefyShare is safer because files never leave your local network. ${competitor.name} ${competitor.limitation}. With DefyShare, there is no server to be hacked and no third party that can access your files.`,
+      question: `How does DefyShare handle privacy compared with ${competitor.name}?`,
+      answer: `DefyShare needs no account, sends files over HTTPS, shows them only to devices in your room, and deletes them after ${RETENTION}. Files are stored temporarily on cloud servers and are not end-to-end encrypted. Compare that with ${competitor.name}'s own privacy policy for your use case.`,
     },
     {
       question: `Can DefyShare replace ${competitor.name} entirely?`,
-      answer: `For local network transfers, yes — DefyShare is a complete replacement. If you need to send files to someone on a different network or across the internet, you would need a different approach for that specific case.`,
+      answer: `Not for everything. DefyShare is built for quick hand-offs between devices on the same Wi-Fi, with files up to ${FILE_LIMIT}. If you need what ${competitor.name} does best — it ${competitor.strength} — keep using it for that.`,
     },
   ];
 
@@ -67,12 +67,12 @@ export default function VsPage() {
     {
       label: 'Best free file sharing for remote teams',
       href: '/best-file-sharing-for-remote-teams',
-      description: 'P2P tools optimized for distributed teams',
+      description: 'Quick sharing between your own devices at home'
     },
     {
-      label: 'Share large video files for free',
+      label: 'Share video clips for free',
       href: '/share-mp4-files',
-      description: 'Transfer MP4, MKV, and MOV with no limits',
+      description: `Send MP4 and MOV clips up to ${FILE_LIMIT} each`,
     },
   ];
 
@@ -113,8 +113,8 @@ export default function VsPage() {
                 DefyShare vs {competitor.name}
               </h1>
               <p className="text-lg text-muted-foreground max-w-2xl leading-relaxed">
-                An honest, technical comparison of DefyShare and {competitor.name} across speed,
-                privacy, file size limits, device compatibility, and cost. Last updated 2026.
+                An honest comparison of DefyShare and {competitor.name} across setup, privacy, file
+                size limits, device compatibility, and cost. Last updated 2026.
               </p>
             </div>
 
@@ -126,10 +126,10 @@ export default function VsPage() {
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-sm">D</div>
                     <span className="font-bold text-foreground">DefyShare</span>
-                    <span className="ml-auto text-xs bg-green-500/20 text-green-600 border border-green-500/20 rounded-full px-2 py-0.5">Recommended</span>
+                    <span className="ml-auto text-xs bg-green-500/20 text-green-600 border border-green-500/20 rounded-full px-2 py-0.5">Best for quick hand-offs</span>
                   </div>
                   <ul className="space-y-2">
-                    {['100% free, forever', 'No file size limit', 'No account required', 'Files stay on your network', 'Works on all platforms'].map((f) => (
+                    {['Free to use', `Files up to ${FILE_LIMIT} each`, 'No account required', `Files deleted after ${RETENTION}`, 'Works on all platforms'].map((f) => (
                       <li key={f} className="flex items-center gap-2 text-sm text-foreground/80">
                         <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
                         {f}
@@ -147,6 +147,10 @@ export default function VsPage() {
                   <p className="text-sm text-muted-foreground leading-relaxed mb-3">
                     {competitor.name} is {competitor.description}.
                   </p>
+                  <div className="flex items-start gap-2 text-sm text-muted-foreground mb-2">
+                    <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
+                    <span>{competitor.strength.charAt(0).toUpperCase() + competitor.strength.slice(1)}.</span>
+                  </div>
                   <div className="flex items-start gap-2 text-sm text-muted-foreground">
                     <XCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                     <span>{competitor.limitation.charAt(0).toUpperCase() + competitor.limitation.slice(1)}.</span>
@@ -160,6 +164,10 @@ export default function VsPage() {
               <h2 className="text-2xl font-bold text-foreground mb-4">
                 Head-to-Head Feature Comparison
               </h2>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                What DefyShare includes. {competitor.name}&apos;s features and limits change by plan and
+                version, so check its current terms for an exact comparison.
+              </p>
               <div className="overflow-x-auto rounded-xl border border-border">
                 <table className="w-full text-sm">
                   <thead>
@@ -179,8 +187,8 @@ export default function VsPage() {
                         <td className="px-4 py-3 text-center">
                           <CheckCircle2 className="w-5 h-5 text-green-600 mx-auto" />
                         </td>
-                        <td className="px-4 py-3 text-center">
-                          <XCircle className="w-5 h-5 text-red-600 mx-auto" />
+                        <td className="px-4 py-3 text-center text-xs text-muted-foreground">
+                          Varies
                         </td>
                       </tr>
                     ))}
@@ -191,16 +199,15 @@ export default function VsPage() {
 
             {/* Performance */}
             <section id="performance" className="mb-10 scroll-mt-24">
-              <h2 className="text-2xl font-bold text-foreground mb-4">Transfer Speed</h2>
+              <h2 className="text-2xl font-bold text-foreground mb-4">Speed and Setup</h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
-                DefyShare leverages WebRTC data channels to transfer files at your local network's
-                maximum throughput — commonly 100 Mbps on standard Wi-Fi 5, and up to 1 Gbps on
-                wired Ethernet or Wi-Fi 6 networks. A 1 GB file transfers in under 10 seconds.
+                DefyShare uploads each file over HTTPS to temporary cloud storage, and the other
+                device downloads it, so transfer speed depends on your internet connection. For
+                typical photos and documents under {FILE_LIMIT}, that usually means a few seconds.
+                Where DefyShare saves the most time is setup: no account, no app, no pairing.
               </p>
               <p className="text-muted-foreground leading-relaxed">
-                {competitor.name}, depending on its architecture, may upload files to remote servers
-                before making them available for download — introducing upload + download latency
-                even when both devices are sitting in the same room.
+                {competitor.name} {competitor.strength}. For jobs that need that, it is the better pick.
               </p>
               <div className="mt-6 grid sm:grid-cols-2 gap-4">
                 <div className="rounded-xl border border-border bg-card/80 p-4">
@@ -208,14 +215,14 @@ export default function VsPage() {
                     <Zap className="w-4 h-4 text-amber-500" />
                     <span className="text-sm font-semibold text-foreground/90">DefyShare</span>
                   </div>
-                  <p className="text-xs text-muted-foreground">Full LAN speed — up to 1 Gbps. No upload step. Files go directly peer-to-peer.</p>
+                  <p className="text-xs text-muted-foreground">No account or pairing. Speed depends on your internet connection. Files up to {FILE_LIMIT}.</p>
                 </div>
                 <div className="rounded-xl border border-border bg-card/80 p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Globe className="w-4 h-4 text-muted-foreground" />
                     <span className="text-sm font-semibold text-muted-foreground">{competitor.name}</span>
                   </div>
-                  <p className="text-xs text-muted-foreground">Speed depends on server routing, internet bandwidth, and geographic distance to servers.</p>
+                  <p className="text-xs text-muted-foreground">Speed and limits depend on its design and your plan.</p>
                 </div>
               </div>
             </section>
@@ -224,19 +231,18 @@ export default function VsPage() {
             <section id="privacy" className="mb-10 scroll-mt-24">
               <h2 className="text-2xl font-bold text-foreground mb-4">Privacy &amp; Security</h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
-                With DefyShare, your files are encrypted via TLS 1.3 and transferred directly
-                between devices using WebRTC. No file ever touches a DefyShare server. This makes it
-                the safest option for confidential documents, medical records, legal files, and
-                anything you would not want stored on a third-party server.
+                {HOW_IT_WORKS} Because files are stored temporarily on third-party cloud servers and
+                are not end-to-end encrypted, DefyShare is right for everyday files — not for
+                confidential documents, medical records, or legal files.
               </p>
               <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-5">
                 <div className="flex items-start gap-3">
                   <Shield className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-semibold text-foreground/90 mb-1">DefyShare Privacy Guarantee</p>
+                    <p className="font-semibold text-foreground/90 mb-1">What DefyShare does with your files</p>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      Files are transferred P2P using WebRTC with TLS 1.3 encryption. Zero server
-                      storage. Zero data retention. DefyShare never has access to your files.
+                      Uploaded and downloaded over HTTPS. Listed only to devices in your room.
+                      Deleted automatically after {RETENTION}. No account, so nothing is tied to your identity.
                     </p>
                   </div>
                 </div>
@@ -249,15 +255,14 @@ export default function VsPage() {
                 Verdict: DefyShare vs {competitor.name}
               </h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
-                For local network file transfers, <strong className="text-foreground/90">DefyShare wins in every
-                measurable category</strong>: speed, privacy, ease of use, cost, and platform support.
-                It requires no installation, no account, and no file size limits — and your files
-                never leave your network.
+                For quick hand-offs between your own devices on the same Wi-Fi,{' '}
+                <strong className="text-foreground/90">DefyShare is the simpler choice</strong>: no
+                installation, no account, devices find each other automatically, and files clean
+                themselves up after {RETENTION}.
               </p>
               <p className="text-muted-foreground leading-relaxed">
-                {competitor.name} remains a viable tool for specific use cases (especially cross-network
-                or internet-based transfers), but for same-network transfers between any two devices,
-                DefyShare is the clear winner.
+                {competitor.name} is the better tool when you need what it does best — it{' '}
+                {competitor.strength}. Many people use both.
               </p>
             </section>
 
@@ -279,9 +284,9 @@ export default function VsPage() {
 
             <div className="mt-12 rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20 p-8 text-center">
               <h2 className="text-2xl font-bold text-foreground mb-2">
-                The verdict is clear — try DefyShare today
+                Try DefyShare for your next quick hand-off
               </h2>
-              <p className="text-muted-foreground mb-6">No account. No download. No limits.</p>
+              <p className="text-muted-foreground mb-6">No account. No download. Free.</p>
               <Link to="/" className="inline-flex items-center gap-2 rounded-xl bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-3 transition-colors">
                 Open DefyShare Free <ArrowRight className="w-4 h-4" />
               </Link>
