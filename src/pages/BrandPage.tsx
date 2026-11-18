@@ -80,8 +80,8 @@ export default function BrandPage() {
           </div>
           <p className="text-muted-foreground text-sm mb-4 leading-relaxed">
             Add the DefyShare widget to your website so your visitors can share files directly. Every
-            embed creates a backlink to DefyShare and lets your users experience instant P2P file
-            transfer without leaving your site.
+            embed creates a backlink to DefyShare and lets your users share files between their
+            devices without leaving your site.
           </p>
           <div className="rounded-xl border border-border bg-card overflow-hidden">
             <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-card">
@@ -159,15 +159,14 @@ export default function BrandPage() {
               files belong to you, and sharing them should be instant, free, and private.
             </p>
             <p className="text-muted-foreground leading-relaxed">
-              We use WebRTC peer-to-peer technology to transfer files directly between devices on the
-              same local network — no cloud servers, no storage limits, no account requirements. This
-              is not a limitation; it is a deliberate architectural choice that gives users maximum
-              speed, zero latency, and complete data sovereignty.
+              Devices on the same network join the same room automatically, so there is no account,
+              no app and no pairing. Files are uploaded over HTTPS to temporary cloud storage and
+              deleted after 3 hours — long enough to move them, short enough that nothing lingers.
             </p>
             <p className="text-muted-foreground leading-relaxed">
-              DefyShare is forever free. We do not charge for storage, we do not sell your data, and
-              we do not restrict file sizes. We believe that the infrastructure of sharing should be
-              as open and frictionless as the web itself.
+              DefyShare is free to use and supported by ads. We do not sell your files, and we keep
+              them only as long as it takes to share them. We believe sharing between your own devices
+              should be as open and frictionless as the web itself.
             </p>
           </div>
         </section>

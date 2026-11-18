@@ -1,6 +1,6 @@
 import { useLocation, Link } from 'react-router-dom';
-import { CheckCircle2, XCircle, Zap, Shield, Globe, ArrowRight } from 'lucide-react';
-import { COMPETITORS, DEFYSHARE_FEATURES } from '@/data/seoData';
+import { CheckCircle2, XCircle, Zap, Shield, Globe, ArrowRight, Info } from 'lucide-react';
+import { COMPETITORS, DEFYSHARE_FEATURES, FILE_LIMIT, RETENTION, HOW_IT_WORKS } from '@/data/seoData';
 import { SeoHead } from '@/components/SeoHead';
 import { getSeoMeta } from '@/data/seoMeta';
 import { JsonLd, buildBreadcrumbSchema, buildFaqSchema, buildWebAppSchema } from '@/components/JsonLd';
@@ -38,22 +38,22 @@ export default function AlternativePage() {
   }
 
   const defaultTitle = `Best ${competitor.name} Alternative in 2026 — DefyShare`;
-  const defaultDescription = `Looking for a ${competitor.name} alternative? DefyShare is a free, browser-based P2P file sharing app with no file size limits, no account required, and zero cloud uploads.`;
+  const defaultDescription = `Looking for a ${competitor.name} alternative? DefyShare is a free browser tool for sharing files, text and links between devices on the same Wi-Fi — no account, no install.`;
   const { title, description } = getSeoMeta(pathname) ?? { title: defaultTitle, description: defaultDescription };
   const canonical = `https://defyshare.app/${competitor.slug}-alternative`;
 
   const faqs = [
     {
       question: `Is DefyShare a good ${competitor.name} alternative?`,
-      answer: `Yes. DefyShare offers everything ${competitor.name} does — and more — completely free, with no account requirement, no file size limits, and true peer-to-peer transfers that never touch a server.`,
+      answer: `It is a good alternative for moving everyday files between your own devices on the same Wi-Fi: no account, no install, and devices find each other automatically. ${competitor.name} is the better choice if you need what it does best — it ${competitor.strength}.`,
     },
     {
       question: `Does DefyShare require an account like ${competitor.name}?`,
-      answer: `No. DefyShare works instantly in any modern browser with zero sign-up. Just open the app on two devices on the same network and start transferring files.`,
+      answer: `No. DefyShare works in any modern browser with no sign-up. Open it on two devices on the same network and they join the same room automatically.`,
     },
     {
       question: `What is the file size limit in DefyShare compared to ${competitor.name}?`,
-      answer: `DefyShare has no file size limit. Files are transferred directly between devices using WebRTC, so they are never uploaded to a server and are only limited by your device's storage.`,
+      answer: `Each file can be up to ${FILE_LIMIT} on DefyShare, and you can send many files or a whole folder at once. Files are uploaded over HTTPS to temporary cloud storage and deleted after ${RETENTION}. If you regularly send files bigger than ${FILE_LIMIT}, ${competitor.name} or another large-file tool may suit you better.`,
     },
   ];
 
@@ -69,14 +69,14 @@ export default function AlternativePage() {
       description: 'Cross-platform local file transfer guide',
     },
     {
-      label: 'Share large video files instantly',
+      label: 'Share video clips',
       href: '/share-mp4-files',
-      description: 'Transfer MP4 and MKV files with no size limit',
+      description: `Send MP4 clips up to ${FILE_LIMIT} each`,
     },
     {
       label: 'Best file sharing for developers',
       href: '/best-file-sharing-for-developers',
-      description: 'P2P tools built for engineering workflows',
+      description: 'Move logs, snippets and builds between machines',
     },
   ];
 
@@ -125,8 +125,8 @@ export default function AlternativePage() {
               </h1>
               <p className="text-lg text-muted-foreground max-w-2xl leading-relaxed">
                 {competitor.name} is {competitor.description}. While it works well, many users need
-                something faster, more private, and completely free. <strong className="text-foreground/90">DefyShare</strong> delivers
-                all of that — directly in your browser, with no installs, no accounts, and no cloud uploads.
+                something quicker for everyday hand-offs between their own devices. <strong className="text-foreground/90">DefyShare</strong> runs
+                in your browser with no installs and no accounts — devices on the same Wi-Fi find each other automatically.
               </p>
               <Link
                 to="/"
@@ -147,10 +147,9 @@ export default function AlternativePage() {
                 in professional and everyday use cases.
               </p>
               <p className="text-muted-foreground leading-relaxed">
-                As your file transfer needs grow — whether you're dealing with large video files,
-                confidential documents, or cross-platform teams — the limitations of {competitor.name}{' '}
-                become more apparent. That's why thousands of users search for a {competitor.name}{' '}
-                alternative every month.
+                No tool fits every job. {competitor.name} is strong where it{' '}
+                {competitor.strength}. But for the quick, everyday job of getting a photo, document or
+                link from one of your devices to another, its setup can feel like more than the task needs.
               </p>
             </section>
 
@@ -165,19 +164,18 @@ export default function AlternativePage() {
                   <div>
                     <p className="font-semibold text-foreground/90 mb-1">Key Limitation of {competitor.name}</p>
                     <p className="text-muted-foreground text-sm leading-relaxed">
-                      {competitor.name} {competitor.limitation}. This means that professionals
-                      dealing with large files, sensitive data, or cross-platform environments often
-                      hit a wall.
+                      {competitor.name} {competitor.limitation}. For quick hand-offs between nearby
+                      devices, that adds steps.
                     </p>
                   </div>
                 </div>
               </div>
               <ul className="space-y-3">
                 {[
-                  `File transfer slowdowns when using ${competitor.name} over internet connections`,
-                  `Privacy concerns about files being routed through third-party infrastructure`,
-                  `Account requirements or app installations creating friction for recipients`,
-                  `File size restrictions blocking transfer of large videos, CAD files, and datasets`,
+                  `Signing in, pairing or installing an app just to move one file`,
+                  `Copying links or emailing files to yourself`,
+                  `Old files piling up in storage after a one-off transfer`,
+                  `Different tools for different operating systems`,
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-3 text-muted-foreground text-sm">
                     <XCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
@@ -193,22 +191,19 @@ export default function AlternativePage() {
                 Why DefyShare is the Best {competitor.name} Alternative
               </h2>
               <p className="text-muted-foreground leading-relaxed mb-6">
-                DefyShare uses WebRTC peer-to-peer technology to transfer files directly between
-                devices on the same local network. This means your files never touch our servers
-                — they go straight from one device to the other at the full speed of your local
-                network (often 100–1000 Mbps).
+                {HOW_IT_WORKS} There is nothing to install and no account to create.
               </p>
               <div className="grid sm:grid-cols-3 gap-4">
                 {[
                   {
                     icon: <Zap className="w-5 h-5 text-amber-500" />,
-                    title: 'Blazing Fast',
-                    desc: 'Transfer at full LAN speed — up to 1 Gbps on modern networks',
+                    title: 'No Setup',
+                    desc: 'Devices on the same Wi-Fi join one room automatically — no codes or pairing',
                   },
                   {
                     icon: <Shield className="w-5 h-5 text-green-600" />,
-                    title: 'Truly Private',
-                    desc: 'P2P transfer — zero data uploaded to any server',
+                    title: 'Nothing Lingers',
+                    desc: `HTTPS transfers, no account, and every file deleted after ${RETENTION}`,
                   },
                   {
                     icon: <Globe className="w-5 h-5 text-primary" />,
@@ -226,6 +221,14 @@ export default function AlternativePage() {
                   </div>
                 ))}
               </div>
+              <div className="mt-6 rounded-xl border border-border bg-card/70 p-5 flex items-start gap-3">
+                <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  <strong className="text-foreground/90">When {competitor.name} is the better pick:</strong>{' '}
+                  {competitor.name} {competitor.strength}. DefyShare needs an internet connection and
+                  handles files up to {FILE_LIMIT} each, so use {competitor.name} for jobs beyond that.
+                </p>
+              </div>
             </section>
 
             {/* Comparison table */}
@@ -233,6 +236,10 @@ export default function AlternativePage() {
               <h2 className="text-2xl font-bold text-foreground mb-4">
                 DefyShare vs {competitor.name}: Feature Comparison
               </h2>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                What DefyShare includes. Features and limits of {competitor.name} change by plan and
+                version, so check its current terms for an exact comparison.
+              </p>
               <div className="overflow-x-auto rounded-xl border border-border">
                 <table className="w-full text-sm">
                   <thead>
@@ -257,8 +264,8 @@ export default function AlternativePage() {
                         <td className="px-4 py-3 text-center">
                           <CheckCircle2 className="w-5 h-5 text-green-600 mx-auto" />
                         </td>
-                        <td className="px-4 py-3 text-center">
-                          <XCircle className="w-5 h-5 text-red-600 mx-auto" />
+                        <td className="px-4 py-3 text-center text-xs text-muted-foreground">
+                          Varies
                         </td>
                       </tr>
                     ))}
@@ -286,17 +293,17 @@ export default function AlternativePage() {
                   {
                     step: '2',
                     title: 'Open DefyShare on the receiving device',
-                    desc: 'On the other device, open the same URL. Both devices must be on the same Wi-Fi or local network. They will automatically discover each other.',
+                    desc: 'On the other device, open the same URL. When both devices are on the same Wi-Fi, they join the same room automatically.',
                   },
                   {
                     step: '3',
                     title: 'Drag and drop your files',
-                    desc: 'Drag any file — regardless of size — onto the DefyShare drop zone and it will transfer instantly at full local network speed.',
+                    desc: `Drag files or a folder onto the page — each file can be up to ${FILE_LIMIT}. Uploads start straight away.`,
                   },
                   {
                     step: '4',
-                    title: 'Done — files arrive instantly',
-                    desc: 'The receiving device gets a notification and can download the file. The entire transfer happens peer-to-peer with no upload to any cloud.',
+                    title: 'Download on the other device',
+                    desc: `The file appears in the list on the other device, ready to preview or download. It is deleted automatically after ${RETENTION}.`,
                   },
                 ].map((item) => (
                   <li key={item.step} className="flex gap-4">
@@ -339,7 +346,7 @@ export default function AlternativePage() {
                 Ready to try the best {competitor.name} alternative?
               </h2>
               <p className="text-muted-foreground mb-6">
-                No sign-up. No download. No file size limits. Just open and share.
+                No sign-up. No download. Just open and share.
               </p>
               <Link
                 to="/"

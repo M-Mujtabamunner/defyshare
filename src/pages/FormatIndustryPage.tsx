@@ -1,6 +1,6 @@
 import { useLocation, Link } from 'react-router-dom';
-import { CheckCircle2, ArrowRight, Shield, Users } from 'lucide-react';
-import { FORMATS, INDUSTRIES } from '@/data/seoData';
+import { CheckCircle2, ArrowRight, Shield, Users, AlertTriangle } from 'lucide-react';
+import { FORMATS, INDUSTRIES, FILE_LIMIT, RETENTION, HOW_IT_WORKS } from '@/data/seoData';
 import { SeoHead } from '@/components/SeoHead';
 import { getSeoMeta } from '@/data/seoMeta';
 import { JsonLd, buildBreadcrumbSchema, buildFaqSchema, buildWebAppSchema } from '@/components/JsonLd';
@@ -38,23 +38,23 @@ export default function FormatIndustryPage() {
     );
   }
 
-  const defaultTitle = `Share ${format.name} Files for ${industry.name} — Free, Instant, Private | DefyShare`;
-  const defaultDescription = `The best way for ${industry.role} to share ${format.description}. DefyShare transfers files P2P over your local network — no cloud, no size limit, no account. Free forever.`;
+  const defaultTitle = `Share ${format.name} Files for ${industry.name} — Free | DefyShare`;
+  const defaultDescription = `A quick way for ${industry.role} to move ${format.description} between devices on the same Wi-Fi. No account, files up to ${FILE_LIMIT}. Free.`;
   const { title, description } = getSeoMeta(pathname) ?? { title: defaultTitle, description: defaultDescription };
   const canonical = `https://defyshare.app/share-${format.slug}-for-${industry.slug}`;
 
   const faqs = [
     {
-      question: `What is the best way for ${industry.name} to share ${format.name} files?`,
-      answer: `DefyShare is the best method for ${industry.role} to share ${format.name} files. It transfers files directly peer-to-peer over the local network at full LAN speed — no size limits, no cloud uploads, no accounts. Files remain private and secure on your network.`,
+      question: `How can ${industry.name} share ${format.name} files quickly?`,
+      answer: `For everyday hand-offs between devices on the same Wi-Fi, DefyShare is quick: no account, no install, and devices join the same room automatically. ${format.sizeNote}`,
     },
     {
-      question: `How do ${industry.name} share ${format.name} files securely?`,
-      answer: `DefyShare is the most secure option for ${industry.role}. All ${format.name} file transfers are TLS 1.3 encrypted and peer-to-peer — the files never leave your local network or touch any server, making it suitable for confidential and sensitive ${industry.name} workflows.`,
+      question: `Is DefyShare suitable for confidential ${format.name} files?`,
+      answer: `DefyShare uses HTTPS for every transfer and deletes files after ${RETENTION}, but files are stored temporarily on third-party cloud servers and are not end-to-end encrypted. Use it for everyday files, and keep confidential or regulated material in tools approved by your organisation.`,
     },
     {
-      question: `Is there a free way for ${industry.name} to share ${format.name} files of any size?`,
-      answer: `Yes. DefyShare is completely free with no file size limits. ${industry.role} can share ${format.name} files of any size — whether they're a few MB or hundreds of GB — at full local network speed. No subscription required.`,
+      question: `Is it free, and how large can ${format.name} files be?`,
+      answer: `DefyShare is free with no account or subscription. Each file can be up to ${FILE_LIMIT}, and you can send many at once.`,
     },
   ];
 
@@ -70,14 +70,14 @@ export default function FormatIndustryPage() {
       description: `How to transfer ${format.name} files on any device`,
     },
     {
-      label: 'Secure P2P file sharing',
+      label: 'How secure is DefyShare?',
       href: '/secure-file-sharing',
-      description: 'TLS 1.3 encrypted transfers for sensitive files',
+      description: 'What HTTPS and auto-delete do and do not protect',
     },
     {
-      label: 'Free file sharing — no size limit',
+      label: 'File size limits explained',
       href: '/no-size-limit-file-sharing',
-      description: 'Transfer any file size for free',
+      description: `What fits in ${FILE_LIMIT} and what to do with bigger files`,
     },
   ];
 
@@ -114,8 +114,8 @@ export default function FormatIndustryPage() {
           <p className="text-lg text-muted-foreground max-w-2xl leading-relaxed">
             {industry.role.charAt(0).toUpperCase() + industry.role.slice(1)} regularly share {format.description}
             {' '}used for {format.useCases}. These files are typically {format.avgSize}.{' '}
-            <strong className="text-foreground/90">DefyShare</strong> transfers them directly P2P at full local
-            network speed — private, instant, and completely free.
+            <strong className="text-foreground/90">DefyShare</strong> moves them between devices on the same
+            Wi-Fi with no account or install — up to {FILE_LIMIT} per file, free.
           </p>
           <Link to="/" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary hover:bg-primary/90 text-white font-semibold px-6 py-3 transition-colors">
             Start Sharing {format.name} Files <ArrowRight className="w-4 h-4" />
@@ -129,12 +129,10 @@ export default function FormatIndustryPage() {
           <p className="text-muted-foreground leading-relaxed mb-4">
             {industry.role.charAt(0).toUpperCase() + industry.role.slice(1)} {industry.painPoint}.
             For {format.name} files specifically — used for {format.useCases} — the problem is compounded
-            because these files can be {format.avgSize}, making cloud uploads slow and email attachments impossible.
+            because these files are typically {format.avgSize}. {format.sizeNote}
           </p>
           <p className="text-muted-foreground leading-relaxed">
-            DefyShare solves this by using WebRTC peer-to-peer technology to transfer {format.name} files
-            directly between devices on the same local network. There is no server intermediary, no upload
-            wait, and no file size restriction. The entire transfer happens at your local network's maximum speed.
+            {HOW_IT_WORKS}
           </p>
         </section>
 
@@ -145,9 +143,9 @@ export default function FormatIndustryPage() {
           <ol className="space-y-4">
             {[
               { step: '1', title: `Open DefyShare on both devices`, desc: `Any device in your ${industry.name} team opens defyshare.app in their browser — no account, no download.` },
-              { step: '2', title: 'Devices connect automatically on your network', desc: `DefyShare discovers other instances on the same local network using WebRTC signaling. No IP addresses to configure.` },
-              { step: '3', title: `Drag your ${format.name} files`, desc: `Drop any ${format.name} file — regardless of how large — onto the DefyShare interface. Multiple files and folders are supported.` },
-              { step: '4', title: 'Transfer completes at full LAN speed', desc: `${format.name} files arrive on the receiving device instantly. For ${industry.name}, this means no more waiting for cloud uploads during critical workflows.` },
+              { step: '2', title: 'Devices join the same room automatically', desc: `Devices on the same Wi-Fi share a public IP address, so DefyShare groups them into one room. Nothing to configure.` },
+              { step: '3', title: `Drag your ${format.name} files`, desc: `Drop ${format.name} files onto the DefyShare page. Multiple files and folders are supported; each file can be up to ${FILE_LIMIT}.` },
+              { step: '4', title: 'Download on the other device', desc: `${format.name} files appear in the list on the receiving device and are deleted automatically after ${RETENTION}.` },
             ].map((item) => (
               <li key={item.step} className="flex gap-4">
                 <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center text-primary font-bold text-sm shrink-0">
@@ -166,12 +164,12 @@ export default function FormatIndustryPage() {
           <h2 className="text-2xl font-bold text-foreground mb-4">Key Benefits for {industry.name}</h2>
           <ul className="space-y-3">
             {[
-              `No file size limit — transfer ${format.name} files of ${format.avgSize} or larger without restrictions`,
-              `Files never leave your network — ideal for ${industry.name} dealing with confidential ${format.name} files`,
+              `Files up to ${FILE_LIMIT} each, delivered without compression`,
+              `Automatic clean-up — everything is deleted after ${RETENTION}`,
               `No account creation — ${industry.role} can start transferring immediately`,
               `Works on all devices used by ${industry.name} — Windows, Mac, Linux, Android, iOS`,
-              `Free forever — no subscription, no per-GB fees, no premium tier`,
-              `TLS 1.3 encrypted — enterprise-grade security for ${format.name} transfers`,
+              `Free to use — no subscription`,
+              `HTTPS for every upload and download`,
             ].map((item) => (
               <li key={item} className="flex items-start gap-3 text-muted-foreground text-sm">
                 <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
@@ -180,6 +178,13 @@ export default function FormatIndustryPage() {
             ))}
           </ul>
         </section>
+
+        {industry.caution && (
+          <div className="mb-10 rounded-xl border border-amber-500/30 bg-amber-500/5 p-5 flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <p className="text-sm text-muted-foreground leading-relaxed">{industry.caution}</p>
+          </div>
+        )}
 
         <section className="mb-10">
           <h2 className="text-2xl font-bold text-foreground mb-6">FAQ</h2>
@@ -200,7 +205,7 @@ export default function FormatIndustryPage() {
           <h2 className="text-2xl font-bold text-foreground mb-2">
             Start sharing {format.name} files in your {industry.name} workflow
           </h2>
-          <p className="text-muted-foreground mb-6">Free forever. No account. No size limit.</p>
+          <p className="text-muted-foreground mb-6">Free. No account. Nothing to install.</p>
           <Link to="/" className="inline-flex items-center gap-2 rounded-xl bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-3 transition-colors">
             Open DefyShare Free <ArrowRight className="w-4 h-4" />
           </Link>
